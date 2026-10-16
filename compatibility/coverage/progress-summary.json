@@ -1,0 +1,497 @@
+{
+  "rubric_version": "pocket-aot-capabilities-v1",
+  "assessed_date": "2026-10-16",
+  "label": "Secondary weighted planning index; implementation and regression counts are primary",
+  "core_capability_score_percent": 49.78248518620859,
+  "supported_only_points": 33.73199574263404,
+  "partial_credit_points": 16.05048944357455,
+  "sensitivity_partial_credit_25_percent": 41.757240464421315,
+  "sensitivity_partial_credit_75_percent": 57.80772990799586,
+  "core_gate_count": 173,
+  "status_counts": {
+    "supported": 56,
+    "partial": 54,
+    "missing": 63
+  },
+  "supporting_tooling_score_percent": 75.0,
+  "functional_api_names": 66,
+  "canonical_api_count": 108,
+  "api_status_counts": {
+    "missing": 42,
+    "supported": 26,
+    "partial": 40
+  },
+  "api_subsystems": [
+    {
+      "name": "system",
+      "total": 12,
+      "status_counts": {
+        "missing": 8,
+        "supported": 2,
+        "partial": 2
+      },
+      "exercised": 1
+    },
+    {
+      "name": "graphics",
+      "total": 26,
+      "status_counts": {
+        "partial": 18,
+        "supported": 3,
+        "missing": 5
+      },
+      "exercised": 10
+    },
+    {
+      "name": "tables",
+      "total": 7,
+      "status_counts": {
+        "supported": 5,
+        "partial": 2
+      },
+      "exercised": 6
+    },
+    {
+      "name": "input",
+      "total": 2,
+      "status_counts": {
+        "partial": 2
+      },
+      "exercised": 0
+    },
+    {
+      "name": "audio",
+      "total": 2,
+      "status_counts": {
+        "missing": 2
+      },
+      "exercised": 0
+    },
+    {
+      "name": "map",
+      "total": 4,
+      "status_counts": {
+        "partial": 3,
+        "missing": 1
+      },
+      "exercised": 2
+    },
+    {
+      "name": "memory",
+      "total": 10,
+      "status_counts": {
+        "missing": 10
+      },
+      "exercised": 0
+    },
+    {
+      "name": "math",
+      "total": 22,
+      "status_counts": {
+        "supported": 16,
+        "partial": 6
+      },
+      "exercised": 7
+    },
+    {
+      "name": "menu",
+      "total": 1,
+      "status_counts": {
+        "missing": 1
+      },
+      "exercised": 0
+    },
+    {
+      "name": "strings",
+      "total": 7,
+      "status_counts": {
+        "partial": 7
+      },
+      "exercised": 7
+    },
+    {
+      "name": "persistence",
+      "total": 3,
+      "status_counts": {
+        "missing": 3
+      },
+      "exercised": 0
+    },
+    {
+      "name": "gpio",
+      "total": 1,
+      "status_counts": {
+        "missing": 1
+      },
+      "exercised": 0
+    },
+    {
+      "name": "advanced_lua",
+      "total": 11,
+      "status_counts": {
+        "missing": 11
+      },
+      "exercised": 0
+    }
+  ],
+  "regression_profile_present": true,
+  "regression_profile_fresh": true,
+  "regression_exercised_api_names": 33,
+  "regression_scenario_count": 5,
+  "regression_suite": "public-original-fixtures",
+  "historical_regression_exercised_api_names": 48,
+  "historical_regression_scenario_count": 8,
+  "historical_evidence_date": "2026-10-16",
+  "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
+  "recorded_rust_tests": 33,
+  "functional_api_name_presence_percent": 61.111111111111114,
+  "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
+  "sample_size": 20,
+  "sample_built": 1,
+  "sample_owner_confirmed": 1,
+  "sample_build_rate_percent": 5.0,
+  "sample_confirmation_rate_percent": 5.0,
+  "sample_first_blocker_counts": {
+    "menuitem": 4,
+    "cartdata": 5,
+    "goto/labels": 3,
+    "varargs": 1,
+    "poke": 3,
+    "costatus": 1,
+    "add_broken_block": 1,
+    "memset": 1
+  },
+  "audit_fresh": true,
+  "changed_since_audit": [],
+  "categories": [
+    {
+      "id": "formats",
+      "name": "Cartridge formats and assets",
+      "weight": 6,
+      "members": [
+        "formats.text",
+        "formats.png",
+        "formats.sprites",
+        "formats.mapflags",
+        "formats.shared",
+        "formats.provenance",
+        "formats.validation",
+        "formats.rom"
+      ],
+      "score_percent": 81.25,
+      "weighted_points": 4.875,
+      "status_counts": {
+        "supported": 6,
+        "partial": 1,
+        "missing": 1
+      }
+    },
+    {
+      "id": "frontend",
+      "name": "Source language and frontend",
+      "weight": 12,
+      "members": [
+        "language.lexing",
+        "language.identifiers",
+        "language.evaluation",
+        "language.assignment",
+        "language.scope",
+        "language.branch",
+        "language.loops",
+        "language.native_codegen",
+        "language.varargs",
+        "language.goto",
+        "language.includes"
+      ],
+      "score_percent": 68.18181818181819,
+      "weighted_points": 8.181818181818182,
+      "status_counts": {
+        "supported": 7,
+        "partial": 1,
+        "missing": 3
+      }
+    },
+    {
+      "id": "semantics",
+      "name": "Values, functions and native semantics",
+      "weight": 18,
+      "members": [
+        "language.truth",
+        "language.numeric",
+        "language.strings",
+        "language.functions",
+        "language.closures",
+        "language.multi_return",
+        "language.methods",
+        "language.tables",
+        "language.iteration_builtin",
+        "language.bitwise",
+        "language.gc",
+        "language.custom_iterators",
+        "language.coroutines",
+        "language.metatables"
+      ],
+      "score_percent": 57.142857142857146,
+      "weighted_points": 10.285714285714286,
+      "status_counts": {
+        "supported": 5,
+        "partial": 6,
+        "missing": 3
+      }
+    },
+    {
+      "id": "graphics",
+      "name": "Graphics, maps and text",
+      "weight": 18,
+      "members": [
+        "api.clip",
+        "api.pset",
+        "api.pget",
+        "api.sget",
+        "api.sset",
+        "api.fget",
+        "api.fset",
+        "api.print",
+        "api.cursor",
+        "api.color",
+        "api.cls",
+        "api.camera",
+        "api.circ",
+        "api.circfill",
+        "api.oval",
+        "api.ovalfill",
+        "api.line",
+        "api.rect",
+        "api.rectfill",
+        "api.rrect",
+        "api.rrectfill",
+        "api.pal",
+        "api.palt",
+        "api.spr",
+        "api.sspr",
+        "api.fillp",
+        "api.mget",
+        "api.mset",
+        "api.map",
+        "api.tline"
+      ],
+      "score_percent": 45.0,
+      "weighted_points": 8.1,
+      "status_counts": {
+        "partial": 21,
+        "supported": 3,
+        "missing": 6
+      }
+    },
+    {
+      "id": "libraries",
+      "name": "Math, tables, strings and advanced Lua APIs",
+      "weight": 8,
+      "members": [
+        "api.add",
+        "api.del",
+        "api.deli",
+        "api.count",
+        "api.all",
+        "api.foreach",
+        "api.pairs",
+        "api.max",
+        "api.min",
+        "api.mid",
+        "api.flr",
+        "api.ceil",
+        "api.cos",
+        "api.sin",
+        "api.atan2",
+        "api.sqrt",
+        "api.abs",
+        "api.rnd",
+        "api.srand",
+        "api.sgn",
+        "api.band",
+        "api.bor",
+        "api.bxor",
+        "api.bnot",
+        "api.shl",
+        "api.shr",
+        "api.lshr",
+        "api.rotl",
+        "api.rotr",
+        "api.tostr",
+        "api.tonum",
+        "api.chr",
+        "api.ord",
+        "api.sub",
+        "api.split",
+        "api.type",
+        "api.setmetatable",
+        "api.getmetatable",
+        "api.rawset",
+        "api.rawget",
+        "api.rawequal",
+        "api.rawlen",
+        "api.select",
+        "api.cocreate",
+        "api.coresume",
+        "api.costatus",
+        "api.yield"
+      ],
+      "score_percent": 60.638297872340424,
+      "weighted_points": 4.851063829787234,
+      "status_counts": {
+        "supported": 21,
+        "partial": 15,
+        "missing": 11
+      }
+    },
+    {
+      "id": "input",
+      "name": "Input and program lifecycle",
+      "weight": 8,
+      "members": [
+        "api.btn",
+        "api.btnp",
+        "input.gpio",
+        "input.callbacks",
+        "input.scheduler",
+        "input.multiplayer",
+        "input.extended",
+        "input.repeat"
+      ],
+      "score_percent": 43.75,
+      "weighted_points": 3.5,
+      "status_counts": {
+        "partial": 3,
+        "supported": 2,
+        "missing": 3
+      }
+    },
+    {
+      "id": "services",
+      "name": "Memory, saves and system services",
+      "weight": 8,
+      "members": [
+        "api.load",
+        "api.save",
+        "api.ls",
+        "api.run",
+        "api.stop",
+        "api.assert",
+        "api.reset",
+        "api.flip",
+        "api.printh",
+        "api.time",
+        "api.stat",
+        "api.extcmd",
+        "api.peek",
+        "api.poke",
+        "api.peek2",
+        "api.poke2",
+        "api.peek4",
+        "api.poke4",
+        "api.memcpy",
+        "api.reload",
+        "api.cstore",
+        "api.memset",
+        "api.menuitem",
+        "api.cartdata",
+        "api.dget",
+        "api.dset",
+        "api.serial"
+      ],
+      "score_percent": 11.11111111111111,
+      "weighted_points": 0.8888888888888888,
+      "status_counts": {
+        "missing": 23,
+        "supported": 2,
+        "partial": 2
+      }
+    },
+    {
+      "id": "audio",
+      "name": "Audio behavior and observable timing",
+      "weight": 8,
+      "members": [
+        "api.sfx",
+        "api.music",
+        "audio.assets",
+        "audio.sequencer",
+        "audio.synthesis",
+        "audio.effects",
+        "audio.queries",
+        "audio.silentmode"
+      ],
+      "score_percent": 0.0,
+      "weighted_points": 0.0,
+      "status_counts": {
+        "missing": 8
+      }
+    },
+    {
+      "id": "target",
+      "name": "RP2040 build and resource handling",
+      "weight": 8,
+      "members": [
+        "build.arm",
+        "build.uf2",
+        "build.autonomous",
+        "build.pools",
+        "build.stack",
+        "build.recovery",
+        "build.preflight",
+        "build.performance",
+        "build.optimization",
+        "build.bootstrap"
+      ],
+      "score_percent": 80.0,
+      "weighted_points": 6.4,
+      "status_counts": {
+        "supported": 6,
+        "partial": 4
+      }
+    },
+    {
+      "id": "validation",
+      "name": "Correctness and compatibility validation",
+      "weight": 6,
+      "members": [
+        "validation.unit",
+        "validation.sanitizers",
+        "validation.failures",
+        "validation.hardware",
+        "validation.corpus",
+        "validation.numericoracle",
+        "validation.graphicsoracle",
+        "validation.audiooracle",
+        "validation.gametraces",
+        "validation.soak"
+      ],
+      "score_percent": 45.0,
+      "weighted_points": 2.7,
+      "status_counts": {
+        "supported": 4,
+        "partial": 1,
+        "missing": 5
+      }
+    }
+  ],
+  "source_hashes": {
+    "src/compiler/parse.rs": "c0e84cb64152bdec55f527d58590a9e35f854a0596e6f1a38bd6921b4dfa75a3",
+    "src/compiler/emit.rs": "4afa768c24ff9cce0c87f3d20c3ca1322f7193c464fcbf8d71be0a237f91dcc5",
+    "src/compiler/mod.rs": "bc3fdb860f22c89b7aabb14f77b5778ac1d9d7ca354fe7ccd17e6c6c1e755e97",
+    "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
+    "converter/runtime/p8.c": "8f5039dd4d2433d987734ac39ff8a09ffd4493a4bc0661cfc7c3de34f7510f08",
+    "converter/runtime/p8.h": "835b876a01b092437c39f8ea0f7c57326353a5407aa498758987960948be842b",
+    "converter/runtime/pico.c": "b50a2a1721f0d6919665b68af6242c317d0f4eab9ce4f8fbb3b942c666f70601",
+    "converter/runtime/host.c": "d0b8a4bf90659f956425860f249921ecaf606c9c2d0f9478185153eed684797d",
+    "converter/build.py": "b61c3744536c4e667df6e0132db99e242fdb1c375a8503c2ac7017840470030a",
+    "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
+    "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
+    "converter/test_pipeline.py": "1694877990f06aef468fa73c846251cf990bef869652d0539a18936d946eeaad",
+    "converter/test_png.py": "332f7e7041f22af18141f660a9cb0827d892a08db307ba3d19187643bdfa995d",
+    "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
+    "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
+    "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
+    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
+  }
+}

@@ -1,0 +1,39 @@
+name: Public source checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-fixtures:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Linux and Python build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libudev-dev libxkbcommon-dev
+          python -m pip install -r requirements.txt
+      - name: Check formatting and Rust tests
+        run: |
+          cargo fmt --check
+          cargo test --locked
+          cargo build --release --locked --bins
+      - name: Check original generated-native fixtures and PNG roundtrip
+        run: |
+          python converter/test_pipeline.py
+          python converter/test_png.py
+      - name: Check publication scope and capability audit
+        run: |
+          python scripts/check_publication.py
+          python converter/coverage_report.py --check

@@ -1,0 +1,24 @@
+# Build output and locally imported cartridges stay private by default.
+/target/
+/bin/
+/converted/
+/firmware/
+/recovery/
+/logs/
+/local-carts/
+/compatibility/carts/
+/compatibility/top200/[0-9]*/
+/.cache/
+/.venv/
+/.toolchain/
+/.python-tools/
+**/__pycache__/
+*.py[cod]
+*.uf2
+*.elf
+*.bin
+*.p8.png
+*.rom
+*.o
+*.su
+*.log

@@ -1,0 +1,2387 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-10-16",
+  "baseline": {
+    "name": "PICO-8 runtime API Reference",
+    "version": "0.2.7",
+    "source_url": "https://www.lexaloffle.com/dl/docs/pico-8_manual.html",
+    "retrieved_date": "2026-10-16",
+    "source_sha256": "db53e8070ee7ffa392b034b08ebdaafbe59563330549372917f72cc5b1c9a852",
+    "scope": "Canonical named functions documented in API Reference sections 6.1\u20136.14, plus sgn documented in the syntax primer. Include runtime cartridge lifecycle/filesystem and advanced Lua functions; exclude four host/editor command functions below. Input-device GPIO/mouse/keyboard facilities expressed via peek/poke/stat share those API rows; their subfeatures are not counted twice.",
+    "denominator_policy": "One row per canonical name, not per alias or overload. time/t count once; overloads affect status, never denominator. Callback hooks _init/_update/_update60/_draw and syntax are measured separately. ipairs is a converter extension not counted in this official inventory.",
+    "excluded": [
+      {
+        "name": "folder",
+        "reason": "Host file browser command."
+      },
+      {
+        "name": "resume",
+        "reason": "Interactive shell command to resume stopped execution."
+      },
+      {
+        "name": "reboot",
+        "reason": "Fantasy-console editor/shell machine reboot command."
+      },
+      {
+        "name": "info",
+        "reason": "Cartridge/editor metadata console command."
+      }
+    ]
+  },
+  "rubric": {
+    "implemented_partial": "Functional implementation exists for some behaviors. Not a claim of complete semantics or official-equivalent results.",
+    "missing": "No implementation, or accepted silent no-op (sfx/music).",
+    "complete": "Reserved for independently reference-verified full promised semantics; no rows meet this bar.",
+    "capability_status": "supported means no specific semantic omission identified by this code audit; partial means a known API behavior is absent or approximated; missing means no functional implementation. These labels are independent of reference-equivalence validation and do not mean production-complete."
+  },
+  "summary": {
+    "canonical_api_count": 108,
+    "implemented_partial": 66,
+    "missing_or_noop": 42,
+    "complete": 0,
+    "compiler_bound_canonical_names": 68,
+    "accepted_noops": [
+      "sfx",
+      "music"
+    ],
+    "functional_name_presence_percent": 61.1,
+    "warning": "Name presence percentage is not project completion, API semantic fidelity, games compatibility or estimated remaining effort.",
+    "capability_status_counts": {
+      "supported": 26,
+      "partial": 40,
+      "missing": 42
+    }
+  },
+  "categories": {
+    "system": {
+      "total": 12,
+      "implemented_partial": 4,
+      "missing_or_noop": 8,
+      "capability_status_counts": {
+        "supported": 2,
+        "partial": 2,
+        "missing": 8
+      }
+    },
+    "graphics": {
+      "total": 26,
+      "implemented_partial": 21,
+      "missing_or_noop": 5,
+      "capability_status_counts": {
+        "supported": 3,
+        "partial": 18,
+        "missing": 5
+      }
+    },
+    "tables": {
+      "total": 7,
+      "implemented_partial": 7,
+      "missing_or_noop": 0,
+      "capability_status_counts": {
+        "supported": 5,
+        "partial": 2,
+        "missing": 0
+      }
+    },
+    "input": {
+      "total": 2,
+      "implemented_partial": 2,
+      "missing_or_noop": 0,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 2,
+        "missing": 0
+      }
+    },
+    "audio": {
+      "total": 2,
+      "implemented_partial": 0,
+      "missing_or_noop": 2,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 0,
+        "missing": 2
+      }
+    },
+    "map": {
+      "total": 4,
+      "implemented_partial": 3,
+      "missing_or_noop": 1,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 3,
+        "missing": 1
+      }
+    },
+    "memory": {
+      "total": 10,
+      "implemented_partial": 0,
+      "missing_or_noop": 10,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 0,
+        "missing": 10
+      }
+    },
+    "math": {
+      "total": 22,
+      "implemented_partial": 22,
+      "missing_or_noop": 0,
+      "capability_status_counts": {
+        "supported": 16,
+        "partial": 6,
+        "missing": 0
+      }
+    },
+    "menu": {
+      "total": 1,
+      "implemented_partial": 0,
+      "missing_or_noop": 1,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 0,
+        "missing": 1
+      }
+    },
+    "strings": {
+      "total": 7,
+      "implemented_partial": 7,
+      "missing_or_noop": 0,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 7,
+        "missing": 0
+      }
+    },
+    "persistence": {
+      "total": 3,
+      "implemented_partial": 0,
+      "missing_or_noop": 3,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 0,
+        "missing": 3
+      }
+    },
+    "gpio": {
+      "total": 1,
+      "implemented_partial": 0,
+      "missing_or_noop": 1,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 0,
+        "missing": 1
+      }
+    },
+    "advanced_lua": {
+      "total": 11,
+      "implemented_partial": 0,
+      "missing_or_noop": 11,
+      "capability_status_counts": {
+        "supported": 0,
+        "partial": 0,
+        "missing": 11
+      }
+    }
+  },
+  "source_evidence": {
+    "src/compiler/emit.rs": "4afa768c24ff9cce0c87f3d20c3ca1322f7193c464fcbf8d71be0a237f91dcc5",
+    "converter/runtime/p8.c": "8f5039dd4d2433d987734ac39ff8a09ffd4493a4bc0661cfc7c3de34f7510f08",
+    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
+  },
+  "apis": [
+    {
+      "name": "load",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "save",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "ls",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "run",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "stop",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "assert",
+      "aliases": [],
+      "category": "system",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Truth condition/message present; return-value/failure details have no independent reference-equivalence suite.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:285"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8",
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "reset",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "flip",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "printh",
+      "aliases": [],
+      "category": "system",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Single-string host console output present; filename/overwrite/desktop/clipboard forms rejected.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:283"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "time",
+      "aliases": [
+        "t"
+      ],
+      "category": "system",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Frame-count based seconds present (alias t); reset/timing/wrap edge cases unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:275"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "stat",
+      "aliases": [],
+      "category": "system",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Only stat(1), reporting native instruction-budget usage rather than PICO-8 CPU utilization. All other indices fail.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:284"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "extcmd",
+      "aliases": [],
+      "category": "system",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "clip",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Rectangular clip/reset present; CLIP_PREVIOUS overload is rejected.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:220"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "pset",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:201"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "pget",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Reads framebuffer pixels; custom out-of-bounds register setting and complete memory-mapped draw state absent.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:202"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sget",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Reads sprite pixels; custom out-of-bounds register setting and remapped sprite memory absent.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:225"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sset",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Writes sprite pixels; omitted colour overload rejected and remapped sprite memory absent.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:226"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "fget",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Reads flags/bitfield; bounded subset lacks reference edge-case comparison.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:229"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "fset",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Writes flags/bitfield; bounded subset lacks reference edge-case comparison.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:230"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "print",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "ASCII raster font/basic cursor and newline implemented; extended P8SCII/control commands/custom fonts and exact return metrics incomplete.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:206"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "cursor",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Cursor position/colour setters present; previous position multiple return values absent.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:218"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "color",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Basic draw colour get/set; extended colour/fill-pattern state unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:217"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "cls",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Clears indexed framebuffer and resets clip/cursor; complete draw-state fidelity unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:200"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "camera",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Sets camera coordinates; previous coordinates multiple return values absent.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:219"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "circ",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Basic integer circle outline; fill patterns/extended draw state absent and raster fidelity unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:205"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "circfill",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Basic integer filled circle; fill patterns/extended draw state absent and raster fidelity unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:205"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "oval",
+      "aliases": [],
+      "category": "graphics",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "ovalfill",
+      "aliases": [],
+      "category": "graphics",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "line",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Four-coordinate line present; continuation/no-coordinate overloads rejected and raster fidelity unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:204"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rect",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Integer rectangle present; fill patterns/extended draw state absent and raster fidelity unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:203"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rectfill",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Integer filled rectangle present; fill patterns/extended draw state absent and raster fidelity unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:203"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rrect",
+      "aliases": [],
+      "category": "graphics",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rrectfill",
+      "aliases": [],
+      "category": "graphics",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "pal",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Only numeric draw-palette remapping (palette 0); table, display, secondary palette overloads unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:221"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "palt",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Two-argument transparency/reset present; bitmask overload rejected.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:222"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "spr",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Integer whole-sprite dimensions/flips present; fractional size/fill-pattern/complete draw-state semantics incomplete.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:223"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sspr",
+      "aliases": [],
+      "category": "graphics",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Positive-dimension scaling/flips present; resource limits and raster edge cases differ or unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:224"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "fillp",
+      "aliases": [],
+      "category": "graphics",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "add",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:233"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "del",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:234"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8",
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "deli",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:234"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "count",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:235"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "all",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Compiler lowers direct generic-for all(table); first-class iterator values/protocol are unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:390",
+        "converter/runtime/p8.c:106"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "foreach",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Invokes native function values over the array portion; bounded table pool and mutation edge cases require broader equivalence tests.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:236"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "pairs",
+      "aliases": [],
+      "category": "tables",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Compiler lowers direct generic-for pairs(table); first-class iterator values/protocol are unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:390",
+        "converter/runtime/p8.c:106"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "btn",
+      "aliases": [],
+      "category": "input",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Single-player six-button reads present; players 1..7 rejected.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:232"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "btnp",
+      "aliases": [],
+      "category": "input",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Single-player presses/repeat present; players 1..7 and configurable repeat registers unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:232"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sfx",
+      "aliases": [],
+      "category": "audio",
+      "status": "missing",
+      "binding_present": true,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "Accepted as a silent no-op; no audio synthesis, sequencing or channel state. Zero functional credit.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:282"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "music",
+      "aliases": [],
+      "category": "audio",
+      "status": "missing",
+      "binding_present": true,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "Accepted as a silent no-op; no audio synthesis, sequencing or channel state. Zero functional credit.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:282"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "mget",
+      "aliases": [],
+      "category": "map",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Default map plus shared gfx half supported; remapped map/width registers unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:227"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "mset",
+      "aliases": [],
+      "category": "map",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Default map plus shared gfx half supported; remapped map/width registers unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:228"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "map",
+      "aliases": [],
+      "category": "map",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Default map drawing/layer mask present; remapped memory, fill patterns and exact draw state incomplete.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:231"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "tline",
+      "aliases": [],
+      "category": "map",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "peek",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "poke",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "peek2",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "poke2",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "peek4",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "poke4",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "memcpy",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "reload",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "cstore",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "memset",
+      "aliases": [],
+      "category": "memory",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "max",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:266"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "min",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:266"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "mid",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:267"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "flr",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:263"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "ceil",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:264"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "cos",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 trig results unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:271"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sin",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 trig results unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:270"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "atan2",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 results unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:272"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sqrt",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 edge cases unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:269"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "abs",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:265"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rnd",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Range/table choices use xorshift; RNG sequence differs from PICO-8 and negative ranges rejected.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:274"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "srand",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Seeds xorshift; does not reproduce PICO-8 seeded random sequence.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:273"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sgn",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:268"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "band",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:254"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "bor",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:254"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "bxor",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:254"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "bnot",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:255"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "shl",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:256"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "shr",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:256"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/runtime_closures.c"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "lshr",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:256"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/runtime_closures.c"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rotl",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:256"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/runtime_closures.c"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rotr",
+      "aliases": [],
+      "category": "math",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:256"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "menuitem",
+      "aliases": [],
+      "category": "menu",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "tostr",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Basic formatting present; format flags rejected and exact numeric/nil/object rendering differs or is unverified.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:276"
+      ],
+      "selected_regression_tests": [],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "tonum",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Decimal conversion present; format flags, binary/hex parsing and error/wrap semantics incomplete.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:277"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "chr",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Byte construction present; NUL byte rejected; at most 16 input arguments.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:280"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/runtime_closures.c"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "ord",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "One byte result present; multi-result overload rejected.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:279"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/runtime_closures.c",
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sub",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Byte substring basics present; NUL-containing strings unsupported.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:281"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8",
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "split",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Delimiter/chunk/number conversion present; format conversion and NUL-containing strings incomplete.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:237"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/runtime_closures.c"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "type",
+      "aliases": [],
+      "category": "strings",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Types supported by native value model recognized; coroutine/thread type unavailable.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:278"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/semantics.p8",
+        "converter/tests/functions.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": true,
+      "capability_status": "partial",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "cartdata",
+      "aliases": [],
+      "category": "persistence",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "dget",
+      "aliases": [],
+      "category": "persistence",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "dset",
+      "aliases": [],
+      "category": "persistence",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "serial",
+      "aliases": [],
+      "category": "gpio",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "setmetatable",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "getmetatable",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rawset",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rawget",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rawequal",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "rawlen",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "select",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "cocreate",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "coresume",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "costatus",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "yield",
+      "aliases": [],
+      "category": "advanced_lua",
+      "status": "missing",
+      "binding_present": false,
+      "functional_credit": false,
+      "reference_equivalence_verified": false,
+      "reason": "No compiler binding or native runtime implementation.",
+      "evidence": [
+        "src/compiler/emit.rs:6 (absent from API bindings)"
+      ],
+      "selected_regression_tests": [],
+      "implemented": false,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "missing",
+      "no_reference_equivalence_suite": true
+    }
+  ],
+  "audit_notes": [
+    "2026-10-16: rechecked bindings and runtime after adding conditional host API profiling; capability statuses unchanged."
+  ],
+  "public_review": "2026-10-16: independently authored compact ASCII font; print remains partial. API implementation/status unchanged. Default public suite uses only original fixtures; external fixture pointers denote unbundled historical evidence."
+}

@@ -1,0 +1,79 @@
+{
+  "cartridges": [
+    {
+      "id": "nomad",
+      "title": "NOMAD-01",
+      "subtitle": "Your pocket is a spaceship.",
+      "kind": "MICROPYTHON / ORIGINAL",
+      "description": "A tiny deep-space cockpit. Chase asteroids, scan strange worlds, sweep the radar and fold spacetime with a click.",
+      "controls": [
+        "STICK   Steer",
+        "A / B   Fire / shield",
+        "X / Y   Star map / scanner",
+        "CLICK   Hyperspace"
+      ],
+      "filename": "",
+      "sha256": "",
+      "accent": [
+        124,
+        222,
+        245
+      ],
+      "cover": "nomad",
+      "credits": "Original Pocket Arcade demo. See demos/ for source.",
+      "status": "source_only",
+      "source_file": "demos/pocket_starship.py",
+      "reason": "Build the original demos with python3 build_cartridges.py, then reopen the launcher."
+    },
+    {
+      "id": "prism",
+      "title": "PRISM GARDEN",
+      "subtitle": "A little ocean, just for you.",
+      "kind": "MICROPYTHON / ORIGINAL",
+      "description": "Colorful fish and glowing jellyfish follow your magic light. Feed your little friends, change the palette and make rainbow ripples.",
+      "controls": [
+        "STICK   Move the magic light",
+        "A / B   Feed / rainbow burst",
+        "X / Y   Palette / species",
+        "CLICK   Summon a friend"
+      ],
+      "filename": "",
+      "sha256": "",
+      "accent": [
+        185,
+        242,
+        132
+      ],
+      "cover": "prism",
+      "credits": "Original Pocket Arcade demo. See demos/ for source.",
+      "status": "source_only",
+      "source_file": "demos/prism_garden.py",
+      "reason": "Build the original demos with python3 build_cartridges.py, then reopen the launcher."
+    },
+    {
+      "id": "buttons",
+      "title": "BUTTON LAB",
+      "subtitle": "Nine inputs. Zero guesswork.",
+      "kind": "MICROPYTHON / DIAGNOSTIC",
+      "description": "Check every switch, including the joystick click. See live pressed states, counts and hold times on the Pico display.",
+      "controls": [
+        "PRESS   Any of the nine controls",
+        "HOLD    Watch its duration",
+        "RELEASE Complete that input test",
+        "TARGET  All 9 inputs pass"
+      ],
+      "filename": "",
+      "sha256": "",
+      "accent": [
+        255,
+        213,
+        121
+      ],
+      "cover": "",
+      "credits": "Original Pocket Arcade demo. See demos/ for source.",
+      "status": "source_only",
+      "source_file": "demos/button_tester.py",
+      "reason": "Build the original demos with python3 build_cartridges.py, then reopen the launcher."
+    }
+  ]
+}

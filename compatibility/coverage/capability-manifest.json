@@ -1,0 +1,892 @@
+{
+  "schema_version": 1,
+  "rubric_version": "pocket-aot-capabilities-v1",
+  "assessed_date": "2026-10-16",
+  "baseline": "PICO-8 v0.2.7 manual",
+  "baseline_url": "https://www.lexaloffle.com/dl/docs/pico-8_manual.html",
+  "scope": "Documented cartridge-runtime behavior for desktop ahead-of-time conversion to the current RP2040/Waveshare target, under explicit resource limits. Host/editor authoring tools and Splore are excluded. Runtime audio state remains in scope even without a speaker. A 100% checklist score does not imply all cartridges fit the RP2040 or run at their target frame rate.",
+  "weights_policy": "Judgment-based importance weights, frozen at rubric v1. They are not measured engineering effort, remaining development time or probabilities that games work. Each category has a fixed weight and equally weighted acceptance entries within it. GUI/flashing tooling is reported separately and contributes zero to the core score.",
+  "status_credit": {
+    "supported": 1,
+    "partial": 0.5,
+    "missing": 0
+  },
+  "status_policy": "Supported means implemented within the stated gate with no specific missing behavior found by the audit; it does not mean independently reference-verified. Partial means a known limitation or incomplete acceptance gate. Missing includes silent no-ops. Evidence is local implementation/regression/device evidence unless explicitly reference-validated.",
+  "categories": [
+    {
+      "id": "formats",
+      "name": "Cartridge formats and assets",
+      "weight": 6,
+      "members": [
+        "formats.text",
+        "formats.png",
+        "formats.sprites",
+        "formats.mapflags",
+        "formats.shared",
+        "formats.provenance",
+        "formats.validation",
+        "formats.rom"
+      ]
+    },
+    {
+      "id": "frontend",
+      "name": "Source language and frontend",
+      "weight": 12,
+      "members": [
+        "language.lexing",
+        "language.identifiers",
+        "language.evaluation",
+        "language.assignment",
+        "language.scope",
+        "language.branch",
+        "language.loops",
+        "language.native_codegen",
+        "language.varargs",
+        "language.goto",
+        "language.includes"
+      ]
+    },
+    {
+      "id": "semantics",
+      "name": "Values, functions and native semantics",
+      "weight": 18,
+      "members": [
+        "language.truth",
+        "language.numeric",
+        "language.strings",
+        "language.functions",
+        "language.closures",
+        "language.multi_return",
+        "language.methods",
+        "language.tables",
+        "language.iteration_builtin",
+        "language.bitwise",
+        "language.gc",
+        "language.custom_iterators",
+        "language.coroutines",
+        "language.metatables"
+      ]
+    },
+    {
+      "id": "graphics",
+      "name": "Graphics, maps and text",
+      "weight": 18,
+      "members": [
+        "api.clip",
+        "api.pset",
+        "api.pget",
+        "api.sget",
+        "api.sset",
+        "api.fget",
+        "api.fset",
+        "api.print",
+        "api.cursor",
+        "api.color",
+        "api.cls",
+        "api.camera",
+        "api.circ",
+        "api.circfill",
+        "api.oval",
+        "api.ovalfill",
+        "api.line",
+        "api.rect",
+        "api.rectfill",
+        "api.rrect",
+        "api.rrectfill",
+        "api.pal",
+        "api.palt",
+        "api.spr",
+        "api.sspr",
+        "api.fillp",
+        "api.mget",
+        "api.mset",
+        "api.map",
+        "api.tline"
+      ]
+    },
+    {
+      "id": "libraries",
+      "name": "Math, tables, strings and advanced Lua APIs",
+      "weight": 8,
+      "members": [
+        "api.add",
+        "api.del",
+        "api.deli",
+        "api.count",
+        "api.all",
+        "api.foreach",
+        "api.pairs",
+        "api.max",
+        "api.min",
+        "api.mid",
+        "api.flr",
+        "api.ceil",
+        "api.cos",
+        "api.sin",
+        "api.atan2",
+        "api.sqrt",
+        "api.abs",
+        "api.rnd",
+        "api.srand",
+        "api.sgn",
+        "api.band",
+        "api.bor",
+        "api.bxor",
+        "api.bnot",
+        "api.shl",
+        "api.shr",
+        "api.lshr",
+        "api.rotl",
+        "api.rotr",
+        "api.tostr",
+        "api.tonum",
+        "api.chr",
+        "api.ord",
+        "api.sub",
+        "api.split",
+        "api.type",
+        "api.setmetatable",
+        "api.getmetatable",
+        "api.rawset",
+        "api.rawget",
+        "api.rawequal",
+        "api.rawlen",
+        "api.select",
+        "api.cocreate",
+        "api.coresume",
+        "api.costatus",
+        "api.yield"
+      ]
+    },
+    {
+      "id": "input",
+      "name": "Input and program lifecycle",
+      "weight": 8,
+      "members": [
+        "api.btn",
+        "api.btnp",
+        "input.gpio",
+        "input.callbacks",
+        "input.scheduler",
+        "input.multiplayer",
+        "input.extended",
+        "input.repeat"
+      ]
+    },
+    {
+      "id": "services",
+      "name": "Memory, saves and system services",
+      "weight": 8,
+      "members": [
+        "api.load",
+        "api.save",
+        "api.ls",
+        "api.run",
+        "api.stop",
+        "api.assert",
+        "api.reset",
+        "api.flip",
+        "api.printh",
+        "api.time",
+        "api.stat",
+        "api.extcmd",
+        "api.peek",
+        "api.poke",
+        "api.peek2",
+        "api.poke2",
+        "api.peek4",
+        "api.poke4",
+        "api.memcpy",
+        "api.reload",
+        "api.cstore",
+        "api.memset",
+        "api.menuitem",
+        "api.cartdata",
+        "api.dget",
+        "api.dset",
+        "api.serial"
+      ]
+    },
+    {
+      "id": "audio",
+      "name": "Audio behavior and observable timing",
+      "weight": 8,
+      "members": [
+        "api.sfx",
+        "api.music",
+        "audio.assets",
+        "audio.sequencer",
+        "audio.synthesis",
+        "audio.effects",
+        "audio.queries",
+        "audio.silentmode"
+      ]
+    },
+    {
+      "id": "target",
+      "name": "RP2040 build and resource handling",
+      "weight": 8,
+      "members": [
+        "build.arm",
+        "build.uf2",
+        "build.autonomous",
+        "build.pools",
+        "build.stack",
+        "build.recovery",
+        "build.preflight",
+        "build.performance",
+        "build.optimization",
+        "build.bootstrap"
+      ]
+    },
+    {
+      "id": "validation",
+      "name": "Correctness and compatibility validation",
+      "weight": 6,
+      "members": [
+        "validation.unit",
+        "validation.sanitizers",
+        "validation.failures",
+        "validation.hardware",
+        "validation.corpus",
+        "validation.numericoracle",
+        "validation.graphicsoracle",
+        "validation.audiooracle",
+        "validation.gametraces",
+        "validation.soak"
+      ]
+    }
+  ],
+  "tooling_members": [
+    "tooling.grid",
+    "tooling.import",
+    "tooling.flash",
+    "tooling.restore",
+    "tooling.batch",
+    "tooling.install"
+  ],
+  "custom_features": [
+    {
+      "id": "formats.text",
+      "name": "Read self-contained .p8 source",
+      "status": "supported",
+      "acceptance": "Extract Lua and cartridge sections without executing or rewriting source.",
+      "evidence": [
+        "src/compiler/mod.rs",
+        "src/bin/pocket-aot.rs"
+      ],
+      "tests": [
+        "converter/test_pipeline.py"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.png",
+      "name": "Read compressed .p8.png containers",
+      "status": "supported",
+      "acceptance": "Decode the frozen sample and a source/ROM-preserving positive control through pinned Shrinko8.",
+      "evidence": [
+        "converter/build.py",
+        "converter/vendor/shrinko8"
+      ],
+      "tests": [
+        "converter/test_png.py",
+        "compatibility/top200/results.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.sprites",
+      "name": "Import sprite pixels",
+      "status": "supported",
+      "acceptance": "Unpack gfx nibbles into native ROM assets with dimension checks.",
+      "evidence": [
+        "src/compiler/mod.rs"
+      ],
+      "tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.mapflags",
+      "name": "Import map and sprite flags",
+      "status": "supported",
+      "acceptance": "Preserve map/flag bytes and expose them to the native runtime.",
+      "evidence": [
+        "src/compiler/mod.rs",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "converter/tests/semantics.p8",
+        "compatibility/top200/019/hardware-check.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.shared",
+      "name": "Preserve shared sprite/map memory",
+      "status": "supported",
+      "acceptance": "mset/mget and sset/sget observe the overlapping lower sprite/map bytes.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "converter/tests/semantics.p8"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.provenance",
+      "name": "Source preservation and build provenance",
+      "status": "supported",
+      "acceptance": "Record original container and decoded-source hashes separately with generated code and firmware evidence.",
+      "evidence": [
+        "converter/build.py",
+        "src/bin/pocket-aot.rs"
+      ],
+      "tests": [
+        "converter/test_png.py",
+        "compatibility/top200/results.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.validation",
+      "name": "Cartridge version and malformed-input coverage",
+      "status": "partial",
+      "acceptance": "Validate documented cartridge versions and malformed sections/containers with systematic negative cases.",
+      "evidence": [
+        "src/compiler/mod.rs",
+        "converter/build.py"
+      ],
+      "tests": [
+        "converter/test_png.py"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "formats.rom",
+      "name": "Read raw .p8.rom cartridges",
+      "status": "missing",
+      "acceptance": "Accept the official raw ROM container in addition to text/PNG.",
+      "evidence": [
+        "converter/build.py"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "input.gpio",
+      "name": "LCD-board physical button mapping",
+      "status": "supported",
+      "acceptance": "Read and debounce the nine known GPIO inputs and map the six PICO-8 gameplay buttons.",
+      "evidence": [
+        "converter/runtime/pico.c"
+      ],
+      "tests": [
+        "compatibility/top200/019/hardware-check.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "input.callbacks",
+      "name": "Program init/update/draw callback lifecycle",
+      "status": "supported",
+      "acceptance": "Initialize and invoke normal _init/_update/_update60/_draw callbacks, including mutable callback values.",
+      "evidence": [
+        "src/compiler/emit.rs",
+        "converter/runtime/pico.c"
+      ],
+      "tests": [
+        "converter/tests/functions.p8",
+        "converter/test_pipeline.py"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "input.scheduler",
+      "name": "30/60 Hz scheduling and frame pacing",
+      "status": "partial",
+      "acceptance": "Match callback order, catch-up and time progression when the game or display cannot sustain its requested rate.",
+      "evidence": [
+        "converter/runtime/pico.c",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "compatibility/top200/019/hardware-check.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "input.multiplayer",
+      "name": "Additional controller players",
+      "status": "missing",
+      "acceptance": "Return supported controller states for documented player indices instead of rejecting every nonzero player.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "input.extended",
+      "name": "Mouse/keyboard input adaptation",
+      "status": "missing",
+      "acceptance": "Adapt the documented mouse/keyboard enable and stat query behavior.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "input.repeat",
+      "name": "Configurable held-button repeat",
+      "status": "missing",
+      "acceptance": "Honor documented repeat configuration rather than only the fixed default delay/rate.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "audio.assets",
+      "name": "Decode SFX/music ROM assets",
+      "status": "missing",
+      "acceptance": "Preserve sound and pattern data from cartridge sections.",
+      "evidence": [
+        "src/compiler/mod.rs"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "audio.sequencer",
+      "name": "Music/SFX sequencer timing",
+      "status": "missing",
+      "acceptance": "Advance patterns/notes/channel state with documented loop and stop behavior.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "audio.synthesis",
+      "name": "Four-channel waveform synthesis",
+      "status": "missing",
+      "acceptance": "Produce documented channel sample waveforms and instruments.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "audio.effects",
+      "name": "Audio effects and custom instruments",
+      "status": "missing",
+      "acceptance": "Implement note effects, envelopes and custom instruments.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "audio.queries",
+      "name": "Audio state accessible to game code",
+      "status": "missing",
+      "acceptance": "Expose current pattern/note/channel state through the relevant stat queries.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "audio.silentmode",
+      "name": "Stateful silent audio mode",
+      "status": "missing",
+      "acceptance": "With no attached speaker, still emulate audio sequencing and observable state instead of discarding sound calls.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "build.arm",
+      "name": "Native Arm compilation and linking",
+      "status": "supported",
+      "acceptance": "Turn generated C and the bounded support runtime into RP2040 firmware using an explicitly configured Pico SDK and Arm toolchain.",
+      "evidence": [
+        "converter/build.py",
+        "converter/CMakeLists.txt"
+      ],
+      "tests": [
+        "converted/aot-cartridge-p8-4ab7f32c/conversion.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.uf2",
+      "name": "UF2 packaging and flash bounds",
+      "status": "supported",
+      "acceptance": "Emit contiguous RP2040-family UF2 blocks and reject firmware beyond this board flash capacity.",
+      "evidence": [
+        "converter/build.py",
+        "src/flasher.rs"
+      ],
+      "tests": [
+        "src/flasher.rs"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.autonomous",
+      "name": "Standalone execution after flashing",
+      "status": "supported",
+      "acceptance": "Run the converted cartridge without a desktop game process, Lua VM or network service.",
+      "evidence": [
+        "converter/runtime/pico.c"
+      ],
+      "tests": [
+        "compatibility/top200/019/hardware-check.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.pools",
+      "name": "Bounded allocations and runaway execution",
+      "status": "supported",
+      "acceptance": "Enforce explicit allocation, instruction and call-depth limits with controlled errors.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "converter/test_pipeline.py",
+        "converter/tests/runtime_closures.c"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.stack",
+      "name": "Separate stacks and stack-use checks",
+      "status": "supported",
+      "acceptance": "Reserve nonoverlapping core stacks and reject oversized generated transitions using compiler evidence and runtime headroom checks.",
+      "evidence": [
+        "converter/memmap_pocket.ld",
+        "converter/build.py",
+        "converter/runtime/pico.c"
+      ],
+      "tests": [
+        "converted/aot-cartridge-p8-4ab7f32c/stack-usage.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.recovery",
+      "name": "Runtime diagnostics and USB recovery",
+      "status": "supported",
+      "acceptance": "Report conversion/runtime errors and provide bootloader recovery from the known buttons/USB commands.",
+      "evidence": [
+        "converter/runtime/pico.c",
+        "helpers/bootloader.py"
+      ],
+      "tests": [
+        "logs/last-flash.txt"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.preflight",
+      "name": "Per-cartridge RAM/stack peak prediction",
+      "status": "partial",
+      "acceptance": "Predict peak live data and worst native call chain before deployment, rather than rely on bounded failures and linker/static-frame checks alone.",
+      "evidence": [
+        "converter/build.py",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "build.performance",
+      "name": "Per-cartridge performance qualification",
+      "status": "partial",
+      "acceptance": "Measure logic/display timing and qualify the intended frame rate over representative play traces.",
+      "evidence": [
+        "converter/runtime/pico.c",
+        "converter/runtime/host.c"
+      ],
+      "tests": [
+        "compatibility/top200/019/hardware-check.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.optimization",
+      "name": "Resource-aware game optimization",
+      "status": "partial",
+      "acceptance": "Reduce generated code/heap/stack costs sufficiently for a varied corpus, with measured fit decisions.",
+      "evidence": [
+        "src/compiler/emit.rs",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "converted/aot-cartridge-p8-4ab7f32c/stack-usage.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "build.bootstrap",
+      "name": "Reproducible clean-machine toolchain bootstrap",
+      "status": "partial",
+      "acceptance": "Rebuild from a clean documented Linux installation with pinned complete host dependencies, SDK and compiler.",
+      "evidence": [
+        "converter/build.py",
+        "Cargo.lock",
+        "converter/README.md"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.unit",
+      "name": "Compiler/unit regression runner",
+      "status": "supported",
+      "acceptance": "Run recorded parser/compiler checks with the pinned Rust lockfile.",
+      "evidence": [
+        "src/compiler",
+        "Cargo.lock"
+      ],
+      "tests": [
+        "logs/rust-retry-tests.txt"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.sanitizers",
+      "name": "Generated-native semantic and sanitizer runner",
+      "status": "supported",
+      "acceptance": "Execute actual generated C fixtures under ASan/UBSan, not just compare generated text.",
+      "evidence": [
+        "converter/test_pipeline.py"
+      ],
+      "tests": [
+        "converter/validation.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.failures",
+      "name": "Controlled failure regression cases",
+      "status": "supported",
+      "acceptance": "Exercise runaway loops and bounded heap failure paths.",
+      "evidence": [
+        "converter/test_pipeline.py"
+      ],
+      "tests": [
+        "converter/validation.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.hardware",
+      "name": "Hardware frame/input/startup checks",
+      "status": "supported",
+      "acceptance": "Capture real-device frames/status and obtain owner confirmation for converted games.",
+      "evidence": [
+        "converter/runtime/pico.c"
+      ],
+      "tests": [
+        "compatibility/top200/019/hardware-check.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.corpus",
+      "name": "Broad unbiased game corpus coverage",
+      "status": "partial",
+      "acceptance": "Maintain a frozen diverse corpus with stage-by-stage results, enough breadth and traces to characterize compatibility.",
+      "evidence": [
+        "converter/sample_top200.py"
+      ],
+      "tests": [
+        "compatibility/top200/results.json"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.numericoracle",
+      "name": "PICO-8 numeric/language differential oracle",
+      "status": "missing",
+      "acceptance": "Compare generated program outputs with a frozen official PICO-8 reference suite.",
+      "evidence": [
+        "converter/tests/semantics.p8",
+        "converter/tests/functions.p8"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.graphicsoracle",
+      "name": "Graphics/text/API overload golden results",
+      "status": "missing",
+      "acceptance": "Compare deterministic reference framebuffers and return values across graphics overloads.",
+      "evidence": [
+        "converter/runtime/host.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.audiooracle",
+      "name": "Audio-state/sample reference comparisons",
+      "status": "missing",
+      "acceptance": "Compare sequencer states and generated samples with reference vectors.",
+      "evidence": [
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.gametraces",
+      "name": "Deterministic full-game input trace comparisons",
+      "status": "missing",
+      "acceptance": "Replay identical recorded input against reference and converted games and compare observable states/frames.",
+      "evidence": [
+        "converter/runtime/host.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "validation.soak",
+      "name": "Real Pico stress and sustained-frame benchmarks",
+      "status": "missing",
+      "acceptance": "Automate long-running resource, stack and frame-deadline benchmarks over varied game traces.",
+      "evidence": [
+        "converter/runtime/pico.c"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "tooling.grid",
+      "name": "Grid/list cartridge navigation and artwork fallback",
+      "status": "supported",
+      "acceptance": "Browse original-demo thumbnails or imported local artwork, search/filter/sort and inspect conversion failures.",
+      "evidence": [
+        "src/main.rs"
+      ],
+      "tests": [
+        "logs/rust-retry-tests.txt"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "tooling.import",
+      "name": "Desktop conversion/import workflow",
+      "status": "supported",
+      "acceptance": "Import a local cartridge and only add firmware after host checks and building succeed.",
+      "evidence": [
+        "src/main.rs",
+        "converter/build.py"
+      ],
+      "tests": [
+        "logs/rust-retry-tests.txt"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "tooling.flash",
+      "name": "Verified one-click flashing and startup checks",
+      "status": "supported",
+      "acceptance": "Validate firmware/hash/chip, enter BOOTSEL, transfer and verify startup.",
+      "evidence": [
+        "src/flasher.rs",
+        "helpers/check_startup.py"
+      ],
+      "tests": [
+        "logs/last-flash.txt"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "tooling.restore",
+      "name": "Saved originals and recovery workflow",
+      "status": "supported",
+      "acceptance": "Restore an optional user-provided, verified RP2040 recovery image; recovery is hidden when no image is configured.",
+      "evidence": [
+        "src/flasher.rs",
+        "catalog.json"
+      ],
+      "tests": [
+        "logs/rust-retry-tests.txt"
+      ],
+      "reference_validated": false
+    },
+    {
+      "id": "tooling.batch",
+      "name": "General GUI batch conversion workflow",
+      "status": "partial",
+      "acceptance": "Run batch selection/download/conversion and export detailed results from an easy desktop flow.",
+      "evidence": [
+        "converter/sample_top200.py",
+        "src/main.rs"
+      ],
+      "tests": [],
+      "reference_validated": false
+    },
+    {
+      "id": "tooling.install",
+      "name": "Portable application installer",
+      "status": "missing",
+      "acceptance": "Install toolchain/helper/USB dependencies on a clean machine with a supported installer.",
+      "evidence": [
+        "launch.sh",
+        "helpers/install-usb-access.sh"
+      ],
+      "tests": [],
+      "reference_validated": false
+    }
+  ],
+  "source_hashes": {
+    "src/compiler/parse.rs": "c0e84cb64152bdec55f527d58590a9e35f854a0596e6f1a38bd6921b4dfa75a3",
+    "src/compiler/emit.rs": "4afa768c24ff9cce0c87f3d20c3ca1322f7193c464fcbf8d71be0a237f91dcc5",
+    "src/compiler/mod.rs": "bc3fdb860f22c89b7aabb14f77b5778ac1d9d7ca354fe7ccd17e6c6c1e755e97",
+    "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
+    "converter/runtime/p8.c": "8f5039dd4d2433d987734ac39ff8a09ffd4493a4bc0661cfc7c3de34f7510f08",
+    "converter/runtime/p8.h": "835b876a01b092437c39f8ea0f7c57326353a5407aa498758987960948be842b",
+    "converter/runtime/pico.c": "b50a2a1721f0d6919665b68af6242c317d0f4eab9ce4f8fbb3b942c666f70601",
+    "converter/runtime/host.c": "d0b8a4bf90659f956425860f249921ecaf606c9c2d0f9478185153eed684797d",
+    "converter/build.py": "b61c3744536c4e667df6e0132db99e242fdb1c375a8503c2ac7017840470030a",
+    "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
+    "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
+    "converter/test_pipeline.py": "1694877990f06aef468fa73c846251cf990bef869652d0539a18936d946eeaad",
+    "converter/test_png.py": "332f7e7041f22af18141f660a9cb0827d892a08db307ba3d19187643bdfa995d",
+    "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
+    "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
+    "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
+    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
+  },
+  "tooling_source_hashes": {
+    "src/main.rs": "b7d592ee1e1981ff6efbbbba6029285f7e224e83b747a73f025f7649e1058f4e",
+    "src/flasher.rs": "cccb69ca3040e09a9d289221fef93c4399986932ac16b83e0ec48790ea229e81",
+    "helpers/check_startup.py": "6a5b0800bc78f63ec7bae2be6f11dda15dc5f0b840fdce4c6a29ad59a62cfbb0",
+    "src/progress_data.rs": "e4b29cc6cb794175a2f28903d17dc59c9dc862675a051aa89ca7f740dd5d31ad",
+    "src/progress_view.rs": "cd6c5b9dae61ab0e973e753301afebd16fa032f28588db101d7b5ad68ba2c6e2"
+  },
+  "audit_notes": [
+    "Dashboard integration: source hashes for GUI/flashing tooling are tracked separately from translator implementation.",
+    "Re-audit: host-only P8_API_PROFILE counters and JSON output added; native runtime behavior and supported/partial/missing capability statuses are unchanged.",
+    "Runtime/API name table moved to file scope to share immutable names with the optional host profiler. No device firmware was flashed during dashboard work.",
+    "Public-source review 2026-10-16: independently authored compact ASCII font replaces the historical font asset; text remains partial. Portable SDK/compiler discovery replaces private paths. The default sanitizer/PNG suite now uses only original fixtures; external game execution is historical. Compiler change is an inline original test-fixture replacement, with no translation-semantic change. Core statuses and rubric weights are unchanged."
+  ],
+  "evidence_policy": "Historical external cartridge/build/hardware paths in test pointers are provenance from the private experiment and are not bundled. Fresh public execution is recorded separately in runtime-api-coverage.json; the historical profile is retained unchanged."
+}

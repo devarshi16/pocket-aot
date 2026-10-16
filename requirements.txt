@@ -1,0 +1,6 @@
+# PNG cartridge decoding and generated preview images.
+Pillow>=11.0,<13
+# USB helpers and optional MicroPython demo installation.
+pyserial>=3.5,<4
+mpremote>=1.24,<2
+littlefs-python>=0.14,<1

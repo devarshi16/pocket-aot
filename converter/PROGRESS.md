@@ -1,0 +1,94 @@
+# Pocket AOT implementation dashboard
+
+Audited snapshot: 2026-10-16. Rubric: pocket-aot-capabilities-v1.
+
+Open Pocket Arcade and choose **PROGRESS** for the interactive subsystem tables, API matrix and game results.
+
+**Functional API names: 66/108 (61.1%).** The inventory contains 26 supported, 40 partial and 42 missing entries. A functional name may implement only a subset of the official behavior. Silent audio stubs remain missing.
+
+**Observed in current public host regression: 33/108 API names** across 5 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
+
+**Historical frozen game sample: 1/20 native builds; 1/20 display/control confirmations.** The original cartridges and their firmware are not bundled. Independent PICO-8 reference conformance remains unmeasured.
+
+| API subsystem | Supported | Partial | Missing | Total | Exercised in host scenarios |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| system | 2 | 2 | 8 | 12 | 1 |
+| graphics | 3 | 18 | 5 | 26 | 10 |
+| tables | 5 | 2 | 0 | 7 | 6 |
+| input | 0 | 2 | 0 | 2 | 0 |
+| audio | 0 | 0 | 2 | 2 | 0 |
+| map | 0 | 3 | 1 | 4 | 2 |
+| memory | 0 | 0 | 10 | 10 | 0 |
+| math | 16 | 6 | 0 | 22 | 7 |
+| menu | 0 | 0 | 1 | 1 | 0 |
+| strings | 0 | 7 | 0 | 7 | 7 |
+| persistence | 0 | 0 | 3 | 3 | 0 |
+| gpio | 0 | 0 | 1 | 1 | 0 |
+| advanced_lua | 0 | 0 | 11 | 11 | 0 |
+
+Baseline: [PICO-8 v0.2.7 manual](https://www.lexaloffle.com/dl/docs/pico-8_manual.html). Documented cartridge-runtime behavior for desktop ahead-of-time conversion to the current RP2040/Waveshare target, under explicit resource limits. Host/editor authoring tools and Splore are excluded. Runtime audio state remains in scope even without a speaker. A 100% checklist score does not imply all cartridges fit the RP2040 or run at their target frame rate.
+
+## Entire translation pipeline
+
+These counts include language, input, build and validation capabilities as well as the API entries above.
+
+| Component | Supported | Partial | Missing | Total | Main remaining work |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Cartridge formats and assets | 6 | 1 | 1 | 8 | Raw ROM input; systematic version/malformed-cartridge coverage |
+| Source language and frontend | 7 | 1 | 3 | 11 | Varargs, goto/labels, external includes; stricter identifier behavior |
+| Values, functions and native semantics | 5 | 6 | 3 | 14 | Custom iterators, coroutines, metatables; numeric/string/GC edge behavior |
+| Graphics, maps and text | 3 | 21 | 6 | 30 | Palette modes, drawing overloads, text controls, shapes and textured lines |
+| Math, tables, strings and advanced Lua APIs | 21 | 15 | 11 | 47 | Advanced Lua APIs and remaining overload/edge behavior |
+| Input and program lifecycle | 2 | 3 | 3 | 8 | Other players, configurable repeat, keyboard/mouse and timing fidelity |
+| Memory, saves and system services | 2 | 2 | 23 | 27 | peek/poke and memory mapping, persistent saves, menu callbacks, cart services |
+| Audio behavior and observable timing | 0 | 0 | 8 | 8 | Stateful sequencing, sound ROM import, synthesis and audio state queries |
+| RP2040 build and resource handling | 6 | 4 | 0 | 10 | Peak resource prediction, optimization and sustained performance qualification |
+| Correctness and compatibility validation | 4 | 1 | 5 | 10 | Independent PICO-8 comparisons, golden frames/traces and Pico stress tests |
+
+## Secondary planning index
+
+The original weighted capability index is **about 50%**. It is an engineering planning estimate. It does not measure remaining time or the probability that an unfamiliar game works.
+
+| Component | Weight | Weighted-rubric score |
+| --- | ---: | ---: |
+| Cartridge formats and assets | 6% | 81.2% |
+| Source language and frontend | 12% | 68.2% |
+| Values, functions and native semantics | 18% | 57.1% |
+| Graphics, maps and text | 18% | 45.0% |
+| Math, tables, strings and advanced Lua APIs | 8% | 60.6% |
+| Input and program lifecycle | 8% | 43.8% |
+| Memory, saves and system services | 8% | 11.1% |
+| Audio behavior and observable timing | 8% | 0.0% |
+| RP2040 build and resource handling | 8% | 80.0% |
+| Correctness and compatibility validation | 6% | 45.0% |
+
+The frozen checklist contains 173 core acceptance entries. Each component has a fixed importance weight; entries share that component's weight equally. Supported earns 1, partial earns 0.5, and missing earns 0. Silent no-ops earn 0. Supported means the described capability exists within its stated limits with no specific omission identified by this audit; it does not mean complete reference equivalence.
+
+Component score = 100 × sum(entry credits) / number of component entries. Overall score = sum(component weight × component score / 100).
+
+Supported entries contribute 33.7 points; partial entries contribute 16.1 more, giving 49.8/100. The weights and half-credit rule are explicit judgment calls, frozen in rubric v1. They are not estimates of equal engineering effort. With quarter-credit versus three-quarter-credit for partial support, the same inventory scores 41.8% versus 57.8%. This is scoring sensitivity, not a confidence interval.
+
+The GUI, thumbnail browsing, import and USB flashing are supporting tooling. Their separate checklist score is 75%; they contribute zero to the translation score. This prevents a finished-looking launcher from hiding missing game behavior.
+
+## Separate outcome and evidence measures
+
+- Historical frozen random sample: 1/20 built native firmware (5%). 1/20 also has owner-confirmed display and controls. This sample result is not universal game compatibility or proof that every scene in a game is correct.
+- Canonical API-name presence: 66/108 (61.1%) has some functional implementation. Aliases are counted once and silent audio stubs are excluded. Presence is not full API semantics.
+- Independent PICO-8 conformance: **not measured**. Existing assertions, sanitizers and hardware checks are useful evidence but do not compare against a separate PICO-8 reference implementation.
+- Public test evidence: 33 recorded passing Rust tests; native semantic/function/GC fixtures and controlled failures. Historical private evidence includes 20 fixed sampled cartridges and owner confirmation for Dusk Child. The dashboard uses recorded tests and host execution profiles; it does not reflash hardware when viewed or refreshed.
+
+A game needs every capability it uses. One missing memory or save API can reject an otherwise well-supported game, so a roughly half-built capability profile can coexist with a 5% sampled pass rate. Completing the checklist would still not make games exceeding the Pico's RAM, flash or processing capacity fit automatically.
+
+## Next measurable milestones
+
+1. Memory mapping and peek/poke/memcpy/memset: 4 sampled games first stop at memory APIs. The full implementation must preserve draw-state, shared asset and screen-memory behavior.
+2. Persistent cartridge data: 5 sampled games first stop at save APIs. Add namespaced saves, reload/reset persistence and tests before crediting cartdata/dget/dset.
+3. Custom menu callbacks: 4 sampled games first stop at menuitem. Clearing that diagnostic does not guarantee those games will pass their next blocker.
+4. Language extensions: 3 sampled games first stop at goto/labels; 1 at varargs and 1 at coroutine status. Require behavioral fixtures, not syntax-only acceptance.
+5. Reference comparisons: establish deterministic language, API and framebuffer results before describing the implementation as faithfully compatible.
+
+## Maintain the score
+
+Run python3 converter/coverage_report.py --check from the repository root to validate the rubric and source snapshot. Run it with --write to regenerate this report and the machine-readable summary. Translator code changes make the core audit stale; UI-only code is tracked separately. Re-audit affected entries, update their evidence/status and snapshot hashes, then recalculate. Do not award progress automatically for added lines or passing test counts. Adding/removing scope or changing weights requires a new rubric version.
+
+Detailed evidence: [full checklist](../compatibility/coverage/CHECKLIST.md), [frozen rubric](../compatibility/coverage/capability-manifest.json), [language audit](../compatibility/coverage/language-audit.json), [API audit](../compatibility/coverage/api-audit.json), [historical sample metadata](../compatibility/top200/results.json).

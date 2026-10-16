@@ -1,0 +1,383 @@
+{
+  "schema_version": 1,
+  "scope": "Read-only audit of current source and recorded validation, 2026-10-16",
+  "status_meaning": {
+    "supported": "Implemented and exercised within explicit resource limits; not proof of full reference compatibility",
+    "partial": "Material limitations inside this family or substantial conformance gaps",
+    "missing": "No implementation, or explicitly rejected"
+  },
+  "independent_pico8_reference_validation": false,
+  "evidence_basis": "Rust parser/compiler unit tests; generated-C assertion fixtures and runtime C checks under ASAN/UBSan; converter/validation.json recorded runs. No new tests executed for this read-only audit.",
+  "features": [
+    {
+      "id": "language.lexing",
+      "name": "Comments and quoted/long literals",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/parse.rs:50",
+        "src/compiler/parse.rs:112"
+      ],
+      "tests": [
+        "official_pico8_escapes_and_long_literals"
+      ],
+      "limits": "Line comments, long bracket comments/literals and documented control escapes are parsed. String value restrictions are counted separately.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.identifiers",
+      "name": "ASCII and P8 glyph identifiers",
+      "status": "partial",
+      "evidence": [
+        "src/compiler/parse.rs:43",
+        "src/compiler/emit.rs:19"
+      ],
+      "tests": [
+        "functions_generic_loops_methods_and_shorthand_calls"
+      ],
+      "limits": "Glyph identifiers parse and generated C names are encoded. Accepts a broad set of non-ASCII characters rather than validating an exact reference identifier alphabet.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.truth",
+      "name": "Nil, booleans, truth and equality",
+      "status": "supported",
+      "evidence": [
+        "converter/runtime/p8.c",
+        "converter/runtime/p8.c",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "semantics.p8: _init",
+        "functions.p8: _init"
+      ],
+      "limits": "Tagged nil/number/boolean/string/table/function values; zero is truthy. No separate independent PICO-8 oracle.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.numeric",
+      "name": "16.16 numeric literals and arithmetic",
+      "status": "partial",
+      "evidence": [
+        "src/compiler/mod.rs:36",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "fixed_literals_wrap_hex_and_keep_fractions",
+        "lex_binary_and_concat_compound_without_ambiguity",
+        "semantics.p8: _init"
+      ],
+      "limits": "Decimal/hex/binary literals and wrapping fixed arithmetic exist; power has a restricted finite range, and library math uses host libm rather than a PICO-8 accuracy oracle.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.evaluation",
+      "name": "Expression evaluation and short circuit",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/emit.rs:194",
+        "src/compiler/emit.rs:226"
+      ],
+      "tests": [
+        "semantics.p8: side/take/_init",
+        "functions.p8: _init"
+      ],
+      "limits": "Emits temporaries in source order, and/or retain operand values and short-circuit effects.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.strings",
+      "name": "String values, concatenation and byte encoding",
+      "status": "partial",
+      "evidence": [
+        "src/compiler/charset.rs:276",
+        "src/compiler/emit.rs:198",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "every_cartridge_character_maps_back_to_its_byte",
+        "functions.p8: _init",
+        "runtime_closures.c"
+      ],
+      "limits": "P8SCII round trips and long strings tested, but NUL bytes are unsupported, strings max8191 bytes, arena32KB/256slots. Rendering glyph fidelity is a separate graphics concern.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.assignment",
+      "name": "Local/global/parallel/compound assignment",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/emit.rs:296",
+        "src/compiler/emit.rs:332"
+      ],
+      "tests": [
+        "semantics.p8: _init",
+        "functions.p8: _init"
+      ],
+      "limits": "RHS temporaries, indexed destinations and one-time compound indexed evaluation tested. Expression-list limit is counted separately.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.scope",
+      "name": "Lexical blocks, locals and shadowing",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/emit.rs:53",
+        "src/compiler/emit.rs:80",
+        "src/compiler/emit.rs:93"
+      ],
+      "tests": [
+        "semantics.p8: _init",
+        "functions.p8: _init"
+      ],
+      "limits": "Stacked scope maps and boxed captured locals. Semantic assertion fixtures cover shadowing and module captures.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.branch",
+      "name": "If/elseif/else and PICO-8 short statements",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/parse.rs:466",
+        "src/compiler/parse.rs:650",
+        "src/compiler/emit.rs:464"
+      ],
+      "tests": [
+        "short_return_stops_at_its_line",
+        "functions_generic_loops_methods_and_shorthand_calls",
+        "semantics.p8: _init"
+      ],
+      "limits": "Normal and same-line conditional/while forms plus ? shorthand print parsed; no exhaustive reference syntax suite.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.loops",
+      "name": "Numeric for, while, repeat and break",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/emit.rs:357",
+        "src/compiler/emit.rs:376"
+      ],
+      "tests": [
+        "semantics.p8: _init",
+        "loop-budget"
+      ],
+      "limits": "Numeric fixed-point iteration, reverse steps, repeat scope and runtime budget exist.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.functions",
+      "name": "Named/anonymous/local functions and first-class calls",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/parse.rs:444",
+        "src/compiler/parse.rs:586",
+        "src/compiler/emit.rs:101"
+      ],
+      "tests": [
+        "closures_generate_native_dispatch",
+        "functions.p8: _init"
+      ],
+      "limits": "Generated native C functions dispatch through function-tagged values; recursion and callbacks asserted, call depth capped32.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.closures",
+      "name": "Mutable lexical captures and closure lifetime",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/emit.rs:101",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "functions.p8: _init/_update",
+        "runtime_closures.c"
+      ],
+      "limits": "Shared mutable cells, sibling and factory isolation, recursion, closure/table cycles and frame-boundary retention tested. Max64captures/closure,1024cells,256closures,2048capturelinks.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.multi_return",
+      "name": "Multiple return expansion and scalar parentheses",
+      "status": "partial",
+      "evidence": [
+        "src/compiler/emit.rs:166",
+        "src/compiler/emit.rs:169",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "multiple_returns_parentheses_and_table_tail",
+        "functions.p8: _init"
+      ],
+      "limits": "Final call expansion in assignments/args/return/table tails tested, but at most16 values per expression list/result; varargs separate missing feature.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.methods",
+      "name": "Table functions and colon method syntax",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/parse.rs:444",
+        "src/compiler/emit.rs:256"
+      ],
+      "tests": [
+        "functions_generic_loops_methods_and_shorthand_calls",
+        "functions.p8: _init"
+      ],
+      "limits": "Method self insertion and receiver-once evaluation tested, including expanded tail arguments.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.tables",
+      "name": "Array/record/mixed tables and identity",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/parse.rs:703",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "semantics.p8: _init",
+        "functions.p8: _init"
+      ],
+      "limits": "Dynamic keys, nil deletion and identity exist within bounded pools; max512tables/3072entries. Metatable semantics separate missing family.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.iteration_builtin",
+      "name": "Built-in all/pairs/ipairs and foreach",
+      "status": "partial",
+      "evidence": [
+        "src/compiler/emit.rs:390",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "functions.p8: _init",
+        "runtime_closures.c"
+      ],
+      "limits": "Direct generic-for built-in forms supported, including all+del shift handling. Not first-class iterator values, arbitrary iterator triples or custom iterators.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.bitwise",
+      "name": "Bitwise operators, shifts and rotations",
+      "status": "partial",
+      "evidence": [
+        "src/compiler/parse.rs:799",
+        "converter/runtime/p8.c",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "lex_binary_and_concat_compound_without_ambiguity",
+        "runtime_closures.c"
+      ],
+      "limits": "& | ^^ ~ << >> and builtin bit/shift/rotate APIs exist. Operator shifts reject counts outside0..31; full reference edge semantics and all operator spellings not covered.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.native_codegen",
+      "name": "Native C code emission and lifecycle",
+      "status": "supported",
+      "evidence": [
+        "src/compiler/emit.rs:812"
+      ],
+      "tests": [
+        "real_breakout_generates_native_functions",
+        "breakout",
+        "chase",
+        "functions",
+        "semantics"
+      ],
+      "limits": "Generates C closures, dispatch, _init/_update/_update60/_draw hooks and root enumeration; actual generated code runs under ASAN/UBSan. Not an on-device Lua interpreter.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.gc",
+      "name": "Object lifetime and bounded memory management",
+      "status": "partial",
+      "evidence": [
+        "converter/runtime/p8.c",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [
+        "functions.p8: _update",
+        "runtime_closures.c",
+        "heap-bound"
+      ],
+      "limits": "Frame-boundary tracing handles cycles and compacts strings. No mid-callback allocation-triggered collection; fixed pools and max graph traversal depth128 can reject valid larger cartridges.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.varargs",
+      "name": "Variable arguments (...)",
+      "status": "missing",
+      "evidence": [
+        "src/compiler/parse.rs:628",
+        "src/compiler/parse.rs:742"
+      ],
+      "tests": [],
+      "limits": "Explicitly rejected in declarations and expressions.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.goto",
+      "name": "Goto and labels",
+      "status": "missing",
+      "evidence": [
+        "src/compiler/parse.rs:565"
+      ],
+      "tests": [],
+      "limits": "Explicitly rejected; current blocker in Picohot, Lab Cat and SUPER World of Goo.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.custom_iterators",
+      "name": "Custom generic iteration and iterator values",
+      "status": "missing",
+      "evidence": [
+        "src/compiler/emit.rs:390"
+      ],
+      "tests": [],
+      "limits": "Generic-for emitter requires exactly one direct all/pairs/ipairs call with one argument.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.coroutines",
+      "name": "Coroutine/yield execution state",
+      "status": "missing",
+      "evidence": [
+        "src/compiler/emit.rs:6"
+      ],
+      "tests": [],
+      "limits": "Coroutine APIs are absent and costatus is a live Picowars blocker; generated native stack has no resumable continuation mechanism.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.metatables",
+      "name": "Metatables and metamethods",
+      "status": "missing",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c"
+      ],
+      "tests": [],
+      "limits": "No metatable storage/dispatch or metatable APIs; table access and arithmetic are direct.",
+      "reference_validated": false
+    },
+    {
+      "id": "language.includes",
+      "name": "External include preprocessing",
+      "status": "missing",
+      "evidence": [
+        "src/compiler/parse.rs:112",
+        "src/compiler/mod.rs:87"
+      ],
+      "tests": [
+        "comments_containing_includes_are_ignored"
+      ],
+      "limits": "Comments containing #include are ignored, but real external includes have no resolution or expansion pipeline.",
+      "reference_validated": false
+    }
+  ],
+  "audit_notes": [
+    "Rechecked optional host instrumentation; no language behavior or capability-status changes. Runtime source locations are file-level references to avoid stale line offsets."
+  ]
+}

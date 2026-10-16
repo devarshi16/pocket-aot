@@ -1,0 +1,51 @@
+[
+  {
+    "test": "runtime-closures",
+    "frames": 2100,
+    "result": "RUNTIME_CLOSURE_ITERATOR_OK frames=2100 multi_return=ok string_arena=ok"
+  },
+  {
+    "test": "semantics",
+    "frames": 5000,
+    "result": "AOT_HOST_OK frames=5000 entries=2 strings=3 operations=1760165 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "functions",
+    "frames": 5000,
+    "result": "AOT_HOST_OK frames=5000 entries=4 strings=4 operations=210179 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "loop-budget",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: frame instruction budget exceeded frame=0",
+    "source_sha256": "2de506aef5442f034e35b8635e6b7fa729fb8a222c770e9c98921fb411bec241",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "heap-bound",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: table entries exhausted frame=0",
+    "source_sha256": "1675e564824edb5506f5ac638c2d74fa6850ef4eec89b07c4a7cac883745c46f",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "unsupported-reload",
+    "result": "rejected explicitly",
+    "detail": "Conversion failed: conversion stopped: unsupported function/API 'reload'",
+    "flashed": false
+  },
+  {
+    "test": "unsupported-poke",
+    "result": "rejected explicitly",
+    "detail": "Conversion failed: conversion stopped: unsupported function/API 'poke'",
+    "flashed": false
+  }
+]
