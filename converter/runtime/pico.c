@@ -224,7 +224,7 @@ static void restart(void) {
     int jump=setjmp(p8_guard);
     if(jump==P8_RESTART){restart();return;}
     if(jump){failed=true;printf("AOT_ERROR %s\n",p8_error);error_screen();return;}
-    p8_reset();p8_program_init();p8_program_draw();p8_collect();
+    p8_reset();p8_program_init();p8_collect();
     printf("AOT_READY hz=%u title=%s\n",p8_target_hz,p8_title);
 }
 static void status(void) {
