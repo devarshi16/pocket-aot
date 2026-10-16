@@ -83,7 +83,11 @@ __attribute__((weak)) void p8_stack_check(void){}
 void p8_enter(void){p8_stack_check();p8_tick();if(++depth>32)p8_fail("call depth exceeds 32");}
 void p8_leave(void){if(depth)depth--;}
 bool p8_truth(V v){return v.tag!=P8_NIL&&(v.tag!=P8_BOOL||v.n);}
-int32_t p8_number(V v){if(v.tag!=P8_NUM)p8_fail("number expected");return v.n;}
+static bool parse_fixed(V value,int32_t *result);
+int32_t p8_number(V v){if(v.tag==P8_NUM)return v.n;
+ /* Lua and PICO-8 coerce numeric strings in arithmetic and API arguments. */
+ if(v.tag==P8_STR){int32_t n;if(parse_fixed(v,&n))return n;}
+ p8_fail("number expected");return 0;}
 static int integer(V v){return p8_number(v)>>16;}
 static bool equal(V a,V b){return a.tag==b.tag&&a.n==b.n;}
 static const char *string(V v){if(v.tag!=P8_STR||(unsigned)v.n>=NS||!strings[v.n].used)p8_fail("string expected");return string_data+strings[v.n].offset;}
@@ -211,7 +215,7 @@ bool p8_iter_next(const char *kind,V t,int *cursor,V *last,V *key,V *value){
 #ifdef P8_API_PROFILE
  if(!strcmp(kind,"all"))iterator_profile_hits[0]++;else if(!strcmp(kind,"pairs"))iterator_profile_hits[1]++;else if(!strcmp(kind,"ipairs"))iterator_profile_hits[2]++;
 #endif
- p8_tick();int id=table_id(t);
+ p8_tick();if(t.tag==P8_NIL)return false;int id=table_id(t);
  if(!strcmp(kind,"all")||!strcmp(kind,"ipairs")){
   int i=*cursor;
   /* DEL shifts array entries left. Revisit this slot if its value changed. */
@@ -544,7 +548,9 @@ static bool parse_raw_integer(V value,int32_t *result){
 static uint32_t random_next(void){uint32_t x=random_state;x^=x<<13;x^=x>>17;x^=x<<5;return random_state=x?x:1;}
 #define HAS(i) ((i)<argc)
 #define A(i) (HAS(i)?argv[i]:p8_nil())
-#define I(i,def) (HAS(i)?integer(argv[i]):(def))
+#define I(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?integer(argv[i]):(def))
+/* Fixed-point argument with a default, for APIs that keep the fraction. */
+#define F(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?p8_number(argv[i]):(def))
 #define C(i) I(i,draw_color)
 #define IS(api) (id==(api))
 /* ---- PICO-8 base RAM (0x0000..0x7fff) mapped onto the runtime state ---- */
@@ -939,9 +945,9 @@ V p8_api_id(int id,int argc,const V *argv){
   if(index<1)p8_fail("select index out of range");
   return p8_return(argc-index,argv+index);
  }
- if(IS(P8_API_add)){V t=A(0),v=A(1);int len=length(t),i=I(2,len+1);if(i<1||i>len+1)p8_fail("invalid add index");for(int j=len;j>=i;j--)p8_set(t,p8_int(j+1),p8_get(t,p8_int(j)));p8_set(t,p8_int(i),v);return v;}
- if(IS(P8_API_del)||IS(P8_API_deli)){V t=A(0);int len=length(t),index=IS(P8_API_deli)?I(1,len):0;if(IS(P8_API_del))for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1))){index=i;break;}if(index<1||index>len)return p8_nil();V old=p8_get(t,p8_int(index));for(int i=index;i<len;i++)p8_set(t,p8_int(i),p8_get(t,p8_int(i+1)));p8_set(t,p8_int(len),p8_nil());return old;}
- if(IS(P8_API_count)){V t=A(0);int len=length(t);if(argc<2)return p8_int(len);int n=0;for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1)))n++;return p8_int(n);}
+ if(IS(P8_API_add)){V t=A(0),v=A(1);if(t.tag==P8_NIL)return p8_nil();int len=length(t),i=I(2,len+1);if(i<1||i>len+1)p8_fail("invalid add index");for(int j=len;j>=i;j--)p8_set(t,p8_int(j+1),p8_get(t,p8_int(j)));p8_set(t,p8_int(i),v);return v;}
+ if(IS(P8_API_del)||IS(P8_API_deli)){V t=A(0);if(t.tag==P8_NIL)return p8_nil();int len=length(t),index=IS(P8_API_deli)?I(1,len):0;if(IS(P8_API_del))for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1))){index=i;break;}if(index<1||index>len)return p8_nil();V old=p8_get(t,p8_int(index));for(int i=index;i<len;i++)p8_set(t,p8_int(i),p8_get(t,p8_int(i+1)));p8_set(t,p8_int(len),p8_nil());return old;}
+ if(IS(P8_API_count)){V t=A(0);if(t.tag==P8_NIL)return p8_int(0);int len=length(t);if(argc<2)return p8_int(len);int n=0;for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1)))n++;return p8_int(n);}
  if(IS(P8_API_foreach)){int cursor=0;V last=p8_nil(),key,value;while(p8_iter_next("all",A(0),&cursor,&last,&key,&value))p8_call(A(1),1,&value);return p8_nil();}
  if(IS(P8_API_split)){
   const char *s=string(A(0));V out=p8_table();int n=0;bool convert=argc<3||p8_truth(A(2));
@@ -972,8 +978,8 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_flr))return p8_num((int32_t)((uint32_t)p8_number(A(0))&0xffff0000u));
  if(IS(P8_API_ceil)){int32_t x=p8_number(A(0));return p8_num((int32_t)(((uint32_t)x&0xffff0000u)+((x&65535)?65536u:0)));}
  if(IS(P8_API_abs)){int32_t x=p8_number(A(0));return p8_num(x<0?(int32_t)(0u-(uint32_t)x):x);}
- if(IS(P8_API_min)||IS(P8_API_max)){int32_t a=p8_number(A(0)),b=p8_number(A(1));return p8_num(IS(P8_API_min)?(a<b?a:b):(a>b?a:b));}
- if(IS(P8_API_mid)){int32_t a=p8_number(A(0)),b=p8_number(A(1)),c=p8_number(A(2));if(a>b){int32_t t=a;a=b;b=t;}if(b>c){int32_t t=b;b=c;c=t;}return p8_num(a>b?a:b);}
+ if(IS(P8_API_min)||IS(P8_API_max)){int32_t a=F(0,0),b=F(1,0);return p8_num(IS(P8_API_min)?(a<b?a:b):(a>b?a:b));}
+ if(IS(P8_API_mid)){int32_t a=F(0,0),b=F(1,0),c=F(2,0);if(a>b){int32_t t=a;a=b;b=t;}if(b>c){int32_t t=b;b=c;c=t;}return p8_num(a>b?a:b);}
  if(IS(P8_API_sgn))return p8_int(p8_number(A(0))<0?-1:1);
  if(IS(P8_API_sqrt)){double x=real(A(0));return numeric(sqrt(x<0?0:x));}
  if(IS(P8_API_sin))return numeric(-sin(real(A(0))*6.283185307179586));
@@ -1157,7 +1163,8 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_ipairs)){V out[3]={native_value(NATIVE_INEXT,0,NULL),A(0),p8_int(0)};table_id(A(0));return p8_return(3,out);}
  if(IS(P8_API_all)){
   /* all(t) returns a closure over the table and its position. */
-  table_id(A(0));V cells[3]={p8_cell(A(0)),p8_cell(p8_int(0)),p8_cell(p8_nil())};return native_value(NATIVE_ALL,3,cells);
+  if(A(0).tag!=P8_NIL)table_id(A(0));
+  V cells[3]={p8_cell(A(0)),p8_cell(p8_int(0)),p8_cell(p8_nil())};return native_value(NATIVE_ALL,3,cells);
  }
  if(IS(P8_API_unpack)){
   int first=I(1,1),last=HAS(2)&&A(2).tag!=P8_NIL?I(2,0):raw_length(A(0));

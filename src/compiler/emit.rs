@@ -118,6 +118,10 @@ const MULTI_RESULT_APIS: &[&str] = &[
     "camera", "cursor", "clip", "select", "assert", "tonum", "ord", "peek", "peek2", "peek4",
     "next", "pairs", "ipairs", "unpack", "coresume", "yield",
 ];
+/// Canonical PICO-8 APIs this target does not provide. Calling one stops the
+/// conversion, because deferring would hide a real capability gap behind a
+/// runtime error; an undefined cart-local name is not in this set.
+const UNIMPLEMENTED_APIS: &[&str] = &["load", "save", "ls", "cstore", "serial"];
 /// Values per expression list. A final multi-value expression may add up to
 /// EXPANSION values beyond the fixed entries; this bounds each call site's
 /// stack array for the Pico's 16 KB stack.
@@ -434,10 +438,17 @@ impl Emitter {
                     if !self.scopes.iter().any(|s| s.contains_key(n)) && !self.assigned.contains(n)
                     {
                         if APIS.contains(&n.as_str()) {
-                            validate_api(n, args.len())?;
-                        } else {
+                            // A trailing call or '...' expands to an unknown number of
+                            // values, so the syntactic count is not the runtime count.
+                            if !args.last().is_some_and(Self::multi) {
+                                validate_api(n, args.len())?;
+                            }
+                        } else if UNIMPLEMENTED_APIS.contains(&n.as_str()) {
                             return Err(Error::new(0, &format!("unsupported function/API '{n}'")));
                         }
+                        // Any other undefined name is an ordinary nil global. Lua
+                        // raises only if the call is reached, so defer to runtime
+                        // instead of rejecting a cartridge for an unused branch.
                     }
                 }
                 let f = self.expr(f)?;
@@ -748,9 +759,11 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "rawset" => (3, 3),
         "select" => (1, 16),
         "circfill" | "circ" => (2, 4),
-        "print" => (1, 4),
-        "spr" => (3, 7),
-        "sspr" => (6, 10),
+        // PICO-8 ignores surplus arguments to its built-ins, as Lua does.
+        "print" => (1, 16),
+        // Omitted coordinates and sizes read as 0, so short calls are legal.
+        "spr" => (1, 7),
+        "sspr" => (1, 10),
         "sset" => (2, 3),
         "mset" => (3, 3),
         "map" => (0, 7),
@@ -761,9 +774,14 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "cursor" => (0, 3),
         "clip" => (0, 5),
         "pal" => (0, 3),
-        "palt" => (0, 2),
-        "min" | "max" | "atan2" | "del" => (2, 2),
-        "mid" => (3, 3),
+        "palt" => (0, 4),
+        // max(x) is max(x,0) in PICO-8; the omitted operand reads as zero.
+        "min" | "max" => (1, 2),
+        "atan2" | "del" => (2, 2),
+        // stat(28,k) queries a specific key; this target reports no keyboard.
+        "stat" => (1, 2),
+        // mid(a,b) compares against a third operand of zero.
+        "mid" => (2, 3),
         "sfx" => (1, 4),
         "music" => (0, 4),
         "assert" => (1, 16),
@@ -772,10 +790,13 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "poke" | "poke2" | "poke4" | "coresume" => (1, 64),
         "memcpy" | "memset" => (3, 3),
         "reload" => (0, 4),
-        "dset" | "setmetatable" => (2, 2),
+        // dset(i) stores zero; the runtime already treats a missing value as 0.
+        "dset" => (1, 2),
+        "setmetatable" => (2, 2),
         "menuitem" | "extcmd" | "unpack" => (1, 3),
         "flip" | "reset" => (0, 0),
-        "run" | "fillp" => (0, 1),
+        "run" => (0, 1),
+        "fillp" => (0, 3),
         "stop" => (0, 4),
         "oval" | "ovalfill" => (4, 5),
         "rrect" | "rrectfill" => (4, 6),
@@ -783,7 +804,7 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "pack" | "yield" => (0, 64),
         _ => (1, 1),
     };
-    if n < min || n > max || (name == "clip" && n != 0 && n != 4 && n != 5) {
+    if n < min || n > max {
         Err(Error::new(
             0,
             &format!("unsupported {name}() overload with {n} arguments"),
