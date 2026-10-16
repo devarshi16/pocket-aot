@@ -27,7 +27,7 @@ def main():
         suffix = path.suffix.lower()
         if path.parts[0] in DENIED_ROOTS or ".git" in path.parts or "__pycache__" in path.parts:
             failures.append(f"Private/build directory: {name}")
-        if name.startswith("compatibility/carts/") or re.match(r"compatibility/top200/\d+/", name):
+        if name.startswith("compatibility/carts/") or re.match(r"compatibility/top(?:100|200)/\d+/", name):
             failures.append(f"External cartridge directory: {name}")
         if suffix in {".uf2", ".elf", ".bin", ".rom", ".o", ".pyc", ".p64"} or name.lower().endswith(".p8.png"):
             failures.append(f"Firmware/cartridge/binary content: {name}")
