@@ -6,9 +6,9 @@
 #include <setjmp.h>
 
 typedef struct { int32_t n; uint8_t tag; } V;
-enum { P8_NIL, P8_NUM, P8_BOOL, P8_STR, P8_TABLE, P8_FUNCTION, P8_CELL };
+enum { P8_NIL, P8_NUM, P8_BOOL, P8_STR, P8_TABLE, P8_FUNCTION, P8_CELL, P8_THREAD };
 #define P8_MAX_STRING 8191
-#define P8_MAX_RESULTS 16
+#define P8_MAX_RESULTS 32
 extern uint8_t game_frame[128*128], game_buttons;
 extern const uint8_t pico_palette[16][3];
 extern const char *p8_title;
@@ -24,6 +24,7 @@ static inline V p8_int(int n){return p8_num((int32_t)((uint32_t)n<<16));}
 bool p8_truth(V v);
 int32_t p8_number(V v);
 V p8_str(const char *s);
+V p8_strn(const char *s,size_t length);
 V p8_table(void);
 V p8_get(V t,V key);
 void p8_set(V t,V key,V value);
@@ -115,6 +116,43 @@ enum P8ApiId {
  P8_API_rawequal,
  P8_API_rawlen,
  P8_API_select,
+ P8_API_peek,
+ P8_API_poke,
+ P8_API_peek2,
+ P8_API_poke2,
+ P8_API_peek4,
+ P8_API_poke4,
+ P8_API_memcpy,
+ P8_API_memset,
+ P8_API_reload,
+ P8_API_cstore,
+ P8_API_cartdata,
+ P8_API_dget,
+ P8_API_dset,
+ P8_API_menuitem,
+ P8_API_flip,
+ P8_API_run,
+ P8_API_reset,
+ P8_API_stop,
+ P8_API_extcmd,
+ P8_API_oval,
+ P8_API_ovalfill,
+ P8_API_rrect,
+ P8_API_rrectfill,
+ P8_API_fillp,
+ P8_API_tline,
+ P8_API_setmetatable,
+ P8_API_getmetatable,
+ P8_API_all,
+ P8_API_pairs,
+ P8_API_ipairs,
+ P8_API_next,
+ P8_API_unpack,
+ P8_API_pack,
+ P8_API_cocreate,
+ P8_API_coresume,
+ P8_API_costatus,
+ P8_API_yield,
  P8_API_COUNT
 };
 #ifdef P8_API_PROFILE
@@ -132,6 +170,29 @@ void p8_collect(void);
 void p8_reset(void);
 void p8_begin_frame(uint8_t held);
 void p8_end_frame(void);
+/* Backends provide the frame presented by flip(); default fails explicitly. */
+void p8_present(void);
+/* Continue a frame from inside flip(): new input and budget, same call stack. */
+void p8_flip_frame(uint8_t held);
+/* Frame-boundary work for flip(): audio state, collection without compaction. */
+void p8_flip_collect(void);
+/* Lowest address of the coroutine stack in use, or NULL on the main stack. */
+const void *p8_current_stack_low(void);
+/* Highest address of the native stack that runs generated code. When set,
+ * pool exhaustion triggers a conservative mid-frame collection. */
+extern void *p8_stack_top;
+/* Screen palette (0x5f10..0x5f1f): 0..15 or 128..143 for each displayed index. */
+extern uint8_t p8_screen_palette[16];
+/* Extended 32-colour table: 0..15 standard, 16..31 the 128..143 colours. */
+extern const uint8_t pico_palette_extended[32][3];
+static inline int p8_display_color(int index){int c=p8_screen_palette[index&15];return (c&128)?16+(c&15):(c&15);}
+/* run() and extcmd("reset") restart the cartridge: setjmp(p8_guard) returns 2. */
+#define P8_RESTART 2
+extern bool p8_paused_by_cart;
+/* Pause-menu entries registered with menuitem(); index 1..5. */
+int p8_menu_count(void);
+const char *p8_menu_label(int index);
+void p8_menu_select(int index,int buttons);
 void p8_text(const char *s,int x,int y,int color);
 const char *p8_describe(V v,char *out,size_t n);
 void p8_program_init(void);

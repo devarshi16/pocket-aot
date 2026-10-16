@@ -103,6 +103,56 @@ fn array(name: &str, bytes: &[u8]) -> String {
     out
 }
 
+/// Music (0x3100) and SFX (0x3200) bytes in PICO-8 memory layout, from the
+/// text sections. An SFX line is 4 header bytes (editor mode, speed, loop
+/// start, loop end) then 32 notes of pitch(2) waveform(1) volume(1) effect(1)
+/// hex digits. A music line is a flag byte and four channel bytes.
+fn sound_rom(sfx: Option<&String>, music: Option<&String>) -> Result<Vec<u8>, Error> {
+    let mut rom = vec![0u8; 0x1200];
+    let hex = |text: &str| {
+        u32::from_str_radix(text, 16).map_err(|_| Error::new(0, "invalid hex sound data"))
+    };
+    if let Some(section) = sfx {
+        for (n, line) in section.lines().filter(|l| !l.trim().is_empty()).enumerate() {
+            let line = line.trim();
+            if n >= 64 || line.len() != 168 || !line.is_ascii() {
+                return Err(Error::new(0, "invalid __sfx__ dimensions"));
+            }
+            let base = 0x100 + n * 68;
+            for k in 0..4 {
+                rom[base + 64 + k] = hex(&line[k * 2..k * 2 + 2])? as u8;
+            }
+            for note in 0..32 {
+                let at = 8 + note * 5;
+                let pitch = hex(&line[at..at + 2])? & 63;
+                let wave = hex(&line[at + 2..at + 3])?;
+                let volume = hex(&line[at + 3..at + 4])? & 7;
+                let effect = hex(&line[at + 4..at + 5])? & 7;
+                let bits = pitch | (wave & 7) << 6 | volume << 9 | effect << 12 | (wave >> 3) << 15;
+                rom[base + note * 2] = bits as u8;
+                rom[base + note * 2 + 1] = (bits >> 8) as u8;
+            }
+        }
+    }
+    if let Some(section) = music {
+        for (n, line) in section.lines().filter(|l| !l.trim().is_empty()).enumerate() {
+            let fields: Vec<&str> = line.split_whitespace().collect();
+            if n >= 64 || fields.len() != 2 || fields[0].len() != 2 || fields[1].len() != 8 {
+                return Err(Error::new(0, "invalid __music__ row"));
+            }
+            let flags = hex(fields[0])?;
+            for ch in 0..4 {
+                let mut byte = hex(&fields[1][ch * 2..ch * 2 + 2])? as u8 & 0x7f;
+                if ch < 3 && flags & (1 << ch) != 0 {
+                    byte |= 0x80;
+                }
+                rom[n * 4 + ch] = byte;
+            }
+        }
+    }
+    Ok(rom)
+}
+
 pub fn compile(text: &str, title: &str) -> Result<Output, Error> {
     if !text.starts_with("pico-8 cartridge") {
         return Err(Error::new(
@@ -172,10 +222,12 @@ pub fn compile(text: &str, title: &str) -> Result<Output, Error> {
             }
         }
     }
+    let sound = sound_rom(sections.get("__sfx__"), sections.get("__music__"))?;
     let assets = "#include <stdint.h>\n".to_string()
         + &array("p8_cart_gfx", &gfx)
         + &array("p8_cart_map", &map)
-        + &array("p8_cart_flags", &flags);
+        + &array("p8_cart_flags", &flags)
+        + &array("p8_cart_sound", &sound);
     let mut warnings = vec![
         "Experimental subset; not full PICO-8 compatibility.".into(),
         "Extended text glyphs use placeholders; RNG is not PICO-8-identical.".into(),
@@ -275,7 +327,8 @@ mod tests {
     #[test]
     fn unknown_apis_and_unsupported_overloads_stop_conversion() {
         for (call, reason) in [
-            ("peek(0)", "unsupported function/API"),
+            ("cstore(0,0,0)", "unsupported function/API"),
+            ("serial(0x804,0,1)", "unsupported function/API"),
             ("line(1,2,3,4,5,6)", "overload"),
             ("rawset({},1)", "overload"),
             ("select()", "overload"),
