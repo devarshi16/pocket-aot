@@ -1067,7 +1067,8 @@ fn main() -> eframe::Result {
 mod tests {
     use super::*;
     fn app() -> (egui::Context, Arcade) {
-        let root = flasher::root_dir();
+        // Tests must read this checkout, regardless of a running launcher's environment.
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let mut cat = flasher::load_catalog(&root).unwrap();
         // UI tests use controlled metadata, independent of locally built UF2s.
         for c in &mut cat.cartridges {
@@ -1171,7 +1172,17 @@ mod tests {
         assert_eq!(a.screen, Screen::Progress);
         let dashboard = a.dashboard.as_ref().unwrap();
         assert_eq!(dashboard.api_counts.total(), 108);
-        assert_eq!(dashboard.api_counts.functional(), 66);
+        let inventory: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(a.root.join("compatibility/coverage/api-audit.json")).unwrap(),
+        )
+        .unwrap();
+        let implemented = inventory["apis"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|row| row["implemented"].as_bool() == Some(true))
+            .count();
+        assert_eq!(dashboard.api_counts.functional(), implemented);
         assert_eq!(dashboard.sample_built, 1);
         assert_eq!(dashboard.sample_confirmed, 1);
         assert!(a.receiver.is_none());

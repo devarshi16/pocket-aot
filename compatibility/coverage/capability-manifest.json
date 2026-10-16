@@ -877,8 +877,8 @@
     "converter/tests/api_overloads.p8": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864"
   },
   "tooling_source_hashes": {
-    "src/main.rs": "b7d592ee1e1981ff6efbbbba6029285f7e224e83b747a73f025f7649e1058f4e",
-    "src/flasher.rs": "cccb69ca3040e09a9d289221fef93c4399986932ac16b83e0ec48790ea229e81",
+    "src/main.rs": "67cae1979108d5c55a6a543c53fee455bec6005583b06916ee31d47fef2d8c26",
+    "src/flasher.rs": "30325cfc5cadcef617f11dc33ee2b85653e2c0b12b75e9f2791c2f865a2651e6",
     "helpers/check_startup.py": "6a5b0800bc78f63ec7bae2be6f11dda15dc5f0b840fdce4c6a29ad59a62cfbb0",
     "src/progress_data.rs": "e4b29cc6cb794175a2f28903d17dc59c9dc862675a051aa89ca7f740dd5d31ad",
     "src/progress_view.rs": "cd6c5b9dae61ab0e973e753301afebd16fa032f28588db101d7b5ad68ba2c6e2"
@@ -888,7 +888,8 @@
     "Re-audit: host-only P8_API_PROFILE counters and JSON output added; native runtime behavior and supported/partial/missing capability statuses are unchanged.",
     "Runtime/API name table moved to file scope to share immutable names with the optional host profiler. No device firmware was flashed during dashboard work.",
     "Public-source review 2026-10-16: independently authored compact ASCII font replaces the historical font asset; text remains partial. Portable SDK/compiler discovery replaces private paths. The default sanitizer/PNG suite now uses only original fixtures; external game execution is historical. Compiler change is an inline original test-fixture replacement, with no translation-semantic change. Core statuses and rubric weights are unchanged.",
-    "2026-10-16: re-audited small API improvements with original generated-native assertions, seven new expected-error cases and an RP2040 fixture build. Four raw helpers and camera/cursor/palt gates are supported within the bounded model; select is partial. Other improved graphics gates stay partial. Scope, weights and historical evidence are unchanged. See docs/SMALL-GAPS.md."
+    "2026-10-16: re-audited small API improvements with original generated-native assertions, seven new expected-error cases and an RP2040 fixture build. Four raw helpers and camera/cursor/palt gates are supported within the bounded model; select is partial. Other improved graphics gates stay partial. Scope, weights and historical evidence are unchanged. See docs/SMALL-GAPS.md.",
+    "Test isolation fix: GUI tests read CARGO_MANIFEST_DIR instead of launcher/executable discovery. Navigation checks current committed inventory rather than a frozen functional count; production behavior and core credit are unchanged."
   ],
   "evidence_policy": "Historical external cartridge/build/hardware paths in test pointers are provenance from the private experiment and are not bundled. Fresh public execution is recorded separately in runtime-api-coverage.json; the historical profile is retained unchanged."
 }
