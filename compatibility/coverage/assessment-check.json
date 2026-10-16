@@ -2,52 +2,50 @@
   "rubric_version": "pocket-aot-capabilities-v1",
   "assessed_date": "2026-10-16",
   "label": "Secondary weighted planning index; implementation and regression counts are primary",
-  "core_capability_score_percent": 52.1984426330171,
-  "supported_only_points": 36.96284680646383,
-  "partial_credit_points": 15.235595826553274,
-  "sensitivity_partial_credit_25_percent": 44.58064471974046,
-  "sensitivity_partial_credit_75_percent": 59.816240546293734,
+  "core_capability_score_percent": 72.5793939905642,
+  "supported_only_points": 52.73117855351898,
+  "partial_credit_points": 19.848215437045223,
+  "sensitivity_partial_credit_25_percent": 62.65528627204159,
+  "sensitivity_partial_credit_75_percent": 82.50350170908682,
   "core_gate_count": 173,
   "status_counts": {
-    "supported": 64,
-    "partial": 52,
-    "missing": 57
+    "supported": 84,
+    "partial": 76,
+    "missing": 13
   },
   "supporting_tooling_score_percent": 75.0,
-  "functional_api_names": 71,
+  "functional_api_names": 103,
   "canonical_api_count": 108,
   "api_status_counts": {
-    "missing": 37,
-    "supported": 33,
-    "partial": 38
+    "missing": 5,
+    "partial": 61,
+    "supported": 42
   },
   "api_subsystems": [
     {
       "name": "system",
       "total": 12,
       "status_counts": {
-        "missing": 8,
-        "supported": 2,
-        "partial": 2
+        "missing": 3,
+        "partial": 5,
+        "supported": 4
       },
-      "exercised": 1
+      "exercised": 4
     },
     {
       "name": "graphics",
       "total": 26,
       "status_counts": {
-        "partial": 15,
-        "supported": 6,
-        "missing": 5
+        "partial": 20,
+        "supported": 6
       },
-      "exercised": 17
+      "exercised": 23
     },
     {
       "name": "tables",
       "total": 7,
       "status_counts": {
-        "supported": 5,
-        "partial": 2
+        "supported": 7
       },
       "exercised": 6
     },
@@ -55,34 +53,34 @@
       "name": "input",
       "total": 2,
       "status_counts": {
-        "partial": 2
+        "supported": 2
       },
-      "exercised": 0
+      "exercised": 1
     },
     {
       "name": "audio",
       "total": 2,
       "status_counts": {
-        "missing": 2
+        "partial": 2
       },
-      "exercised": 0
+      "exercised": 2
     },
     {
       "name": "map",
       "total": 4,
       "status_counts": {
-        "partial": 3,
-        "missing": 1
+        "partial": 4
       },
-      "exercised": 2
+      "exercised": 3
     },
     {
       "name": "memory",
       "total": 10,
       "status_counts": {
-        "missing": 10
+        "partial": 9,
+        "missing": 1
       },
-      "exercised": 0
+      "exercised": 8
     },
     {
       "name": "math",
@@ -97,9 +95,9 @@
       "name": "menu",
       "total": 1,
       "status_counts": {
-        "missing": 1
+        "partial": 1
       },
-      "exercised": 0
+      "exercised": 1
     },
     {
       "name": "strings",
@@ -113,9 +111,9 @@
       "name": "persistence",
       "total": 3,
       "status_counts": {
-        "missing": 3
+        "partial": 3
       },
-      "exercised": 0
+      "exercised": 3
     },
     {
       "name": "gpio",
@@ -129,24 +127,23 @@
       "name": "advanced_lua",
       "total": 11,
       "status_counts": {
-        "missing": 6,
-        "supported": 4,
-        "partial": 1
+        "supported": 7,
+        "partial": 4
       },
-      "exercised": 5
+      "exercised": 11
     }
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 51,
-  "regression_scenario_count": 34,
+  "regression_exercised_api_names": 82,
+  "regression_scenario_count": 41,
   "regression_suite": "public-original-fixtures",
-  "historical_regression_exercised_api_names": 48,
+  "historical_regression_exercised_api_names": 49,
   "historical_regression_scenario_count": 8,
   "historical_evidence_date": "2026-10-16",
   "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
-  "recorded_rust_tests": 37,
-  "functional_api_name_presence_percent": 65.74074074074075,
+  "recorded_rust_tests": null,
+  "functional_api_name_presence_percent": 95.37037037037037,
   "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
   "sample_size": 20,
   "sample_built": 1,

@@ -15,7 +15,7 @@
   {
     "test": "functions",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=4 strings=4 operations=210179 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=5000 entries=4 strings=5 operations=210179 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -57,6 +57,14 @@
     "frames": 2500,
     "result": "AOT_HOST_OK frames=2500 entries=0 strings=0 operations=152871 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "extended-features",
+    "frames": 600,
+    "result": "FEATURES_OK 34\nAOT_HOST_OK frames=600 entries=35 strings=36 operations=43207 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "c86209abfd937285b14d2cf1d7ce69f0684bc19cd7376bec9e594ab8a4577c2d",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -127,7 +135,7 @@
   {
     "test": "ord-zero",
     "frames": 1,
-    "result": "CARTRIDGE_ERROR: ord count must be 1 to 16 in this subset frame=0",
+    "result": "CARTRIDGE_ERROR: ord count must be 1 to 32 in this subset frame=0",
     "source_sha256": "7057d6ed55bd73ad62fcd8265a668b0afa5e4177e2dba26a43cc2de506ad07d9",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -135,8 +143,8 @@
   {
     "test": "ord-large",
     "frames": 1,
-    "result": "CARTRIDGE_ERROR: ord count must be 1 to 16 in this subset frame=0",
-    "source_sha256": "713e417bbc465a00867a455909fac6cace5ec6095db42db51ee7aa69b3ff9398",
+    "result": "CARTRIDGE_ERROR: ord count must be 1 to 32 in this subset frame=0",
+    "source_sha256": "e9c6a32894cdcf805b03caff29376d1eae27720cc80174114c407284006f5bbe",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -173,10 +181,58 @@
     "origin": "original-public-fixture"
   },
   {
-    "test": "pal-screen",
+    "test": "pal-selector",
     "frames": 1,
-    "result": "CARTRIDGE_ERROR: only draw palette remapping is supported frame=0",
-    "source_sha256": "731c762f9215161425d240c0a57ea92082b5a21cbd1687c1f4669541377f7859",
+    "result": "CARTRIDGE_ERROR: pal palette selector must be 0, 1 or 2 frame=0",
+    "source_sha256": "6c33427aa6b5a808fd74a5489c407529c8d7e87360e0649cfac154a9518e9218",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "upper-memory",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: upper memory 0x8000-0xffff is not available on this target frame=0",
+    "source_sha256": "2da86f1a266cdaca5fa4b198fa777b1f44623714af4c00d3335fdaacc145a8cf",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "yield-outside",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: yield called outside a coroutine frame=0",
+    "source_sha256": "3d887868d83a10391f3b7a39d5f0f756624d8f0597524c9be2e445a6de07ce7c",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "cartdata-twice",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: cartdata() may only be called once frame=0",
+    "source_sha256": "e0d93d06bb122cbf52342bcd03197504f72bacd219d7f6564b83fc8d03fb2fec",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "memcpy-range",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: memory range outside 64 KB address space frame=0",
+    "source_sha256": "0259d004876bdaf3855410f73a27bf146dffc41ef37ca91f6a66e19117fe919a",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "index-chain",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: __index chain too long frame=0",
+    "source_sha256": "a4438f442a705294b08c06892b804e5e2a998d6729264bb9c84174997e39fe66",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "vararg-limit",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: unpack exceeds the result limit frame=0",
+    "source_sha256": "6f65549657014ca116e40145a3bb0b97cd871e89b7ecfa38268705b0647fd396",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -269,15 +325,27 @@
     "origin": "original-public-fixture"
   },
   {
-    "test": "unsupported-reload",
+    "test": "unsupported-cstore",
     "result": "rejected explicitly",
-    "detail": "Conversion failed: conversion stopped: unsupported function/API 'reload'",
+    "detail": "Conversion failed: conversion stopped: unsupported function/API 'cstore'",
     "flashed": false
   },
   {
-    "test": "unsupported-poke",
+    "test": "unsupported-serial",
     "result": "rejected explicitly",
-    "detail": "Conversion failed: conversion stopped: unsupported function/API 'poke'",
+    "detail": "Conversion failed: conversion stopped: unsupported function/API 'serial'",
+    "flashed": false
+  },
+  {
+    "test": "goto-without-label",
+    "result": "rejected explicitly",
+    "detail": "Conversion failed: conversion stopped: no visible label 'nowhere' for goto",
+    "flashed": false
+  },
+  {
+    "test": "vararg-outside",
+    "result": "rejected explicitly",
+    "detail": "Conversion failed: conversion stopped: '...' used outside a vararg function",
     "flashed": false
   }
 ]
