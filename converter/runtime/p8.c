@@ -84,10 +84,15 @@ void p8_enter(void){p8_stack_check();p8_tick();if(++depth>32)p8_fail("call depth
 void p8_leave(void){if(depth)depth--;}
 bool p8_truth(V v){return v.tag!=P8_NIL&&(v.tag!=P8_BOOL||v.n);}
 static bool parse_fixed(V value,int32_t *result);
-int32_t p8_number(V v){if(v.tag==P8_NUM)return v.n;
- /* Lua and PICO-8 coerce numeric strings in arithmetic and API arguments. */
+/* PICO-8 accepts a numeric string wherever it expects a number, including
+   arithmetic and API arguments. */
+int32_t p8_number(V v){
+ if(v.tag==P8_NUM)return v.n;
  if(v.tag==P8_STR){int32_t n;if(parse_fixed(v,&n))return n;}
  p8_fail("number expected");return 0;}
+/* Bitwise operators and comparisons against a number do not coerce, matching
+   Lua. Kept separate so "4"|2 and "1"<2 still fail. */
+static int32_t strict_number(V v){if(v.tag!=P8_NUM)p8_fail("number expected");return v.n;}
 static int integer(V v){return p8_number(v)>>16;}
 static bool equal(V a,V b){return a.tag==b.tag&&a.n==b.n;}
 static const char *string(V v){if(v.tag!=P8_STR||(unsigned)v.n>=NS||!strings[v.n].used)p8_fail("string expected");return string_data+strings[v.n].offset;}
@@ -386,7 +391,9 @@ V p8_binary(const char *op,V a,V b){
   size_t alen=a.tag==P8_STR?(size_t)string_length(a):strlen(as),blen=b.tag==P8_STR?(size_t)string_length(b):strlen(bs);
   if(alen+blen>=SL)p8_fail("concatenated string too long");memmove(string_scratch,as,alen);memmove(string_scratch+alen,bs,blen);return string_bytes(string_scratch,alen+blen);}
  if(a.tag==P8_STR&&b.tag==P8_STR){int c=compare_strings(a,b);if(!strcmp(op,"<"))return p8_bool(c<0);if(!strcmp(op,">"))return p8_bool(c>0);if(!strcmp(op,"<="))return p8_bool(c<=0);if(!strcmp(op,">="))return p8_bool(c>=0);}
- int32_t x=p8_number(a),y=p8_number(b);uint32_t ux=(uint32_t)x,uy=(uint32_t)y;
+ bool coerce=!strcmp(op,"+")||!strcmp(op,"-")||!strcmp(op,"*")||!strcmp(op,"/")||!strcmp(op,"//")||!strcmp(op,"%");
+ int32_t x=coerce?p8_number(a):strict_number(a),y=coerce?p8_number(b):strict_number(b);
+ uint32_t ux=(uint32_t)x,uy=(uint32_t)y;
  if(!strcmp(op,"+"))return p8_num((int32_t)(ux+uy));if(!strcmp(op,"-"))return p8_num((int32_t)(ux-uy));
  if(!strcmp(op,"*"))return p8_num((int32_t)floor_div((int64_t)x*y,65536));
  if(!strcmp(op,"/"))return p8_num(y?(int32_t)(((int64_t)x*65536)/y):(x<0?-INT32_MAX:INT32_MAX));
