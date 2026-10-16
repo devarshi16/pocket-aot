@@ -74,7 +74,9 @@ static V string_bytes(const char *s,size_t len){
 V p8_str(const char *s){return string_bytes(s,strlen(s));}
 static int table_id(V t){if(t.tag!=P8_TABLE||(unsigned)t.n>=NT||!tables[t.n].used)p8_fail("table expected");return t.n;}
 V p8_table(void){for(int i=0;i<NT;i++)if(!tables[i].used){tables[i].used=1;tables[i].head=0;return(V){i,P8_TABLE};}p8_fail("table pool exhausted");return p8_nil();}
-V p8_get(V t,V key){int id=table_id(t);for(int at=tables[id].head;at;at=entries[at-1].next){if(equal(entries[at-1].key,key))return entries[at-1].value;}return p8_nil();}
+V p8_get(V t,V key){
+ if(t.tag==P8_STR){const char *text=string(t);int n=(int)strlen(text),i=integer(key);if(i<0)i+=n+1;return string_bytes(i>=1&&i<=n?text+i-1:text,i>=1&&i<=n?1:0);}
+ int id=table_id(t);for(int at=tables[id].head;at;at=entries[at-1].next){if(equal(entries[at-1].key,key))return entries[at-1].value;}return p8_nil();}
 void p8_set(V t,V key,V value){int id=table_id(t);if(key.tag==P8_NIL)p8_fail("nil table key");uint16_t *link=&tables[id].head;
  while(*link){int i=*link-1;if(equal(entries[i].key,key)){if(value.tag==P8_NIL){*link=entries[i].next;entries[i].used=0;}else entries[i].value=value;return;}link=&entries[i].next;}
  if(value.tag==P8_NIL)return;
@@ -189,6 +191,45 @@ static void sprite(int n,int x,int y,int w,int h,bool fx,bool fy){int sx=(n%16)*
  for(int yy=0;yy<height;yy++)for(int xx=0;xx<width;xx++){int c=sample(sx+(fx?width-1-xx:xx),sy+(fy?height-1-yy:yy));if(!transparent[c])pixel(x+xx,y+yy,c);}}
 static double real(V v){return (double)p8_number(v)/65536.0;}
 static V numeric(double n){if(!isfinite(n)||n< -32768.0||n>=32768.0)p8_fail("math result outside fixed point range");return p8_num((int32_t)floor(n*65536.));}
+/* Numeric text shared by TONUM, SELECT coercion and SPLIT. Hex/binary
+ * construction uses unsigned bits, including the signed 16.16 wrap boundary.
+ * Decimal rounding/range behavior remains a documented partial implementation. */
+static bool number_space(char c){return c==' '||c=='\t'||c=='\r'||c=='\n'||c=='\v'||c=='\f';}
+static int hex_digit(char c){if(c>='0'&&c<='9')return c-'0';if(c>='a'&&c<='f')return c-'a'+10;if(c>='A'&&c<='F')return c-'A'+10;return -1;}
+static bool parse_fixed(V value,int32_t *result){
+ if(value.tag==P8_NUM){*result=value.n;return true;}
+ if(value.tag!=P8_STR)return false;
+ const char *start=string(value),*end=start+strlen(start);
+ while(start<end&&number_space(*start))start++;
+ while(end>start&&number_space(end[-1]))end--;
+ const char *at=start;bool negative=false;
+ if(at<end&&(*at=='-'||*at=='+')){negative=*at=='-';at++;}
+ if(end-at>=2&&at[0]=='0'&&(at[1]=='x'||at[1]=='X'||at[1]=='b'||at[1]=='B')){
+  unsigned step=(at[1]=='x'||at[1]=='X')?4:1,base=1u<<step,bits_left=16;
+  uint32_t whole=0,fraction=0;bool dot=false,digits=false;at+=2;
+  for(;at<end;at++){
+   if(*at=='.'&&!dot){dot=true;continue;}
+   int digit=hex_digit(*at);if(digit<0||(unsigned)digit>=base)return false;digits=true;
+   if(!dot)whole=(whole<<step)|(unsigned)digit;
+   else if(bits_left){bits_left-=step;fraction|=(unsigned)digit<<bits_left;}
+  }
+  if(!digits)return false;
+  uint32_t bits=(whole<<16)|fraction;*result=(int32_t)(negative?0u-bits:bits);return true;
+ }
+ if(at==end||!((*at>='0'&&*at<='9')||*at=='.'))return false;
+ char *stop;double number=strtod(start,&stop);
+ if(stop!=end||!isfinite(number)||number< -32768.0||number>=32768.0)return false;
+ *result=(int32_t)floor(number*65536.0);return true;
+}
+static bool parse_raw_integer(V value,int32_t *result){
+ if(value.tag!=P8_STR)return false;
+ const char *at=string(value),*end=at+strlen(at);
+ while(at<end&&number_space(*at))at++;while(end>at&&number_space(end[-1]))end--;
+ bool negative=false;if(at<end&&(*at=='-'||*at=='+')){negative=*at=='-';at++;}
+ if(at==end)return false;uint32_t bits=0;
+ for(;at<end;at++){if(*at<'0'||*at>'9')return false;bits=bits*10u+(unsigned)(*at-'0');}
+ *result=(int32_t)(negative?0u-bits:bits);return true;
+}
 static uint32_t random_next(void){uint32_t x=random_state;x^=x<<13;x^=x>>17;x^=x<<5;return random_state=x?x:1;}
 #define HAS(i) ((i)<argc)
 #define A(i) (HAS(i)?argv[i]:p8_nil())
@@ -249,18 +290,19 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_sset)){set_sample(I(0,0),I(1,0),C(2));return p8_nil();}
  if(IS(P8_API_mget))return p8_int(mapget(I(0,0),I(1,0)));
  if(IS(P8_API_mset)){mapset(I(0,0),I(1,0),I(2,0));return p8_nil();}
- if(IS(P8_API_fget)){int f=flags[I(0,0)&255];return argc>1?p8_bool((f>>(I(1,0)&7))&1):p8_int(f);}
+ if(IS(P8_API_fget)){int tile=I(0,0),bit=I(1,0),f=(unsigned)tile<256?flags[tile]:0;return argc>1?p8_bool((unsigned)bit<8&&((f>>bit)&1)):p8_int(f);}
  if(IS(P8_API_fset)){int i=I(0,0)&255;if(argc==2)flags[i]=I(1,0);else if(p8_truth(A(2)))flags[i]|=1<<(I(1,0)&7);else flags[i]&=~(1<<(I(1,0)&7));return p8_nil();}
  if(IS(P8_API_map)){int mx=I(0,0),my=I(1,0),dx=I(2,0),dy=I(3,0),w=I(4,128),h=I(5,32),mask=I(6,0);if(w>128||h>64)p8_fail("map dimensions outside supported range");for(int y=0;y<h;y++)for(int x=0;x<w;x++){int tile=mapget(mx+x,my+y);if(tile&&(!mask||(flags[tile]&mask)))sprite(tile,dx+x*8,dy+y*8,1,1,false,false);}return p8_nil();}
  if(IS(P8_API_btn)||IS(P8_API_btnp)){if(I(1,0)!=0)p8_fail("only player one is supported");unsigned bits=IS(P8_API_btn)?game_buttons:pressed;if(!argc)return p8_int(bits);int b=I(0,0);return p8_bool((unsigned)b<6&&(bits&(1u<<b)));}
- if(IS(P8_API_rawget)){if(argc!=2)p8_fail("rawget requires two arguments");return p8_get(A(0),A(1));}
+ if(IS(P8_API_rawget)){if(argc!=2)p8_fail("rawget requires two arguments");table_id(A(0));return p8_get(A(0),A(1));}
  if(IS(P8_API_rawset)){if(argc!=3)p8_fail("rawset requires three arguments");p8_set(A(0),A(1),A(2));return A(0);}
  if(IS(P8_API_rawequal)){if(argc!=2)p8_fail("rawequal requires two arguments");return p8_bool(equal(A(0),A(1)));}
  if(IS(P8_API_rawlen)){if(argc!=1)p8_fail("rawlen requires one argument");return p8_int(length(A(0)));}
  if(IS(P8_API_select)){
   if(argc<1||argc>P8_MAX_RESULTS)p8_fail("select requires 1 to 16 arguments");
   if(A(0).tag==P8_STR&&string(A(0))[0]=='#'){V n=p8_int(argc-1);return p8_return(1,&n);}
-  int index=p8_number(A(0))/65536;
+  int32_t selector;if(!parse_fixed(A(0),&selector))p8_fail("number expected");
+  int index=selector/65536;
   if(index<0)index=argc+index;else if(index>argc)index=argc;
   if(index<1)p8_fail("select index out of range");
   return p8_return(argc-index,argv+index);
@@ -280,7 +322,7 @@ V p8_api_id(int id,int argc,const V *argv){
    const char *end=chunk?at+(strlen(at)<(size_t)chunk?strlen(at):(size_t)chunk):strstr(at,sep);
    if(!end)end=at+strlen(at);size_t len=(size_t)(end-at);if(len>=SL)p8_fail("split token exceeds string limit");
    V v=string_bytes(at,len);
-   if(convert&&len){const char *token=string(v);char *stop;double x=strtod(token,&stop);if(stop!=token&&!*stop&&isfinite(x)&&x>=-32768&&x<32768)v=numeric(x);}
+   if(convert&&len){int32_t number;if(parse_fixed(v,&number))v=p8_num(number);}
    p8_set(out,p8_int(++n),v);
    if(chunk){at=end;if(!*at)break;}else{if(!*end)break;at=end+seplen;}
   }while(true);
@@ -308,10 +350,44 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_srand)){random_state=(uint32_t)p8_number(A(0));if(!random_state)random_state=1;return p8_nil();}
  if(IS(P8_API_rnd)){uint32_t r=random_next();if(argc&&A(0).tag==P8_TABLE){int n=length(A(0));return n?p8_get(A(0),p8_int((int)(r%(unsigned)n)+1)):p8_nil();}int32_t limit=HAS(0)?p8_number(A(0)):65536;if(limit<0)p8_fail("negative rnd range unsupported");return p8_num((int32_t)(((uint64_t)r*(uint32_t)limit)>>32));}
  if(IS(P8_API_time)||IS(P8_API_t))return p8_num((int32_t)(((uint64_t)p8_frames*65536)/p8_target_hz));
- if(IS(P8_API_tostr)){if(argc>1&&p8_truth(A(1)))p8_fail("hex tostr overload unsupported");if(A(0).tag==P8_STR)return A(0);char s[128];return p8_str(p8_describe(A(0),s,sizeof s));}
- if(IS(P8_API_tonum)){if(A(0).tag==P8_NUM)return A(0);if(A(0).tag!=P8_STR)return p8_nil();char *end;double x=strtod(string(A(0)),&end);if(*end||end==string(A(0)))return p8_nil();return numeric(x);}
+ if(IS(P8_API_tostr)){
+  if(!argc)return p8_str("");
+  int flags=HAS(1)&&A(1).tag==P8_BOOL?(p8_truth(A(1))?1:0):I(1,0);
+  if(flags&~3)p8_fail("unsupported tostr flags");
+  if(A(0).tag==P8_NUM&&flags){
+   char text[32];uint32_t bits=(uint32_t)A(0).n;
+   if(flags==1)snprintf(text,sizeof text,"0x%04x.%04x",(unsigned)(bits>>16),(unsigned)(bits&65535));
+   else if(flags==3)snprintf(text,sizeof text,"0x%08x",(unsigned)bits);
+   else snprintf(text,sizeof text,"%ld",(long)A(0).n);
+   return p8_str(text);
+  }
+  if((flags&1)&&(A(0).tag==P8_TABLE||A(0).tag==P8_FUNCTION))p8_fail("raw object-address formatting unsupported");
+  if(A(0).tag==P8_STR)return A(0);
+  if(A(0).tag==P8_NIL)return p8_str("[nil]");
+  char text[128];return p8_str(p8_describe(A(0),text,sizeof text));
+ }
+ if(IS(P8_API_tonum)){
+  int flags=I(1,0);if(flags&~7)p8_fail("unsupported tonum flags");
+  int32_t number=0;bool valid=false;
+  if(A(0).tag==P8_NUM){number=A(0).n;valid=true;}
+  else if((flags&1)&&A(0).tag==P8_STR){
+   uint32_t bits=0;for(const char *at=string(A(0));*at;at++){int digit=hex_digit(*at);bits=(bits<<4)|(digit<0?0u:(unsigned)digit);}
+   number=(int32_t)((flags&2)?bits:bits<<16);valid=true;
+  }else valid=(flags&2)?parse_raw_integer(A(0),&number):parse_fixed(A(0),&number);
+  if(!valid&&!(flags&4))return p8_return(0,NULL);
+  V result=p8_num(number);return p8_return(1,&result);
+ }
  if(IS(P8_API_type)){static const char *types[]={"nil","number","boolean","string","table","function"};return p8_str(types[A(0).tag<=P8_FUNCTION?A(0).tag:0]);}
- if(IS(P8_API_ord)){if(argc>2&&I(2,1)!=1)p8_fail("ord multiple results unsupported");if(A(0).tag!=P8_STR)return p8_nil();const char *s=string(A(0));int i=I(1,1);return i<1||i>(int)strlen(s)?p8_nil():p8_int((uint8_t)s[i-1]);}
+ if(IS(P8_API_ord)){
+  int count=I(2,1);if(count<1||count>P8_MAX_RESULTS)p8_fail("ord count must be 1 to 16 in this subset");
+  int index=I(1,1);V results[P8_MAX_RESULTS];
+  if(A(0).tag!=P8_STR){if(count!=1)p8_fail("ord multiple results require a string");results[0]=p8_nil();return p8_return(1,results);}
+  const char *text=string(A(0));int size=(int)strlen(text);
+  if(index<1||index>size){if(count!=1)p8_fail("ord result range outside string unsupported");results[0]=p8_nil();return p8_return(1,results);}
+  if(count>size-index+1)p8_fail("ord result range outside string unsupported");
+  for(int n=0;n<count;n++)results[n]=p8_int((uint8_t)text[index-1+n]);
+  return p8_return(count,results);
+ }
  if(IS(P8_API_chr)){if(argc>=SL)p8_fail("chr result exceeds string limit");for(int i=0;i<argc;i++){int ch=I(i,0)&255;if(!ch)p8_fail("NUL strings unsupported");string_scratch[i]=(char)ch;}string_scratch[argc]=0;return p8_str(string_scratch);}
  if(IS(P8_API_sub)){const char *s=string(A(0));int len=strlen(s),i=I(1,1),j=HAS(2)&&A(2).tag!=P8_NUM?i:I(2,len);if(i<0)i+=len+1;if(j<0)j+=len+1;if(i<1)i=1;if(j>len)j=len;int n=j>=i?j-i+1:0;if(i>len)n=0;return string_bytes(n?s+i-1:s,(size_t)n);}
  if(IS(P8_API_sfx)||IS(P8_API_music))return p8_nil();

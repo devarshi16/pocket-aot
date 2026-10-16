@@ -503,7 +503,8 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "sset" => (2, 3),
         "mset" => (3, 3),
         "map" => (0, 7),
-        "fget" | "count" | "tostr" | "deli" => (1, 2),
+        "fget" | "count" | "tonum" | "deli" => (1, 2),
+        "tostr" => (0, 2),
         "fset" | "add" | "sub" => (2, 3),
         "camera" | "btn" | "btnp" => (0, 2),
         "cursor" => (0, 3),
@@ -870,7 +871,10 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
         if names.contains(*n) {
             // These builtins publish their own result list, including zero results.
             // Keep other APIs scalar: e.g. foreach may leave callback results behind.
-            if matches!(*n, "camera" | "cursor" | "clip" | "select" | "assert") {
+            if matches!(
+                *n,
+                "camera" | "cursor" | "clip" | "select" | "assert" | "tonum" | "ord"
+            ) {
                 e.line(format!(
                     "case {}:return p8_api_id(P8_API_{},argc,argv);",
                     10000 + i,

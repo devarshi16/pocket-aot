@@ -287,11 +287,13 @@
       "acceptance": "Decode the frozen sample and a source/ROM-preserving positive control through pinned Shrinko8.",
       "evidence": [
         "converter/build.py",
-        "converter/vendor/shrinko8"
+        "converter/vendor/shrinko8",
+        "converter/cartridge_input.py"
       ],
       "tests": [
         "converter/test_png.py",
-        "compatibility/top200/results.json"
+        "compatibility/top200/results.json",
+        "converter/test_containers.py"
       ],
       "reference_validated": false
     },
@@ -358,22 +360,29 @@
       "acceptance": "Validate documented cartridge versions and malformed sections/containers with systematic negative cases.",
       "evidence": [
         "src/compiler/mod.rs",
-        "converter/build.py"
+        "converter/build.py",
+        "converter/cartridge_input.py"
       ],
       "tests": [
-        "converter/test_png.py"
+        "converter/test_png.py",
+        "converter/test_containers.py"
       ],
       "reference_validated": false
     },
     {
       "id": "formats.rom",
       "name": "Read raw .p8.rom cartridges",
-      "status": "missing",
-      "acceptance": "Accept the official raw ROM container in addition to text/PNG.",
+      "status": "supported",
+      "acceptance": "Accept full-size 32768-byte .rom/.p8.rom containers, optionally with a 32-byte trailer, through the shared text/PNG decode path. Code-only tiny ROMs and multi-cart exports are excluded.",
       "evidence": [
-        "converter/build.py"
+        "converter/cartridge_input.py",
+        "converter/build.py",
+        "converter/vendor/shrinko8",
+        "converter/container-validation.json"
       ],
-      "tests": [],
+      "tests": [
+        "converter/test_containers.py"
+      ],
       "reference_validated": false
     },
     {
@@ -858,26 +867,29 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "c0e84cb64152bdec55f527d58590a9e35f854a0596e6f1a38bd6921b4dfa75a3",
-    "src/compiler/emit.rs": "f8392ea332ebb6ed0149b31a176ee833c75358935959b199926e3c4f8de10410",
+    "src/compiler/emit.rs": "6c31f2923f7329e8bb5880fc82c5f0e06c3b8aae9e2265b81de4405315e54a00",
     "src/compiler/mod.rs": "24e9ab410e50307f1384935e3bd7ca15b927476382a4e780d58d50c9a2be0c39",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "34d666093057f74672dae82f073509935287532f17f0beb314b9987a1cd5581e",
+    "converter/runtime/p8.c": "58ac9e48b6d20514926cdcd81e48b60cf97602024b2d00db549fdc109e624a75",
     "converter/runtime/p8.h": "d8f4085b6b86e2a1ae67d933d43cb5d975bf17cc37620a4ece74aab986c51b16",
     "converter/runtime/pico.c": "b50a2a1721f0d6919665b68af6242c317d0f4eab9ce4f8fbb3b942c666f70601",
     "converter/runtime/host.c": "d0b8a4bf90659f956425860f249921ecaf606c9c2d0f9478185153eed684797d",
-    "converter/build.py": "b61c3744536c4e667df6e0132db99e242fdb1c375a8503c2ac7017840470030a",
+    "converter/build.py": "6c51d3ed3945be1944eb75e13a20a1df63cd37617b060e4736f8bb882dadf56a",
     "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "8293c09c8ebfb166a78feadd2659f14369d833a9b6bfd07a3e41383076ea3e9d",
-    "converter/test_png.py": "332f7e7041f22af18141f660a9cb0827d892a08db307ba3d19187643bdfa995d",
+    "converter/test_pipeline.py": "ee09e08382811591c0ab9c3ebc1846af63806c4a9e9b87ca3ff3f3e36ea0f5a4",
+    "converter/test_png.py": "76bee5ccb5038430e45393c8420fe6de905fdbcb447f13a9831031938f916635",
     "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
-    "converter/tests/api_overloads.p8": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864"
+    "converter/tests/api_overloads.p8": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864",
+    "converter/cartridge_input.py": "21e634578ca8ef2fa34ee4e380c78fee19b1bd641c96bd9acb1e6859af22c8f8",
+    "converter/test_containers.py": "c78934234733d7ec43379ca0460e0cdb4cd54f0d040ea2a1b01c2fc35932d9d6",
+    "converter/tests/numeric_strings.p8": "2437099687700752d71306f733b9b9654fbda813af575afe06465cbf620f5c5f"
   },
   "tooling_source_hashes": {
-    "src/main.rs": "67cae1979108d5c55a6a543c53fee455bec6005583b06916ee31d47fef2d8c26",
+    "src/main.rs": "d0380be605ed40bb28392f646ae4be81c6fd54eca3cae50161da55fd19a6d9af",
     "src/flasher.rs": "30325cfc5cadcef617f11dc33ee2b85653e2c0b12b75e9f2791c2f865a2651e6",
     "helpers/check_startup.py": "6a5b0800bc78f63ec7bae2be6f11dda15dc5f0b840fdce4c6a29ad59a62cfbb0",
     "src/progress_data.rs": "e4b29cc6cb794175a2f28903d17dc59c9dc862675a051aa89ca7f740dd5d31ad",
@@ -889,7 +901,8 @@
     "Runtime/API name table moved to file scope to share immutable names with the optional host profiler. No device firmware was flashed during dashboard work.",
     "Public-source review 2026-10-16: independently authored compact ASCII font replaces the historical font asset; text remains partial. Portable SDK/compiler discovery replaces private paths. The default sanitizer/PNG suite now uses only original fixtures; external game execution is historical. Compiler change is an inline original test-fixture replacement, with no translation-semantic change. Core statuses and rubric weights are unchanged.",
     "2026-10-16: re-audited small API improvements with original generated-native assertions, seven new expected-error cases and an RP2040 fixture build. Four raw helpers and camera/cursor/palt gates are supported within the bounded model; select is partial. Other improved graphics gates stay partial. Scope, weights and historical evidence are unchanged. See docs/SMALL-GAPS.md.",
-    "Test isolation fix: GUI tests read CARGO_MANIFEST_DIR instead of launcher/executable discovery. Navigation checks current committed inventory rather than a frozen functional count; production behavior and core credit are unchanged."
+    "Test isolation fix: GUI tests read CARGO_MANIFEST_DIR instead of launcher/executable discovery. Navigation checks current committed inventory rather than a frozen functional count; production behavior and core credit are unchanged.",
+    "Second small-gap pass: full-size raw ROM acceptance gate is supported after four original source/data/generated-C identity scenarios, 600 sanitized frames each, and eight malformed input rejections. Numeric/string APIs improved but retain partial limits; scope and weights unchanged. Numeric fixture built end-to-end from raw ROM to RP2040 UF2 without flashing."
   ],
   "evidence_policy": "Historical external cartridge/build/hardware paths in test pointers are provenance from the private experiment and are not bundled. Fresh public execution is recorded separately in runtime-api-coverage.json; the historical profile is retained unchanged."
 }

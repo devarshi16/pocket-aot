@@ -26,11 +26,11 @@ Assessed **16 October 2026** against a frozen inventory based on the PICO-8 v0.2
 | Measurement | Recorded result | Meaning |
 | --- | --- | --- |
 | API implementation | **33 supported · 38 partial · 37 missing**, out of 108 | 71 names have some functional behavior (**65.7%**); partial support has documented limitations |
-| Public fixture regression | **42/108** functional API names reached in 13 sanitizer scenarios | Reproducible using only the original fixtures included here |
+| Public fixture regression | **44/108** functional API names reached in 20 sanitizer scenarios | Reproducible using only the original fixtures included here |
 | Full development regression | **48/108** functional API names reached in 8 sanitizer scenarios | Historical execution evidence; external game fixtures are deliberately unbundled |
 | Fixed random game sample | **1/20** built; **1/20** display/control confirmed on a Pico | The same 20 sampled games, without substitutions; not a universal compatibility rate |
 | Independent reference conformance | **Unmeasured** | No separate PICO-8 oracle or systematic golden-frame suite yet |
-| Weighted planning index | **51.4%** across 173 core gates | Secondary engineering estimate with explicit weights and half-credit for partial support |
+| Weighted planning index | **52.2%** across 173 core gates | Secondary engineering estimate with explicit weights and half-credit for partial support |
 
 The [small-gap assessment](docs/SMALL-GAPS.md) records the latest implemented helpers/overloads and ranks the next inexpensive improvements.
 

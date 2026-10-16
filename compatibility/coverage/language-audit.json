@@ -96,9 +96,10 @@
       "tests": [
         "every_cartridge_character_maps_back_to_its_byte",
         "functions.p8: _init",
-        "runtime_closures.c"
+        "runtime_closures.c",
+        "converter/tests/numeric_strings.p8"
       ],
-      "limits": "P8SCII round trips and long strings tested, but NUL bytes are unsupported, strings max8191 bytes, arena32KB/256slots. Rendering glyph fidelity is a separate graphics concern.",
+      "limits": "P8SCII byte indexing with positive/negative positions and empty out-of-range reads is tested, alongside roundtrips/long strings. NUL bytes remain unsupported, strings max8191 bytes, arena32KB/256slots. Fractional/non-numeric index coercion and glyph fidelity are not fully modeled.",
       "reference_validated": false
     },
     {
@@ -207,9 +208,10 @@
       "tests": [
         "multiple_returns_parentheses_and_table_tail",
         "functions.p8: _init",
-        "converter/tests/api_overloads.p8: native_results"
+        "converter/tests/api_overloads.p8: native_results",
+        "converter/tests/numeric_strings.p8"
       ],
-      "limits": "Final-call expansion in assignments/args/return/table tails and native builtin result lists tested, but at most 16 values per expression list/result. Varargs remain a separate missing feature.",
+      "limits": "Final-call expansion in assignments/args/return/table tails and native builtin result lists tested, but at most 16 values per expression list/result. Varargs remain a separate missing feature. tonum failure has zero results; ord now transports bounded in-range byte lists.",
       "reference_validated": false
     },
     {
@@ -380,6 +382,7 @@
   ],
   "audit_notes": [
     "Rechecked optional host instrumentation; no language behavior or capability-status changes. Runtime source locations are file-level references to avoid stale line offsets.",
-    "2026-10-16: native builtin multiple-result transport now preserves camera/cursor/clip/select/assert results. New original fixture covers scalar parentheses, aliases, empty tails and callback-result isolation. Existing 16-value bound keeps the language gate partial; varargs remain missing."
+    "2026-10-16: native builtin multiple-result transport now preserves camera/cursor/clip/select/assert results. New original fixture covers scalar parentheses, aliases, empty tails and callback-result isolation. Existing 16-value bound keeps the language gate partial; varargs remain missing.",
+    "Second small-gap pass: string indexing added through value lookup with rawget remaining table-only. tonum/ord result lists share the existing native bridge; language strings and multiple-return gates remain partial."
   ]
 }

@@ -2,16 +2,16 @@
   "rubric_version": "pocket-aot-capabilities-v1",
   "assessed_date": "2026-10-16",
   "label": "Secondary weighted planning index; implementation and regression counts are primary",
-  "core_capability_score_percent": 51.4484426330171,
-  "supported_only_points": 36.21284680646383,
+  "core_capability_score_percent": 52.1984426330171,
+  "supported_only_points": 36.96284680646383,
   "partial_credit_points": 15.235595826553274,
-  "sensitivity_partial_credit_25_percent": 43.83064471974046,
-  "sensitivity_partial_credit_75_percent": 59.066240546293734,
+  "sensitivity_partial_credit_25_percent": 44.58064471974046,
+  "sensitivity_partial_credit_75_percent": 59.816240546293734,
   "core_gate_count": 173,
   "status_counts": {
-    "supported": 63,
+    "supported": 64,
     "partial": 52,
-    "missing": 58
+    "missing": 57
   },
   "supporting_tooling_score_percent": 75.0,
   "functional_api_names": 71,
@@ -40,7 +40,7 @@
         "supported": 6,
         "missing": 5
       },
-      "exercised": 14
+      "exercised": 16
     },
     {
       "name": "tables",
@@ -138,8 +138,8 @@
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 42,
-  "regression_scenario_count": 13,
+  "regression_exercised_api_names": 44,
+  "regression_scenario_count": 20,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 48,
   "historical_regression_scenario_count": 8,

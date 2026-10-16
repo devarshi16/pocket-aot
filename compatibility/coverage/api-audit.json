@@ -168,8 +168,8 @@
     }
   },
   "source_evidence": {
-    "src/compiler/emit.rs": "f8392ea332ebb6ed0149b31a176ee833c75358935959b199926e3c4f8de10410",
-    "converter/runtime/p8.c": "34d666093057f74672dae82f073509935287532f17f0beb314b9987a1cd5581e",
+    "src/compiler/emit.rs": "6c31f2923f7329e8bb5880fc82c5f0e06c3b8aae9e2265b81de4405315e54a00",
+    "converter/runtime/p8.c": "58ac9e48b6d20514926cdcd81e48b60cf97602024b2d00db549fdc109e624a75",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
   },
   "apis": [
@@ -279,7 +279,7 @@
       "reason": "Truth condition/message and all supplied successful return values, including nil, within the 16-argument/result limit. Error-format equivalence has no independent reference suite.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:320",
+        "converter/runtime/p8.c:396",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -342,7 +342,7 @@
       "reason": "Single-string host console output present; filename/overwrite/desktop/clipboard forms rejected.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:318"
+        "converter/runtime/p8.c:394"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -364,7 +364,7 @@
       "reason": "Frame-count based seconds present (alias t); reset/timing/wrap edge cases unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:310"
+        "converter/runtime/p8.c:352"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -384,7 +384,7 @@
       "reason": "Only stat(1), reporting native instruction-budget usage rather than PICO-8 CPU utilization. All other indices fail.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:319"
+        "converter/runtime/p8.c:395"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -423,7 +423,7 @@
       "reason": "Integer screen clipping/reset, fifth-argument intersection and four previous-rectangle results. Exact off-screen/fractional clipping state fidelity has not been established.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:230",
+        "converter/runtime/p8.c:271",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -446,7 +446,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:204"
+        "converter/runtime/p8.c:245"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -468,7 +468,7 @@
       "reason": "Reads framebuffer pixels; custom out-of-bounds register setting and complete memory-mapped draw state absent.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:205"
+        "converter/runtime/p8.c:246"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -490,7 +490,7 @@
       "reason": "Reads sprite pixels; custom out-of-bounds register setting and remapped sprite memory absent.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:248"
+        "converter/runtime/p8.c:289"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -512,7 +512,7 @@
       "reason": "Explicit/default draw-colour sprite-pixel writes are implemented; remapped sprite memory remains absent.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:249",
+        "converter/runtime/p8.c:290",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -533,12 +533,14 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Reads flags/bitfield; bounded subset lacks reference edge-case comparison.",
+      "reason": "Reads sprite flag bitfields/booleans; invalid sprite or bit indices return zero/false rather than wrapping. Independent reference equivalence remains unmeasured.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:252"
+        "converter/runtime/p8.c:293"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/numeric_strings.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
       "known_limit": false,
@@ -556,9 +558,11 @@
       "reason": "Writes flags/bitfield; bounded subset lacks reference edge-case comparison.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:253"
+        "converter/runtime/p8.c:294"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/numeric_strings.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
       "known_limit": false,
@@ -576,7 +580,7 @@
       "reason": "ASCII raster font/basic cursor and newline implemented; extended P8SCII/control commands/custom fonts and exact return metrics incomplete.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:216"
+        "converter/runtime/p8.c:257"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -598,7 +602,7 @@
       "reason": "Sets/resets integer cursor position with optional draw colour and returns both previous coordinates; independent reference fidelity unmeasured.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:228",
+        "converter/runtime/p8.c:269",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -622,7 +626,7 @@
       "reason": "Basic draw colour get/set; extended colour/fill-pattern state unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:227"
+        "converter/runtime/p8.c:268"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -644,7 +648,7 @@
       "reason": "Clears indexed framebuffer and resets clip/cursor; complete draw-state fidelity unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:203"
+        "converter/runtime/p8.c:244"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -666,7 +670,7 @@
       "reason": "Sets/resets integer camera coordinates and returns both previous coordinates through direct or first-class native calls; independent reference fidelity unmeasured.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:229",
+        "converter/runtime/p8.c:270",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -689,7 +693,7 @@
       "reason": "Basic integer circle outline; fill patterns/extended draw state absent and raster fidelity unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:215"
+        "converter/runtime/p8.c:256"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -709,7 +713,7 @@
       "reason": "Basic integer filled circle; fill patterns/extended draw state absent and raster fidelity unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:215"
+        "converter/runtime/p8.c:256"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -767,7 +771,7 @@
       "reason": "Explicit endpoints, continuation, no-argument and colour-only pen reset implemented; fill patterns and exact raster fidelity remain incomplete/unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:207",
+        "converter/runtime/p8.c:248",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -790,7 +794,7 @@
       "reason": "Integer rectangle present; fill patterns/extended draw state absent and raster fidelity unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:206"
+        "converter/runtime/p8.c:247"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -810,7 +814,7 @@
       "reason": "Integer filled rectangle present; fill patterns/extended draw state absent and raster fidelity unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:206"
+        "converter/runtime/p8.c:247"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -870,7 +874,7 @@
       "reason": "Only numeric draw-palette remapping (palette 0); table, display, secondary palette overloads unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:238"
+        "converter/runtime/p8.c:279"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -890,7 +894,7 @@
       "reason": "Reset, colour/boolean and 16-bit mask overloads with previous-mask return; high bit controls colour 0, low bit colour 15. Independent reference fidelity unmeasured.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:239",
+        "converter/runtime/p8.c:280",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -913,7 +917,7 @@
       "reason": "Integer whole-sprite dimensions/flips present; fractional size/fill-pattern/complete draw-state semantics incomplete.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:246"
+        "converter/runtime/p8.c:287"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -933,7 +937,7 @@
       "reason": "Positive-dimension scaling/flips present; resource limits and raster edge cases differ or unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:247"
+        "converter/runtime/p8.c:288"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -972,7 +976,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:268"
+        "converter/runtime/p8.c:310"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -994,7 +998,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:269"
+        "converter/runtime/p8.c:311"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8",
@@ -1017,7 +1021,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:269"
+        "converter/runtime/p8.c:311"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1039,7 +1043,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:270"
+        "converter/runtime/p8.c:312"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1081,7 +1085,7 @@
       "reason": "Invokes native function values over the array portion; bounded table pool and mutation edge cases require broader equivalence tests.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:271"
+        "converter/runtime/p8.c:313"
       ],
       "selected_regression_tests": [
         "converter/tests/functions.p8"
@@ -1125,7 +1129,7 @@
       "reason": "Single-player six-button reads present; players 1..7 rejected.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:255"
+        "converter/runtime/p8.c:296"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1145,7 +1149,7 @@
       "reason": "Single-player presses/repeat present; players 1..7 and configurable repeat registers unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:255"
+        "converter/runtime/p8.c:296"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1165,7 +1169,7 @@
       "reason": "Accepted as a silent no-op; no audio synthesis, sequencing or channel state. Zero functional credit.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:317"
+        "converter/runtime/p8.c:393"
       ],
       "selected_regression_tests": [],
       "implemented": false,
@@ -1185,7 +1189,7 @@
       "reason": "Accepted as a silent no-op; no audio synthesis, sequencing or channel state. Zero functional credit.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:317"
+        "converter/runtime/p8.c:393"
       ],
       "selected_regression_tests": [],
       "implemented": false,
@@ -1205,7 +1209,7 @@
       "reason": "Default map plus shared gfx half supported; remapped map/width registers unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:250"
+        "converter/runtime/p8.c:291"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1227,7 +1231,7 @@
       "reason": "Default map plus shared gfx half supported; remapped map/width registers unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:251"
+        "converter/runtime/p8.c:292"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1249,7 +1253,7 @@
       "reason": "Default map drawing/layer mask present; remapped memory, fill patterns and exact draw state incomplete.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:254"
+        "converter/runtime/p8.c:295"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1478,7 +1482,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:301"
+        "converter/runtime/p8.c:343"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1498,7 +1502,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:301"
+        "converter/runtime/p8.c:343"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1518,7 +1522,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:302"
+        "converter/runtime/p8.c:344"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1540,7 +1544,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:298"
+        "converter/runtime/p8.c:340"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1562,7 +1566,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:299"
+        "converter/runtime/p8.c:341"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1584,7 +1588,7 @@
       "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 trig results unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:306"
+        "converter/runtime/p8.c:348"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1604,7 +1608,7 @@
       "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 trig results unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:305"
+        "converter/runtime/p8.c:347"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8"
@@ -1626,7 +1630,7 @@
       "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 results unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:307"
+        "converter/runtime/p8.c:349"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1646,7 +1650,7 @@
       "reason": "Uses host libm then fixed-point conversion; bit-exact PICO-8 edge cases unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:304"
+        "converter/runtime/p8.c:346"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1666,7 +1670,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:300"
+        "converter/runtime/p8.c:342"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1686,7 +1690,7 @@
       "reason": "Range/table choices use xorshift; RNG sequence differs from PICO-8 and negative ranges rejected.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:309"
+        "converter/runtime/p8.c:351"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1706,7 +1710,7 @@
       "reason": "Seeds xorshift; does not reproduce PICO-8 seeded random sequence.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:308"
+        "converter/runtime/p8.c:350"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1726,7 +1730,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:303"
+        "converter/runtime/p8.c:345"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1746,7 +1750,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:289"
+        "converter/runtime/p8.c:331"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1766,7 +1770,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:289"
+        "converter/runtime/p8.c:331"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1786,7 +1790,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:289"
+        "converter/runtime/p8.c:331"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1806,7 +1810,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:290"
+        "converter/runtime/p8.c:332"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1826,7 +1830,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:291"
+        "converter/runtime/p8.c:333"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1846,7 +1850,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:291"
+        "converter/runtime/p8.c:333"
       ],
       "selected_regression_tests": [
         "converter/tests/runtime_closures.c"
@@ -1868,7 +1872,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:291"
+        "converter/runtime/p8.c:333"
       ],
       "selected_regression_tests": [
         "converter/tests/runtime_closures.c"
@@ -1890,7 +1894,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:291"
+        "converter/runtime/p8.c:333"
       ],
       "selected_regression_tests": [
         "converter/tests/runtime_closures.c"
@@ -1912,7 +1916,7 @@
       "reason": "Core behavior implemented in bounded runtime; complete overload, coercion, numeric edge-case and reference-equivalence coverage unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:291"
+        "converter/runtime/p8.c:333"
       ],
       "selected_regression_tests": [],
       "implemented": true,
@@ -1948,12 +1952,14 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Basic formatting present; format flags rejected and exact numeric/nil/object rendering differs or is unverified.",
+      "reason": "Numeric hexadecimal fixed/raw and signed raw-integer format flags, no-argument empty string and nil display implemented. Default decimal formatting is approximate; raw object-address formatting is rejected.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:311"
+        "converter/runtime/p8.c:353"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/numeric_strings.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
       "known_limit": true,
@@ -1968,13 +1974,14 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Decimal conversion present; format flags, binary/hex parsing and error/wrap semantics incomplete.",
+      "reason": "Decimal text/numeric identity, exact fixed-point hexadecimal/binary forms, integer/hex flags and zero-on-failure flag implemented. Invalid conversion publishes zero results. Decimal rounding/overflow and other coercions remain incomplete; numeric identity retains its existing value.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:312"
+        "converter/runtime/p8.c:369"
       ],
       "selected_regression_tests": [
-        "converter/tests/semantics.p8"
+        "converter/tests/semantics.p8",
+        "converter/tests/numeric_strings.p8"
       ],
       "implemented": true,
       "reference_validated": false,
@@ -1993,7 +2000,7 @@
       "reason": "Byte construction present; NUL byte rejected; at most 16 input arguments.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:315"
+        "converter/runtime/p8.c:391"
       ],
       "selected_regression_tests": [
         "converter/tests/runtime_closures.c"
@@ -2012,14 +2019,15 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "One byte result present; multi-result overload rejected.",
+      "reason": "Scalar byte lookup and bounded in-range multi-result lookup up to 16 P8SCII bytes implemented. Zero/negative/oversized counts and multi-result ranges beyond the string are explicitly rejected; embedded-NUL strings remain unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:314"
+        "converter/runtime/p8.c:381"
       ],
       "selected_regression_tests": [
         "converter/tests/runtime_closures.c",
-        "converter/tests/functions.p8"
+        "converter/tests/functions.p8",
+        "converter/tests/numeric_strings.p8"
       ],
       "implemented": true,
       "reference_validated": false,
@@ -2038,7 +2046,7 @@
       "reason": "Byte substring basics present; NUL-containing strings unsupported.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:316"
+        "converter/runtime/p8.c:392"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8",
@@ -2058,13 +2066,14 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Delimiter/chunk/number conversion present; format conversion and NUL-containing strings incomplete.",
+      "reason": "Separator/chunk splitting with shared decimal/hex/binary numeric conversion and preserved invalid/empty tokens. NUL-containing strings and exact decimal conversion fidelity remain unsupported/incomplete.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:272"
+        "converter/runtime/p8.c:314"
       ],
       "selected_regression_tests": [
-        "converter/tests/runtime_closures.c"
+        "converter/tests/runtime_closures.c",
+        "converter/tests/numeric_strings.p8"
       ],
       "implemented": true,
       "reference_validated": false,
@@ -2083,7 +2092,7 @@
       "reason": "Types supported by native value model recognized; coroutine/thread type unavailable.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:313"
+        "converter/runtime/p8.c:380"
       ],
       "selected_regression_tests": [
         "converter/tests/semantics.p8",
@@ -2220,7 +2229,7 @@
       "reason": "Raw table mutation, nil-value deletion, non-nil key checks and receiver return. Existing bounded table/value model; no metatable implementation is implied.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:257",
+        "converter/runtime/p8.c:298",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -2240,14 +2249,15 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Raw table lookup for numeric, string and identity keys, including nil/missing reads. Existing bounded table/value model; no metatable implementation is implied.",
+      "reason": "Raw table lookup for numeric, string and identity keys, including nil/missing reads. String indexing is a separate operation; rawget still requires a table. Existing bounded table/value model; no metatable implementation is implied.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:256",
+        "converter/runtime/p8.c:297",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
-        "converter/tests/api_overloads.p8"
+        "converter/tests/api_overloads.p8",
+        "converter/tests/numeric_strings.p8"
       ],
       "implemented": true,
       "reference_validated": false,
@@ -2266,7 +2276,7 @@
       "reason": "Type-sensitive raw equality of values, interned strings and table/function identities within the existing bounded value model.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:258",
+        "converter/runtime/p8.c:299",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -2289,7 +2299,7 @@
       "reason": "Raw length of bounded strings and contiguous table sequences; hash entries are excluded. Sparse-table borders are not uniquely defined by Lua.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:259",
+        "converter/runtime/p8.c:300",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
@@ -2309,14 +2319,15 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Count including nil and positive/negative indexed result tails; at most 16 total arguments. Numeric-string index coercion and vararg syntax are unsupported.",
+      "reason": "Numeric/count selectors, numeric-string decimal/hex/binary coercion and positive/negative tails implemented. At most 16 total arguments; vararg syntax remains a separate missing feature.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:260",
+        "converter/runtime/p8.c:301",
         "converter/tests/api_overloads.p8"
       ],
       "selected_regression_tests": [
-        "converter/tests/api_overloads.p8"
+        "converter/tests/api_overloads.p8",
+        "converter/tests/numeric_strings.p8"
       ],
       "implemented": true,
       "reference_validated": false,
@@ -2403,7 +2414,8 @@
   ],
   "audit_notes": [
     "2026-10-16: rechecked bindings and runtime after adding conditional host API profiling; capability statuses unchanged.",
-    "2026-10-16 small API gaps: four raw helpers and partial select added; camera/cursor previous returns and palt bitmask/state gate omissions closed. Clip, line and sset overloads improved but remain partial. Assert multi-results fixed. New original sanitizer fixture and negative cases; no reference-conformance or game-compatibility claims. See docs/SMALL-GAPS.md."
+    "2026-10-16 small API gaps: four raw helpers and partial select added; camera/cursor previous returns and palt bitmask/state gate omissions closed. Clip, line and sset overloads improved but remain partial. Assert multi-results fixed. New original sanitizer fixture and negative cases; no reference-conformance or game-compatibility claims. See docs/SMALL-GAPS.md.",
+    "Second small-gap pass: numeric-string selectors; shared radix parser for tonum/split; numeric tostr/tonum flags; zero-result tonum failures; and bounded in-range multi-result ord. Existing API statuses remain unchanged because decimal, bounded-result and string limits remain. Original numeric_strings.p8 and controlled errors provide host evidence; no independent reference comparison. Added flag-index boundary assertions and zero/false invalid reads instead of wrapping; valid fset modes exercised."
   ],
   "public_review": "2026-10-16: independently authored compact ASCII font; print remains partial. API implementation/status unchanged. Default public suite uses only original fixtures; external fixture pointers denote unbundled historical evidence. Small-gap follow-up uses only an original API boundary fixture and generated invalid-input cases; no external game source or device flashing."
 }

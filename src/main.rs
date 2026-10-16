@@ -578,7 +578,9 @@ impl Arcade {
                             .color(GOLD),
                     );
                 }
-                if (c.source_file.ends_with(".p8") || c.source_file.ends_with(".png"))
+                if [".p8", ".png", ".rom"]
+                    .iter()
+                    .any(|ext| c.source_file.to_ascii_lowercase().ends_with(ext))
                     && c.status != "source_only"
                     && ui
                         .add_enabled(
@@ -941,7 +943,7 @@ impl Arcade {
         let mut convert = false;
         if self.import_open {
             egui::Window::new("Add a PICO-8 cartridge").open(&mut self.import_open).default_width(650.).show(ctx,|ui|{
-   ui.label("Choose a local .p8 or .p8.png cartridge, or drag it into Pocket Arcade.");ui.add_space(6.);
+   ui.label("Choose a local .p8, .p8.png or .p8.rom cartridge, or drag it into Pocket Arcade.");ui.add_space(6.);
    ui.label("Cartridge path");ui.add(egui::TextEdit::singleline(&mut self.import_path).desired_width(620.));
    ui.label("Title (optional)");ui.add(egui::TextEdit::singleline(&mut self.import_title).desired_width(620.));ui.add_space(8.);
    ui.label("Conversion runs on this computer. Unsupported features are reported. A prepared cartridge is added only after build checks pass.");

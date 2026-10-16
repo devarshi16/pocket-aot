@@ -6,14 +6,14 @@ Open Pocket Arcade and choose **PROGRESS** for the interactive subsystem tables,
 
 **Functional API names: 71/108 (65.7%).** The inventory contains 33 supported, 38 partial and 37 missing entries. A functional name may implement only a subset of the official behavior. Silent audio stubs remain missing.
 
-**Observed in current public host regression: 42/108 API names** across 13 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
+**Observed in current public host regression: 44/108 API names** across 20 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
 
 **Historical frozen game sample: 1/20 native builds; 1/20 display/control confirmations.** The original cartridges and their firmware are not bundled. Independent PICO-8 reference conformance remains unmeasured.
 
 | API subsystem | Supported | Partial | Missing | Total | Exercised in host scenarios |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | system | 2 | 2 | 8 | 12 | 1 |
-| graphics | 6 | 15 | 5 | 26 | 14 |
+| graphics | 6 | 15 | 5 | 26 | 16 |
 | tables | 5 | 2 | 0 | 7 | 6 |
 | input | 0 | 2 | 0 | 2 | 0 |
 | audio | 0 | 0 | 2 | 2 | 0 |
@@ -34,7 +34,7 @@ These counts include language, input, build and validation capabilities as well 
 
 | Component | Supported | Partial | Missing | Total | Main remaining work |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Cartridge formats and assets | 6 | 1 | 1 | 8 | Raw ROM input; systematic version/malformed-cartridge coverage |
+| Cartridge formats and assets | 7 | 1 | 0 | 8 | Raw ROM input; systematic version/malformed-cartridge coverage |
 | Source language and frontend | 7 | 1 | 3 | 11 | Varargs, goto/labels, external includes; stricter identifier behavior |
 | Values, functions and native semantics | 5 | 6 | 3 | 14 | Custom iterators, coroutines, metatables; numeric/string/GC edge behavior |
 | Graphics, maps and text | 6 | 18 | 6 | 30 | Palette modes, drawing overloads, text controls, shapes and textured lines |
@@ -47,11 +47,11 @@ These counts include language, input, build and validation capabilities as well 
 
 ## Secondary planning index
 
-The original weighted capability index is **about 51%**. It is an engineering planning estimate. It does not measure remaining time or the probability that an unfamiliar game works.
+The original weighted capability index is **about 52%**. It is an engineering planning estimate. It does not measure remaining time or the probability that an unfamiliar game works.
 
 | Component | Weight | Weighted-rubric score |
 | --- | ---: | ---: |
-| Cartridge formats and assets | 6% | 81.2% |
+| Cartridge formats and assets | 6% | 93.8% |
 | Source language and frontend | 12% | 68.2% |
 | Values, functions and native semantics | 18% | 57.1% |
 | Graphics, maps and text | 18% | 50.0% |
@@ -66,7 +66,7 @@ The frozen checklist contains 173 core acceptance entries. Each component has a 
 
 Component score = 100 × sum(entry credits) / number of component entries. Overall score = sum(component weight × component score / 100).
 
-Supported entries contribute 36.2 points; partial entries contribute 15.2 more, giving 51.4/100. The weights and half-credit rule are explicit judgment calls, frozen in rubric v1. They are not estimates of equal engineering effort. With quarter-credit versus three-quarter-credit for partial support, the same inventory scores 43.8% versus 59.1%. This is scoring sensitivity, not a confidence interval.
+Supported entries contribute 37.0 points; partial entries contribute 15.2 more, giving 52.2/100. The weights and half-credit rule are explicit judgment calls, frozen in rubric v1. They are not estimates of equal engineering effort. With quarter-credit versus three-quarter-credit for partial support, the same inventory scores 44.6% versus 59.8%. This is scoring sensitivity, not a confidence interval.
 
 The GUI, thumbnail browsing, import and USB flashing are supporting tooling. Their separate checklist score is 75%; they contribute zero to the translation score. This prevents a finished-looking launcher from hiding missing game behavior.
 

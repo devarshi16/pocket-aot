@@ -1,6 +1,6 @@
 # Pocket AOT converter
 
-A self-contained `.p8` source cartridge or decoded `.p8.png` becomes generated C, links against a bounded C runtime, and compiles to an RP2040 UF2. Rust handles parsing and code generation on the computer. After flashing, the program runs independently on the Pico, without a Lua interpreter, desktop game process or network service.
+A self-contained `.p8` source cartridge, decoded `.p8.png` or full-size `.p8.rom` becomes generated C, links against a bounded C runtime, and compiles to an RP2040 UF2. Rust handles parsing and code generation on the computer. After flashing, the program runs independently on the Pico, without a Lua interpreter, desktop game process or network service.
 
 This is an experimental PICO-8 language/API subset. The [Status page](../docs/STATUS.md) separates implementation coverage, executed tests, historical game outcomes and the weighted planning estimate. Unsupported syntax/APIs stop conversion; unsupported runtime arguments and exhausted resource pools produce controlled errors.
 
@@ -19,7 +19,7 @@ The Rust stage can be used without the Pico SDK:
 target/release/pocket-aot /path/to/game.p8 /path/to/generated 'My Game'
 ```
 
-It writes `game.c`, `assets.c` and `conversion.json`; the input is not rewritten. The frontend accepts decoded `.p8` text. `build.py` accepts `.p8.png` through the vendored, MIT-licensed Shrinko8 format decoder; it does not execute or minify cartridge Lua.
+It writes `game.c`, `assets.c` and `conversion.json`; the input is not rewritten. The frontend accepts decoded `.p8` text. `build.py` accepts `.p8.png` and full-size `.rom`/`.p8.rom` through the vendored, MIT-licensed Shrinko8 format decoder; it does not execute or minify cartridge Lua.
 
 ## Build RP2040 firmware
 
@@ -32,9 +32,11 @@ python3 converter/build.py /path/to/game.p8 --title 'My Game' --library
 
 If the Arm compiler is outside `PATH`, set `PICO_TOOLCHAIN_PATH` to its installation directory. `POCKET_AOT_BIN` can point to a prebuilt compiler executable; otherwise the build helper asks Cargo to build the release compiler. `CARGO_TARGET_DIR` is honored.
 
+Raw ROM input must be 32,768 bytes, optionally followed by a 32-byte trailer. Plain, legacy-compressed and modern-compressed code are supported; a present nonzero trailer hash is verified. Code-only tiny ROMs and multi-cart exports are excluded. Sources are not rewritten.
+
 The helper translates, runs generated C with ASan/UBSan, compiles firmware, checks generated stack usage, and records source/firmware hashes. `--library` adds a shelf card only after these stages succeed. Omit it to build without changing the shelf. Conversion does not flash hardware. Output goes to ignored `converted/` and `firmware/` directories.
 
-In Pocket Arcade, use **+ ADD CARTRIDGE**, choose a local `.p8` or `.p8.png`, then **CONVERT + ADD TO COLLECTION**. Drag and drop also works. Select a successfully built card and press **FLASH TO PICO**. The grid/list browser supports search, status filters, sorting and artwork fallback. Use **PROGRESS** for the subsystem dashboard and searchable API matrix.
+In Pocket Arcade, use **+ ADD CARTRIDGE**, choose a local `.p8`, `.p8.png` or `.p8.rom`, then **CONVERT + ADD TO COLLECTION**. Drag and drop also works. Select a successfully built card and press **FLASH TO PICO**. The grid/list browser supports search, status filters, sorting and artwork fallback. Use **PROGRESS** for the subsystem dashboard and searchable API matrix.
 
 ## Hardware scope
 
@@ -61,6 +63,7 @@ Directions map to PICO-8 buttons 0–3, A to 4 and B to 5. X or centre click pau
 - Lexical scopes, parallel/compound assignments, numeric `for`, built-in `all`/`pairs`/`ipairs` loops, `foreach`, `while`, `repeat`, `break`, conditionals and short-circuit logic.
 - `_init`, `_update`/`_update60`, `_draw`; basic pixel, rectangle, circle, line, text, sprite, map, clipping, camera and palette operations. Only documented implemented overloads are accepted.
 - Sprite/map/flag import and shared lower-sprite/map memory; player-one `btn`/`btnp` with default held-button repeat.
+- Numeric-string selectors, exact hex/binary string parsing, numeric formatting/conversion flags, bounded in-range multi-result `ord`, and positive/negative string byte indexing. Decimal conversion and NUL strings remain partial.
 - P8SCII source-byte conversion. Text uses an independently authored compact ASCII font; extended glyph and advanced text behavior are approximate.
 
 See [API audit](../compatibility/coverage/api-audit.json) and [full checklist](../compatibility/coverage/CHECKLIST.md) for per-entry limitations. The fixed API inventory has **33 supported, 38 partial and 37 missing entries**; a functional name is not a claim of complete behavior.
@@ -82,6 +85,7 @@ cargo test --locked
 cargo build --release --locked --bin pocket-aot
 python3 converter/test_pipeline.py
 python3 converter/test_png.py
+python3 converter/test_containers.py
 python3 converter/coverage_report.py --check
 ```
 
@@ -91,13 +95,15 @@ python3 converter/coverage_report.py --check
 | `semantics.p8` | 5,000 generated-native frames; arithmetic, ordering, scopes, tables, cyclic GC, graphics/shared memory |
 | `functions.p8` | 5,000 frames; captures, function values, methods and return expansion |
 | `api_overloads.p8` | 2,500 frames; raw helpers, select/native result lists, clipping/transparency pixels and line continuation |
-| Seven generated invalid API calls | Controlled select index/type, raw table/key/type and aliased arity failures |
+| `numeric_strings.p8` | 2,500 frames; numeric flags/radices, result counts, roundtrips, byte indexing and bounded `ord` |
+| Thirteen generated invalid API calls | Controlled select/raw-table/index/ord range/type/arity failures |
 | Generated infinite loop | Expected controlled instruction-budget failure |
 | Generated oversized table | Expected controlled table-entry failure |
 | Generated unsupported `reload` / `poke` | Explicit conversion rejection, no generated game output |
 | Semantic-fixture PNG roundtrip | Source/ROM identity plus 600 sanitized generated-native frames |
+| Original raw ROM containers | Four forms with source/data/generated-C identity and 600 sanitizer frames each; eight malformed inputs rejected |
 
-The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **42/108 functional API names across 13 sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
+The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **44/108 functional API names across 20 sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
 
 `test_png.py --arm-build` additionally builds UF2 when the SDK and Arm compiler are installed. `test_pipeline.py --external-cart /path/to/game.p8` explicitly adds a private local source check; repeated flags add more. This never downloads, publishes or flashes the supplied game, and the resulting coverage is labeled as including external sources.
 

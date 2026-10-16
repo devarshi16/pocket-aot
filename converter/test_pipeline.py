@@ -96,11 +96,18 @@ def main():
         check("semantics", ROOT / "converter/tests/semantics.p8", 5000)
         check("functions", ROOT / "converter/tests/functions.p8", 5000)
         check("api-overloads", ROOT / "converter/tests/api_overloads.p8", 2500)
+        check("numeric-strings", ROOT / "converter/tests/numeric_strings.p8", 2500)
         for name, body, expected in [
             ("loop-budget", "function _update() while true do end end", "frame instruction budget exceeded"),
             ("select-zero", "function _init() select(0,1) end", "select index out of range"),
             ("select-negative", "function _init() select(-3,1,2) end", "select index out of range"),
             ("select-type", 'function _init() select("bad",1) end', "number expected"),
+            ("select-bad-radix", 'function _init() select("0b2",1) end', "number expected"),
+            ("rawget-string", 'function _init() rawget("text",1) end', "table expected"),
+            ("string-index-type", 'function _init() local s="abc" printh(s[false]) end', "number expected"),
+            ("ord-overrun", 'function _init() ord("ab",2,2) end', "ord result range outside string unsupported"),
+            ("ord-zero", 'function _init() ord("ab",1,0) end', "ord count must be 1 to 16"),
+            ("ord-large", 'function _init() ord("abcdefghijklmnopqrstuvwxyz",1,17) end', "ord count must be 1 to 16"),
             ("rawget-type", "function _init() rawget(1,2) end", "table expected"),
             ("rawset-nil-key", "function _init() rawset({},nil,1) end", "nil table key"),
             ("rawlen-type", "function _init() rawlen(false) end", "table expected"),

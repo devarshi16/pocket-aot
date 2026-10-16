@@ -29,6 +29,14 @@
     "origin": "original-public-fixture"
   },
   {
+    "test": "numeric-strings",
+    "frames": 2500,
+    "result": "AOT_HOST_OK frames=2500 entries=2 strings=2 operations=35678 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "2437099687700752d71306f733b9b9654fbda813af575afe06465cbf620f5c5f",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
     "test": "loop-budget",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: frame instruction budget exceeded frame=0",
@@ -57,6 +65,54 @@
     "frames": 1,
     "result": "CARTRIDGE_ERROR: number expected frame=0",
     "source_sha256": "ed421a216159edb32d8063a34ab22233c7b26cb81e4f648d828cdf7b220ca5d3",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "select-bad-radix",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: number expected frame=0",
+    "source_sha256": "dbecefc025a8128f23f04c63e38b6ca0e8ef73db49498a1f0e00c5af7099e482",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "rawget-string",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: table expected frame=0",
+    "source_sha256": "8f1fd37e9042c1bae0029ac8c4d252ae8a33e7e6afed560187c91a0f4bd43ee2",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "string-index-type",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: number expected frame=0",
+    "source_sha256": "9585e43aa3cb5731a2ac014190345b1f0ec30ac8deea9d918234edcc046b938a",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "ord-overrun",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: ord result range outside string unsupported frame=0",
+    "source_sha256": "d992f82830f7bdabcf0d09f9a2cde0a9652e2a5cccc8f68473dd94ec7449e79b",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "ord-zero",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: ord count must be 1 to 16 in this subset frame=0",
+    "source_sha256": "7057d6ed55bd73ad62fcd8265a668b0afa5e4177e2dba26a43cc2de506ad07d9",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "ord-large",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: ord count must be 1 to 16 in this subset frame=0",
+    "source_sha256": "713e417bbc465a00867a455909fac6cace5ec6095db42db51ee7aa69b3ff9398",
     "source_modified": false,
     "origin": "original-public-fixture"
   },

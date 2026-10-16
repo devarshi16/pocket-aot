@@ -334,15 +334,15 @@ def make_status(manifest, summary):
         "| Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |",
         f"| Secondary weighted planning index | {summary['core_capability_score_percent']:.1f}% | Judgment-based rubric; not remaining time or compatibility |", "",
         "## Low-hanging work", "",
-        "The latest pass adds four raw table helpers and partial `select`, closes previous-position returns "
-        "for `camera`/`cursor` and the `palt` bitmask gap, and improves `clip`, `line`, `sset` and `assert` overloads. "
-        "The latter graphics functions retain their documented partial limits. "
-        "See [completed work and the next small gaps](SMALL-GAPS.md) for test evidence and priorities.", "",
+        "The first batch added raw table helpers and drawing overloads. The second adds numeric conversion/formatting "
+        "flags, numeric-string selectors, string byte indexing, bounded in-range `ord` results, flag-index bounds and raw ROM input. "
+        "String/numeric APIs retain their documented partial limits; only the raw ROM gate closes in the second batch. "
+        "See [completed work and remaining small gaps](SMALL-GAPS.md) for evidence and scope.", "",
         "| Next candidate | Why it is comparatively small |", "| --- | --- |",
-        "| Numeric-string indices for `select` | Reuse numeric parsing; test coercion and error boundaries |",
-        "| Multiple-result `ord` | Reuse result transport, after establishing string-end/count semantics |",
-        "| Raw `.rom` input | Reuse the existing decoder and conversion path; add malformed-input tests |",
-        "| `tostr` / `tonum` flags and forms | Share parsing/formatting work; fixed-point edge cases make this a medium task |", "",
+        "| Numeric `pal` previous-state return | Reuse the palette map after establishing return/reset semantics |",
+        "| Leading-dot hex/binary source literals | Small frontend change with valid/malformed literal fixtures |",
+        "| `ord` boundary/count cases | Extend the working result transport after a reference check |",
+        "| Decimal `tonum` fidelity | Exact fixed-point parsing is medium work; radix paths already preserve bits |", "",
         "Audio, coroutines, metatables, complete memory emulation and persistent saves require larger changes. "
         "These priorities are an effort assessment, not measured remaining time.", "",
         "## API coverage", "",
@@ -373,9 +373,10 @@ def make_status(manifest, summary):
              f"Its source hashes are **{'fresh' if fresh else 'stale or unavailable'}**. "
              "The runner profiles only scenarios whose success or expected controlled failure was checked. "
              "Two additional original fixtures check explicit rejection of unsupported APIs. "
-             "A separate PNG test roundtrips the original semantic fixture and executes the generated C for 600 sanitized frames.", "",
+             "Separate container tests verify four original ROM forms and eight malformed inputs; each positive form executes for 600 sanitized frames. "
+             "A PNG test roundtrips the original semantic fixture through the shared decoder and executes for 600 sanitized frames.", "",
              "```sh", "cargo test --locked", "cargo build --release --locked --bin pocket-aot",
-             "python3 converter/test_pipeline.py", "python3 converter/test_png.py",
+             "python3 converter/test_pipeline.py", "python3 converter/test_png.py", "python3 converter/test_containers.py",
              "python3 converter/coverage_report.py --check", "```", "",
              "The public suite needs no external cartridges, network downloads, Pico SDK or connected board. "
              "The optional `test_png.py --arm-build` adds a UF2 build when the SDK and Arm compiler are installed. "
