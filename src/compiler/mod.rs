@@ -206,7 +206,9 @@ mod tests {
     fn unknown_apis_and_unsupported_overloads_stop_conversion() {
         for (call, reason) in [
             ("peek(0)", "unsupported function/API"),
-            ("line()", "overload"),
+            ("line(1,2,3,4,5,6)", "overload"),
+            ("rawset({},1)", "overload"),
+            ("select()", "overload"),
         ] {
             let source = format!("pico-8 cartridge\n__lua__\nfunction _draw() {call} end");
             assert!(compile(&source, "test")
@@ -215,6 +217,29 @@ mod tests {
                 .message
                 .contains(reason));
         }
+    }
+
+    #[test]
+    fn native_api_results_and_draw_overloads_compile() {
+        let output = compile(
+            "pico-8 cartridge\n__lua__\nfunction _init() local x,y=camera() local c=cursor local a,b=c() local r={select(1,4,5)} local q=assert(true,8,9) rawset({},1,rawlen({})) end\nfunction _draw() clip(0,0,8,8,true) palt(0) sset(0,0) line() line(7) line(1,2) line(3,4,9) end",
+            "native-results",
+        ).unwrap();
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_camera,argc,argv)"));
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_cursor,argc,argv)"));
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_select,argc,argv)"));
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_assert,argc,argv)"));
+        assert!(output
+            .c
+            .contains("V result=p8_api_id(P8_API_rawlen,argc,argv);return p8_return(1,&result)"));
     }
 
     #[test]

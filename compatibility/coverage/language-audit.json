@@ -29,7 +29,7 @@
       "status": "partial",
       "evidence": [
         "src/compiler/parse.rs:43",
-        "src/compiler/emit.rs:19"
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "functions_generic_loops_methods_and_shorthand_calls"
@@ -74,8 +74,8 @@
       "name": "Expression evaluation and short circuit",
       "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs:194",
-        "src/compiler/emit.rs:226"
+        "src/compiler/emit.rs",
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "semantics.p8: side/take/_init",
@@ -90,7 +90,7 @@
       "status": "partial",
       "evidence": [
         "src/compiler/charset.rs:276",
-        "src/compiler/emit.rs:198",
+        "src/compiler/emit.rs",
         "converter/runtime/p8.c"
       ],
       "tests": [
@@ -106,8 +106,8 @@
       "name": "Local/global/parallel/compound assignment",
       "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs:296",
-        "src/compiler/emit.rs:332"
+        "src/compiler/emit.rs",
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "semantics.p8: _init",
@@ -121,9 +121,9 @@
       "name": "Lexical blocks, locals and shadowing",
       "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs:53",
-        "src/compiler/emit.rs:80",
-        "src/compiler/emit.rs:93"
+        "src/compiler/emit.rs",
+        "src/compiler/emit.rs",
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "semantics.p8: _init",
@@ -139,7 +139,7 @@
       "evidence": [
         "src/compiler/parse.rs:466",
         "src/compiler/parse.rs:650",
-        "src/compiler/emit.rs:464"
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "short_return_stops_at_its_line",
@@ -154,8 +154,8 @@
       "name": "Numeric for, while, repeat and break",
       "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs:357",
-        "src/compiler/emit.rs:376"
+        "src/compiler/emit.rs",
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "semantics.p8: _init",
@@ -171,7 +171,7 @@
       "evidence": [
         "src/compiler/parse.rs:444",
         "src/compiler/parse.rs:586",
-        "src/compiler/emit.rs:101"
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "closures_generate_native_dispatch",
@@ -185,7 +185,7 @@
       "name": "Mutable lexical captures and closure lifetime",
       "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs:101",
+        "src/compiler/emit.rs",
         "converter/runtime/p8.c"
       ],
       "tests": [
@@ -200,15 +200,16 @@
       "name": "Multiple return expansion and scalar parentheses",
       "status": "partial",
       "evidence": [
-        "src/compiler/emit.rs:166",
-        "src/compiler/emit.rs:169",
+        "src/compiler/emit.rs",
+        "src/compiler/emit.rs",
         "converter/runtime/p8.c"
       ],
       "tests": [
         "multiple_returns_parentheses_and_table_tail",
-        "functions.p8: _init"
+        "functions.p8: _init",
+        "converter/tests/api_overloads.p8: native_results"
       ],
-      "limits": "Final call expansion in assignments/args/return/table tails tested, but at most16 values per expression list/result; varargs separate missing feature.",
+      "limits": "Final-call expansion in assignments/args/return/table tails and native builtin result lists tested, but at most 16 values per expression list/result. Varargs remain a separate missing feature.",
       "reference_validated": false
     },
     {
@@ -217,7 +218,7 @@
       "status": "supported",
       "evidence": [
         "src/compiler/parse.rs:444",
-        "src/compiler/emit.rs:256"
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "functions_generic_loops_methods_and_shorthand_calls",
@@ -246,7 +247,7 @@
       "name": "Built-in all/pairs/ipairs and foreach",
       "status": "partial",
       "evidence": [
-        "src/compiler/emit.rs:390",
+        "src/compiler/emit.rs",
         "converter/runtime/p8.c"
       ],
       "tests": [
@@ -277,7 +278,7 @@
       "name": "Native C code emission and lifecycle",
       "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs:812"
+        "src/compiler/emit.rs"
       ],
       "tests": [
         "real_breakout_generates_native_functions",
@@ -333,7 +334,7 @@
       "name": "Custom generic iteration and iterator values",
       "status": "missing",
       "evidence": [
-        "src/compiler/emit.rs:390"
+        "src/compiler/emit.rs"
       ],
       "tests": [],
       "limits": "Generic-for emitter requires exactly one direct all/pairs/ipairs call with one argument.",
@@ -344,7 +345,7 @@
       "name": "Coroutine/yield execution state",
       "status": "missing",
       "evidence": [
-        "src/compiler/emit.rs:6"
+        "src/compiler/emit.rs"
       ],
       "tests": [],
       "limits": "Coroutine APIs are absent and costatus is a live Picowars blocker; generated native stack has no resumable continuation mechanism.",
@@ -355,7 +356,7 @@
       "name": "Metatables and metamethods",
       "status": "missing",
       "evidence": [
-        "src/compiler/emit.rs:6",
+        "src/compiler/emit.rs",
         "converter/runtime/p8.c"
       ],
       "tests": [],
@@ -378,6 +379,7 @@
     }
   ],
   "audit_notes": [
-    "Rechecked optional host instrumentation; no language behavior or capability-status changes. Runtime source locations are file-level references to avoid stale line offsets."
+    "Rechecked optional host instrumentation; no language behavior or capability-status changes. Runtime source locations are file-level references to avoid stale line offsets.",
+    "2026-10-16: native builtin multiple-result transport now preserves camera/cursor/clip/select/assert results. New original fixture covers scalar parentheses, aliases, empty tails and callback-result isolation. Existing 16-value bound keeps the language gate partial; varargs remain missing."
   ]
 }

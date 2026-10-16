@@ -35,7 +35,7 @@ def find_compiler(value=None):
 def command(args, cwd=None, timeout=60, ok=True):
     process = subprocess.run([str(a) for a in args], cwd=cwd, text=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
-    if ok and process.returncode:
+    if ok and (process.returncode or "runtime error:" in process.stdout):
         raise AssertionError(process.stdout)
     return process
 
@@ -95,8 +95,16 @@ def main():
 
         check("semantics", ROOT / "converter/tests/semantics.p8", 5000)
         check("functions", ROOT / "converter/tests/functions.p8", 5000)
+        check("api-overloads", ROOT / "converter/tests/api_overloads.p8", 2500)
         for name, body, expected in [
             ("loop-budget", "function _update() while true do end end", "frame instruction budget exceeded"),
+            ("select-zero", "function _init() select(0,1) end", "select index out of range"),
+            ("select-negative", "function _init() select(-3,1,2) end", "select index out of range"),
+            ("select-type", 'function _init() select("bad",1) end', "number expected"),
+            ("rawget-type", "function _init() rawget(1,2) end", "table expected"),
+            ("rawset-nil-key", "function _init() rawset({},nil,1) end", "nil table key"),
+            ("rawlen-type", "function _init() rawlen(false) end", "table expected"),
+            ("raw-alias-arity", "function _init() local get=rawget get({}) end", "rawget requires two arguments"),
             ("heap-bound", "function _init() local a={} for i=1,5000 do a[i]=i end end", "table entries exhausted"),
         ]:
             source = base / (name + ".p8")

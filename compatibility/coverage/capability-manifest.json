@@ -858,22 +858,23 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "c0e84cb64152bdec55f527d58590a9e35f854a0596e6f1a38bd6921b4dfa75a3",
-    "src/compiler/emit.rs": "4afa768c24ff9cce0c87f3d20c3ca1322f7193c464fcbf8d71be0a237f91dcc5",
-    "src/compiler/mod.rs": "bc3fdb860f22c89b7aabb14f77b5778ac1d9d7ca354fe7ccd17e6c6c1e755e97",
+    "src/compiler/emit.rs": "f8392ea332ebb6ed0149b31a176ee833c75358935959b199926e3c4f8de10410",
+    "src/compiler/mod.rs": "24e9ab410e50307f1384935e3bd7ca15b927476382a4e780d58d50c9a2be0c39",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "8f5039dd4d2433d987734ac39ff8a09ffd4493a4bc0661cfc7c3de34f7510f08",
-    "converter/runtime/p8.h": "835b876a01b092437c39f8ea0f7c57326353a5407aa498758987960948be842b",
+    "converter/runtime/p8.c": "34d666093057f74672dae82f073509935287532f17f0beb314b9987a1cd5581e",
+    "converter/runtime/p8.h": "d8f4085b6b86e2a1ae67d933d43cb5d975bf17cc37620a4ece74aab986c51b16",
     "converter/runtime/pico.c": "b50a2a1721f0d6919665b68af6242c317d0f4eab9ce4f8fbb3b942c666f70601",
     "converter/runtime/host.c": "d0b8a4bf90659f956425860f249921ecaf606c9c2d0f9478185153eed684797d",
     "converter/build.py": "b61c3744536c4e667df6e0132db99e242fdb1c375a8503c2ac7017840470030a",
     "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "1694877990f06aef468fa73c846251cf990bef869652d0539a18936d946eeaad",
+    "converter/test_pipeline.py": "8293c09c8ebfb166a78feadd2659f14369d833a9b6bfd07a3e41383076ea3e9d",
     "converter/test_png.py": "332f7e7041f22af18141f660a9cb0827d892a08db307ba3d19187643bdfa995d",
     "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
-    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
+    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
+    "converter/tests/api_overloads.p8": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864"
   },
   "tooling_source_hashes": {
     "src/main.rs": "b7d592ee1e1981ff6efbbbba6029285f7e224e83b747a73f025f7649e1058f4e",
@@ -886,7 +887,8 @@
     "Dashboard integration: source hashes for GUI/flashing tooling are tracked separately from translator implementation.",
     "Re-audit: host-only P8_API_PROFILE counters and JSON output added; native runtime behavior and supported/partial/missing capability statuses are unchanged.",
     "Runtime/API name table moved to file scope to share immutable names with the optional host profiler. No device firmware was flashed during dashboard work.",
-    "Public-source review 2026-10-16: independently authored compact ASCII font replaces the historical font asset; text remains partial. Portable SDK/compiler discovery replaces private paths. The default sanitizer/PNG suite now uses only original fixtures; external game execution is historical. Compiler change is an inline original test-fixture replacement, with no translation-semantic change. Core statuses and rubric weights are unchanged."
+    "Public-source review 2026-10-16: independently authored compact ASCII font replaces the historical font asset; text remains partial. Portable SDK/compiler discovery replaces private paths. The default sanitizer/PNG suite now uses only original fixtures; external game execution is historical. Compiler change is an inline original test-fixture replacement, with no translation-semantic change. Core statuses and rubric weights are unchanged.",
+    "2026-10-16: re-audited small API improvements with original generated-native assertions, seven new expected-error cases and an RP2040 fixture build. Four raw helpers and camera/cursor/palt gates are supported within the bounded model; select is partial. Other improved graphics gates stay partial. Scope, weights and historical evidence are unchanged. See docs/SMALL-GAPS.md."
   ],
   "evidence_policy": "Historical external cartridge/build/hardware paths in test pointers are provenance from the private experiment and are not bundled. Fresh public execution is recorded separately in runtime-api-coverage.json; the historical profile is retained unchanged."
 }

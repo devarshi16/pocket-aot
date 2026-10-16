@@ -57,12 +57,13 @@ Directions map to PICO-8 buttons 0–3, A to 4 and B to 5. X or centre click pau
 - Signed 16.16 fixed-point values, wrapping arithmetic and basic math/bit/string functions. Decimal literals round to fixed point. Numeric edge behavior and RNG sequences are not independently PICO-8-verified.
 - Nil, booleans, strings, arrays/record tables, insertion/deletion/counting, and frame-boundary garbage collection, including cycles through tables, closures and lexical cells.
 - Named, local and anonymous native functions; function values, methods, mutable captures, top-level locals, multiple returns and last-expression expansion. Up to 16 call arguments/results; no varargs.
+- Raw table access/equality/length helpers, bounded `select` result tails, previous camera/cursor/clip state returns, transparency bitmasks and line continuation. See [small-gap details and remaining limits](../docs/SMALL-GAPS.md).
 - Lexical scopes, parallel/compound assignments, numeric `for`, built-in `all`/`pairs`/`ipairs` loops, `foreach`, `while`, `repeat`, `break`, conditionals and short-circuit logic.
 - `_init`, `_update`/`_update60`, `_draw`; basic pixel, rectangle, circle, line, text, sprite, map, clipping, camera and palette operations. Only documented implemented overloads are accepted.
 - Sprite/map/flag import and shared lower-sprite/map memory; player-one `btn`/`btnp` with default held-button repeat.
 - P8SCII source-byte conversion. Text uses an independently authored compact ASCII font; extended glyph and advanced text behavior are approximate.
 
-See [API audit](../compatibility/coverage/api-audit.json) and [full checklist](../compatibility/coverage/CHECKLIST.md) for per-entry limitations. The fixed API inventory has **26 supported, 40 partial and 42 missing entries**; a functional name is not a claim of complete behavior.
+See [API audit](../compatibility/coverage/api-audit.json) and [full checklist](../compatibility/coverage/CHECKLIST.md) for per-entry limitations. The fixed API inventory has **33 supported, 38 partial and 37 missing entries**; a functional name is not a claim of complete behavior.
 
 ## Limits and recovery
 
@@ -89,12 +90,14 @@ python3 converter/coverage_report.py --check
 | Runtime/closure C assertions | 2,100 frames; cells, iterators, multiple returns and string arena |
 | `semantics.p8` | 5,000 generated-native frames; arithmetic, ordering, scopes, tables, cyclic GC, graphics/shared memory |
 | `functions.p8` | 5,000 frames; captures, function values, methods and return expansion |
+| `api_overloads.p8` | 2,500 frames; raw helpers, select/native result lists, clipping/transparency pixels and line continuation |
+| Seven generated invalid API calls | Controlled select index/type, raw table/key/type and aliased arity failures |
 | Generated infinite loop | Expected controlled instruction-budget failure |
 | Generated oversized table | Expected controlled table-entry failure |
 | Generated unsupported `reload` / `poke` | Explicit conversion rejection, no generated game output |
 | Semantic-fixture PNG roundtrip | Source/ROM identity plus 600 sanitized generated-native frames |
 
-The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **33/108 functional API names across five sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
+The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **42/108 functional API names across 13 sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
 
 `test_png.py --arm-build` additionally builds UF2 when the SDK and Arm compiler are installed. `test_pipeline.py --external-cart /path/to/game.p8` explicitly adds a private local source check; repeated flags add more. This never downloads, publishes or flashes the supplied game, and the resulting coverage is labeled as including external sources.
 

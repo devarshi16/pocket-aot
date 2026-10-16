@@ -21,10 +21,74 @@
     "origin": "original-public-fixture"
   },
   {
+    "test": "api-overloads",
+    "frames": 2500,
+    "result": "AOT_HOST_OK frames=2500 entries=4 strings=2 operations=45359 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
     "test": "loop-budget",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: frame instruction budget exceeded frame=0",
     "source_sha256": "2de506aef5442f034e35b8635e6b7fa729fb8a222c770e9c98921fb411bec241",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "select-zero",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: select index out of range frame=0",
+    "source_sha256": "9bcd88a5c785e9b69330fd18aed91eaa44e74b011ee033c0422a6c33584830bf",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "select-negative",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: select index out of range frame=0",
+    "source_sha256": "bef7797d068b0cebab5a973a05d90276dbeb87cc1ac98451aba3f9874d14e991",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "select-type",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: number expected frame=0",
+    "source_sha256": "ed421a216159edb32d8063a34ab22233c7b26cb81e4f648d828cdf7b220ca5d3",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "rawget-type",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: table expected frame=0",
+    "source_sha256": "723323cbcff33aec7740a06454de5c0b01e25abecd9ce07dd3b51fb66ba2326a",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "rawset-nil-key",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: nil table key frame=0",
+    "source_sha256": "47601daa1ecafdc17f9ed7dcff1d28592df945fc880a799a6489e133a7e7fcc9",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "rawlen-type",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: table expected frame=0",
+    "source_sha256": "46d488f7c326a97965941832f502e0a8dc4de39692e12bb5520977bab9162fac",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "raw-alias-arity",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: rawget requires two arguments frame=0",
+    "source_sha256": "cfedcf555c578f3b09ef3163627beac604111e08bbe60f8e3f9bb96c93006793",
     "source_modified": false,
     "origin": "original-public-fixture"
   },

@@ -9,7 +9,8 @@ pub const APIS: &[&str] = &[
     "color", "cursor", "btn", "btnp", "add", "del", "deli", "count", "flr", "ceil", "abs", "min",
     "max", "mid", "sgn", "sqrt", "sin", "cos", "atan2", "rnd", "srand", "time", "t", "tostr",
     "tonum", "type", "sub", "sfx", "music", "assert", "foreach", "split", "band", "bor", "bxor",
-    "bnot", "shl", "shr", "lshr", "rotl", "rotr", "ord", "chr", "stat", "printh",
+    "bnot", "shl", "shr", "lshr", "rotl", "rotr", "ord", "chr", "stat", "printh", "rawget",
+    "rawset", "rawequal", "rawlen", "select",
 ];
 #[derive(Clone)]
 struct Binding {
@@ -490,31 +491,35 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "chr" => (0, 16),
         "pset" => (2, 3),
         "pget" | "sget" | "mget" => (2, 2),
-        "rectfill" | "rect" | "line" => (4, 5),
+        "rectfill" | "rect" => (4, 5),
+        "line" => (0, 5),
+        "rawget" | "rawequal" => (2, 2),
+        "rawset" => (3, 3),
+        "select" => (1, 16),
         "circfill" | "circ" => (2, 4),
         "print" => (1, 4),
         "spr" => (3, 7),
         "sspr" => (6, 10),
-        "sset" | "mset" => (3, 3),
+        "sset" => (2, 3),
+        "mset" => (3, 3),
         "map" => (0, 7),
         "fget" | "count" | "tostr" | "deli" => (1, 2),
         "fset" | "add" | "sub" => (2, 3),
         "camera" | "btn" | "btnp" => (0, 2),
         "cursor" => (0, 3),
-        "clip" => (0, 4),
+        "clip" => (0, 5),
         "pal" => (0, 3),
         "palt" => (0, 2),
         "min" | "max" | "atan2" | "del" => (2, 2),
         "mid" => (3, 3),
         "sfx" => (1, 4),
         "music" => (0, 4),
-        "assert" => (1, 2),
+        "assert" => (1, 16),
         _ => (1, 1),
     };
     if n < min
         || n > max
-        || (name == "clip" && n != 0 && n != 4)
-        || (name == "palt" && n == 1)
+        || (name == "clip" && n != 0 && n != 4 && n != 5)
         || (name == "pal" && n == 1)
     {
         Err(Error::new(
@@ -863,11 +868,20 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
     }
     for (i, n) in APIS.iter().enumerate() {
         if names.contains(*n) {
-            e.line(format!(
-                "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
-                10000 + i,
-                n
-            ));
+            // These builtins publish their own result list, including zero results.
+            // Keep other APIs scalar: e.g. foreach may leave callback results behind.
+            if matches!(*n, "camera" | "cursor" | "clip" | "select" | "assert") {
+                e.line(format!(
+                    "case {}:return p8_api_id(P8_API_{},argc,argv);",
+                    10000 + i,
+                    n
+                ));
+            } else {
+                e.line(format!(
+                    "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
+                    10000 + i, n
+                ));
+            }
         }
     }
     e.line("default:p8_fail(\"invalid native function\");return p8_nil();}}");

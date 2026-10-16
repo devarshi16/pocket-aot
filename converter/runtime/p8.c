@@ -41,6 +41,9 @@ static uint8_t palette[16],transparent[16],previous,pressed;
 static uint16_t held_frames[6];
 static int camera_x,camera_y,clip_x0,clip_y0,clip_x1,clip_y1,draw_color,cursor_x,cursor_y;
 static uint32_t random_state;
+static int line_x,line_y;
+static bool line_started;
+static int screen_bound(int n){return n<0?0:n>128?128:n;}
 
 void p8_fail(const char *s){snprintf(p8_error,sizeof p8_error,"%s",s);longjmp(p8_guard,1);}
 void p8_tick(void){if(!budget--)p8_fail("frame instruction budget exceeded");p8_operations++;}
@@ -201,7 +204,14 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_pset)){pixel(I(0,0),I(1,0),C(2));return p8_nil();}
  if(IS(P8_API_pget)){int x=I(0,0)-camera_x,y=I(1,0)-camera_y;return p8_int((unsigned)x<128&&(unsigned)y<128?game_frame[y*128+x]:0);}
  if(IS(P8_API_rectfill)||IS(P8_API_rect)){int x=I(0,0),y=I(1,0),xx=I(2,0),yy=I(3,0),c=C(4);draw_color=c&15;if(IS(P8_API_rectfill))rectfill(x,y,xx,yy,c);else{line_draw(x,y,xx,y,c);line_draw(xx,y,xx,yy,c);line_draw(xx,yy,x,yy,c);line_draw(x,yy,x,y,c);}return p8_nil();}
- if(IS(P8_API_line)){if(argc<4)p8_fail("line requires four coordinates in this subset");int c=C(4);draw_color=c&15;line_draw(I(0,0),I(1,0),I(2,0),I(3,0),c);return p8_nil();}
+ if(IS(P8_API_line)){
+  if(argc>5)p8_fail("line accepts at most five arguments");
+  if(argc<2){if(argc)draw_color=I(0,6)&15;line_started=false;return p8_nil();}
+  int x=I(0,0),y=I(1,0),c=argc<4?C(2):C(4);draw_color=c&15;
+  if(argc>=4){line_x=x;line_y=y;x=I(2,0);y=I(3,0);line_started=true;}
+  if(line_started)line_draw(line_x,line_y,x,y,c);
+  line_x=x;line_y=y;line_started=true;return p8_nil();
+ }
  if(IS(P8_API_circfill)||IS(P8_API_circ)){int c=C(3);draw_color=c&15;circle(I(0,0),I(1,0),I(2,4),c,IS(P8_API_circfill));return p8_nil();}
  if(IS(P8_API_print)){
   char description[128];const char *s=A(0).tag==P8_STR?string(A(0)):p8_describe(A(0),description,sizeof description);bool implicit=argc<=2;
@@ -215,21 +225,46 @@ V p8_api_id(int id,int argc,const V *argv){
   draw_color=c&15;p8_text(s,x,y,c);cursor_x=0;cursor_y=y+6*lines;return p8_int(x+4*(int)strlen(s));
  }
  if(IS(P8_API_color)){int old=draw_color;draw_color=I(0,6)&15;return p8_int(old);}
- if(IS(P8_API_cursor)){cursor_x=I(0,0);cursor_y=I(1,0);if(argc>2)draw_color=I(2,6)&15;return p8_nil();}
- if(IS(P8_API_camera)){camera_x=I(0,0);camera_y=I(1,0);return p8_nil();}
- if(IS(P8_API_clip)){clip_x0=I(0,0);clip_y0=I(1,0);clip_x1=clip_x0+I(2,128);clip_y1=clip_y0+I(3,128);if(clip_x0<0)clip_x0=0;if(clip_y0<0)clip_y0=0;if(clip_x1>128)clip_x1=128;if(clip_y1>128)clip_y1=128;return p8_nil();}
+ if(IS(P8_API_cursor)){V old[]={p8_int(cursor_x),p8_int(cursor_y)};cursor_x=I(0,0);cursor_y=I(1,0);if(argc>2)draw_color=I(2,6)&15;return p8_return(2,old);}
+ if(IS(P8_API_camera)){V old[]={p8_int(camera_x),p8_int(camera_y)};camera_x=I(0,0);camera_y=I(1,0);return p8_return(2,old);}
+ if(IS(P8_API_clip)){
+  V old[]={p8_int(clip_x0),p8_int(clip_y0),p8_int(clip_x1-clip_x0),p8_int(clip_y1-clip_y0)};
+  int x=I(0,0),y=I(1,0),x1=screen_bound(x+I(2,128)),y1=screen_bound(y+I(3,128));
+  x=screen_bound(x);y=screen_bound(y);
+  if(p8_truth(A(4))){if(x<clip_x0)x=clip_x0;if(y<clip_y0)y=clip_y0;if(x1>clip_x1)x1=clip_x1;if(y1>clip_y1)y1=clip_y1;}
+  clip_x0=x;clip_y0=y;clip_x1=x1<x?x:x1;clip_y1=y1<y?y:y1;
+  return p8_return(4,old);
+ }
  if(IS(P8_API_pal)){if(!argc){for(int i=0;i<16;i++)palette[i]=i;return p8_nil();}if(I(2,0)!=0)p8_fail("screen palette remapping is not supported yet");palette[I(0,0)&15]=I(1,0)&15;return p8_nil();}
- if(IS(P8_API_palt)){if(!argc){for(int i=0;i<16;i++)transparent[i]=(i==0);}else if(argc==1)p8_fail("palt bitmask overload is not supported yet");else transparent[I(0,0)&15]=p8_truth(A(1));return p8_nil();}
+ if(IS(P8_API_palt)){
+  unsigned old=0;for(int i=0;i<16;i++)old|=(unsigned)transparent[i]<<(15-i);
+  if(!argc){for(int i=0;i<16;i++)transparent[i]=(i==0);}
+  else if(argc==1){unsigned mask=(unsigned)I(0,0)&65535;for(int i=0;i<16;i++)transparent[i]=(mask>>(15-i))&1;}
+  else transparent[I(0,0)&15]=p8_truth(A(1));
+  return p8_int((int)old);
+ }
  if(IS(P8_API_spr)){sprite(I(0,0),I(1,0),I(2,0),I(3,1),I(4,1),p8_truth(A(5)),p8_truth(A(6)));return p8_nil();}
  if(IS(P8_API_sspr)){int sx=I(0,0),sy=I(1,0),sw=I(2,1),sh=I(3,1),dx=I(4,0),dy=I(5,0),dw=I(6,sw),dh=I(7,sh);bool fx=p8_truth(A(8)),fy=p8_truth(A(9));if(sw<1||sh<1||dw<1||dh<1||dw>1024||dh>1024)p8_fail("unsupported sspr dimensions");for(int y=0;y<dh;y++)for(int x=0;x<dw;x++){int c=sample(sx+(fx?dw-1-x:x)*sw/dw,sy+(fy?dh-1-y:y)*sh/dh);if(!transparent[c])pixel(dx+x,dy+y,c);}return p8_nil();}
  if(IS(P8_API_sget))return p8_int(sample(I(0,0),I(1,0)));
- if(IS(P8_API_sset)){set_sample(I(0,0),I(1,0),I(2,0));return p8_nil();}
+ if(IS(P8_API_sset)){set_sample(I(0,0),I(1,0),C(2));return p8_nil();}
  if(IS(P8_API_mget))return p8_int(mapget(I(0,0),I(1,0)));
  if(IS(P8_API_mset)){mapset(I(0,0),I(1,0),I(2,0));return p8_nil();}
  if(IS(P8_API_fget)){int f=flags[I(0,0)&255];return argc>1?p8_bool((f>>(I(1,0)&7))&1):p8_int(f);}
  if(IS(P8_API_fset)){int i=I(0,0)&255;if(argc==2)flags[i]=I(1,0);else if(p8_truth(A(2)))flags[i]|=1<<(I(1,0)&7);else flags[i]&=~(1<<(I(1,0)&7));return p8_nil();}
  if(IS(P8_API_map)){int mx=I(0,0),my=I(1,0),dx=I(2,0),dy=I(3,0),w=I(4,128),h=I(5,32),mask=I(6,0);if(w>128||h>64)p8_fail("map dimensions outside supported range");for(int y=0;y<h;y++)for(int x=0;x<w;x++){int tile=mapget(mx+x,my+y);if(tile&&(!mask||(flags[tile]&mask)))sprite(tile,dx+x*8,dy+y*8,1,1,false,false);}return p8_nil();}
  if(IS(P8_API_btn)||IS(P8_API_btnp)){if(I(1,0)!=0)p8_fail("only player one is supported");unsigned bits=IS(P8_API_btn)?game_buttons:pressed;if(!argc)return p8_int(bits);int b=I(0,0);return p8_bool((unsigned)b<6&&(bits&(1u<<b)));}
+ if(IS(P8_API_rawget)){if(argc!=2)p8_fail("rawget requires two arguments");return p8_get(A(0),A(1));}
+ if(IS(P8_API_rawset)){if(argc!=3)p8_fail("rawset requires three arguments");p8_set(A(0),A(1),A(2));return A(0);}
+ if(IS(P8_API_rawequal)){if(argc!=2)p8_fail("rawequal requires two arguments");return p8_bool(equal(A(0),A(1)));}
+ if(IS(P8_API_rawlen)){if(argc!=1)p8_fail("rawlen requires one argument");return p8_int(length(A(0)));}
+ if(IS(P8_API_select)){
+  if(argc<1||argc>P8_MAX_RESULTS)p8_fail("select requires 1 to 16 arguments");
+  if(A(0).tag==P8_STR&&string(A(0))[0]=='#'){V n=p8_int(argc-1);return p8_return(1,&n);}
+  int index=p8_number(A(0))/65536;
+  if(index<0)index=argc+index;else if(index>argc)index=argc;
+  if(index<1)p8_fail("select index out of range");
+  return p8_return(argc-index,argv+index);
+ }
  if(IS(P8_API_add)){V t=A(0),v=A(1);int len=length(t),i=I(2,len+1);if(i<1||i>len+1)p8_fail("invalid add index");for(int j=len;j>=i;j--)p8_set(t,p8_int(j+1),p8_get(t,p8_int(j)));p8_set(t,p8_int(i),v);return v;}
  if(IS(P8_API_del)||IS(P8_API_deli)){V t=A(0);int len=length(t),index=IS(P8_API_deli)?I(1,len):0;if(IS(P8_API_del))for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1))){index=i;break;}if(index<1||index>len)return p8_nil();V old=p8_get(t,p8_int(index));for(int i=index;i<len;i++)p8_set(t,p8_int(i),p8_get(t,p8_int(i+1)));p8_set(t,p8_int(len),p8_nil());return old;}
  if(IS(P8_API_count)){V t=A(0);int len=length(t);if(argc<2)return p8_int(len);int n=0;for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1)))n++;return p8_int(n);}
@@ -282,7 +317,7 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_sfx)||IS(P8_API_music))return p8_nil();
  if(IS(P8_API_printh)){if(argc!=1)p8_fail("printh file output unsupported");char description[128];const char *s=A(0).tag==P8_STR?string(A(0)):p8_describe(A(0),description,sizeof description);puts(s);return p8_nil();}
  if(IS(P8_API_stat)){if(I(0,-1)!=1)p8_fail("stat index unsupported");/* Native budget ratio, not an emulated PICO-8 CPU measurement. */return p8_num((int32_t)(((uint64_t)(200000-budget)*65536)/200000));}
- if(IS(P8_API_assert)){if(!p8_truth(A(0)))p8_fail(argc>1&&A(1).tag==P8_STR?string(A(1)):"cartridge assertion failed");return A(0);}
+ if(IS(P8_API_assert)){if(argc<1||argc>P8_MAX_RESULTS)p8_fail("assert requires 1 to 16 arguments");if(!p8_truth(A(0)))p8_fail(argc>1&&A(1).tag==P8_STR?string(A(1)):"cartridge assertion failed");return p8_return(argc,argv);}
  p8_fail("unimplemented API");return p8_nil();
 }
 #undef HAS
@@ -291,6 +326,11 @@ V p8_api_id(int id,int argc,const V *argv){
 #undef C
 #undef IS
 static const char *const api_names[P8_API_COUNT]={
+  [P8_API_rawget]="rawget",
+  [P8_API_rawset]="rawset",
+  [P8_API_rawequal]="rawequal",
+  [P8_API_rawlen]="rawlen",
+  [P8_API_select]="select",
   [P8_API_cls]="cls",
   [P8_API_pset]="pset",
   [P8_API_pget]="pget",
@@ -370,6 +410,6 @@ V p8_api(const char *name,int argc,const V *argv){
  p8_fail("unimplemented API");return p8_nil();
 }
 void p8_reset(void){memset(tables,0,sizeof tables);memset(entries,0,sizeof entries);memset(strings,0,sizeof strings);memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);memset(captures,0,sizeof captures);memcpy(gfx,p8_cart_gfx,sizeof gfx);memcpy(map_data,p8_cart_map,sizeof map_data);memcpy(flags,p8_cart_flags,sizeof flags);memset(game_frame,0,sizeof game_frame);
- for(int i=0;i<16;i++){palette[i]=i;transparent[i]=(i==0);}memset(held_frames,0,sizeof held_frames);camera_x=camera_y=clip_x0=clip_y0=cursor_x=cursor_y=0;clip_x1=clip_y1=128;draw_color=6;game_buttons=previous=pressed=0;p8_frames=p8_operations=p8_heap_entries=p8_heap_strings=0;depth=0;budget=200000;random_state=1;p8_error[0]=0;result_count=0;p8_program_clear();}
+ for(int i=0;i<16;i++){palette[i]=i;transparent[i]=(i==0);}memset(held_frames,0,sizeof held_frames);camera_x=camera_y=clip_x0=clip_y0=cursor_x=cursor_y=0;clip_x1=clip_y1=128;draw_color=6;game_buttons=previous=pressed=0;p8_frames=p8_operations=p8_heap_entries=p8_heap_strings=0;depth=0;budget=200000;random_state=1;p8_error[0]=0;result_count=0;line_x=line_y=0;line_started=false;p8_program_clear();}
 void p8_begin_frame(uint8_t held){budget=200000;depth=0;result_count=0;game_buttons=held;pressed=held&~previous;for(int i=0;i<6;i++){if(held&(1u<<i)){if(held_frames[i]<65535)held_frames[i]++;if(held_frames[i]>=16&&((held_frames[i]-16)%4)==0)pressed|=1u<<i;}else held_frames[i]=0;}previous=held;}
 void p8_end_frame(void){p8_collect();p8_frames++;}

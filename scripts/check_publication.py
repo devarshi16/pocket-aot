@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-OWN_CARTS = {"converter/tests/semantics.p8", "converter/tests/functions.p8"}
+OWN_CARTS = {"converter/tests/semantics.p8", "converter/tests/functions.p8", "converter/tests/api_overloads.p8"}
 DENIED_ROOTS = {
     "recovery", "firmware", "converted", "target", "bin", "logs",
     ".cache", ".toolchain", ".python-tools", ".venv", "local-carts",

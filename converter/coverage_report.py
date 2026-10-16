@@ -333,6 +333,18 @@ def make_status(manifest, summary):
         f"| Historical random game sample | {summary['sample_built']}/{summary['sample_size']} built; {summary['sample_owner_confirmed']}/{summary['sample_size']} owner-confirmed | Earlier RP2040/Waveshare display and controls check; not a new public-suite result |",
         "| Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |",
         f"| Secondary weighted planning index | {summary['core_capability_score_percent']:.1f}% | Judgment-based rubric; not remaining time or compatibility |", "",
+        "## Low-hanging work", "",
+        "The latest pass adds four raw table helpers and partial `select`, closes previous-position returns "
+        "for `camera`/`cursor` and the `palt` bitmask gap, and improves `clip`, `line`, `sset` and `assert` overloads. "
+        "The latter graphics functions retain their documented partial limits. "
+        "See [completed work and the next small gaps](SMALL-GAPS.md) for test evidence and priorities.", "",
+        "| Next candidate | Why it is comparatively small |", "| --- | --- |",
+        "| Numeric-string indices for `select` | Reuse numeric parsing; test coercion and error boundaries |",
+        "| Multiple-result `ord` | Reuse result transport, after establishing string-end/count semantics |",
+        "| Raw `.rom` input | Reuse the existing decoder and conversion path; add malformed-input tests |",
+        "| `tostr` / `tonum` flags and forms | Share parsing/formatting work; fixed-point edge cases make this a medium task |", "",
+        "Audio, coroutines, metatables, complete memory emulation and persistent saves require larger changes. "
+        "These priorities are an effort assessment, not measured remaining time.", "",
         "## API coverage", "",
         "Supported means implemented within the stated audit gate, with no specific omission identified. "
         "Partial means a known limitation. Missing includes silent no-ops. Audio stubs receive no functional credit. "
@@ -465,6 +477,7 @@ def main():
         (ROOT / "converter/PROGRESS.md").write_text(make_overview(manifest, summary))
         (DEST / "CHECKLIST.md").write_text(make_checklist(manifest, entries, summary))
         (DEST / "progress-summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+        (DEST / "assessment-check.json").write_text(json.dumps({k: v for k, v in summary.items() if k not in ("categories", "source_hashes")}, indent=2) + "\n")
         (ROOT / "docs").mkdir(exist_ok=True)
         (ROOT / "docs/STATUS.md").write_text(make_status(manifest, summary))
         (ROOT / "docs/status.svg").write_text(make_status_svg(manifest, summary))

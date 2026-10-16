@@ -110,6 +110,11 @@ enum P8ApiId {
  P8_API_printh,
  P8_API_stat,
  P8_API_assert,
+ P8_API_rawget,
+ P8_API_rawset,
+ P8_API_rawequal,
+ P8_API_rawlen,
+ P8_API_select,
  P8_API_COUNT
 };
 #ifdef P8_API_PROFILE
