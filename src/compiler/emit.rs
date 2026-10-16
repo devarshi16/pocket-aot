@@ -518,11 +518,7 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "assert" => (1, 16),
         _ => (1, 1),
     };
-    if n < min
-        || n > max
-        || (name == "clip" && n != 0 && n != 4 && n != 5)
-        || (name == "pal" && n == 1)
-    {
+    if n < min || n > max || (name == "clip" && n != 0 && n != 4 && n != 5) {
         Err(Error::new(
             0,
             &format!("unsupported {name}() overload with {n} arguments"),

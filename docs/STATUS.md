@@ -10,7 +10,7 @@ Inspired by the subsystem reporting style of [AnyPS5](https://boykopovar.github.
 | --- | ---: | --- |
 | Functional API names | 71/108 (65.7%) | Some implemented behavior, including partial support |
 | API inventory | 33 supported · 38 partial · 37 missing | Fixed set of canonical names; aliases counted once |
-| Current public host execution | 44/108 | Entry points reached in 20 completed original-fixture sanitizer scenarios |
+| Current public host execution | 51/108 | Entry points reached in 34 completed original-fixture sanitizer scenarios |
 | Historical private host execution | 48/108 | Earlier 8-scenario run, including external cartridges that are not bundled |
 | Historical random game sample | 1/20 built; 1/20 owner-confirmed | Earlier RP2040/Waveshare display and controls check; not a new public-suite result |
 | Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |
@@ -18,14 +18,14 @@ Inspired by the subsystem reporting style of [AnyPS5](https://boykopovar.github.
 
 ## Low-hanging work
 
-The first batch added raw table helpers and drawing overloads. The second adds numeric conversion/formatting flags, numeric-string selectors, string byte indexing, bounded in-range `ord` results, flag-index bounds and raw ROM input. String/numeric APIs retain their documented partial limits; only the raw ROM gate closes in the second batch. See [completed work and remaining small gaps](SMALL-GAPS.md) for evidence and scope.
+Three small-gap batches have added table helpers, drawing overloads, numeric/string behavior and raw ROM input. The latest adds draw-palette state/table/reset support, leading-dot radix literals and bitwise function defaults. These subfeature changes do not on their own earn an additional whole-gate credit. See [completed work and remaining small gaps](SMALL-GAPS.md) for evidence and scope.
 
-| Next candidate | Why it is comparatively small |
+| Next candidate | Work still needed |
 | --- | --- |
-| Numeric `pal` previous-state return | Reuse the palette map after establishing return/reset semantics |
-| Leading-dot hex/binary source literals | Small frontend change with valid/malformed literal fixtures |
-| `ord` boundary/count cases | Extend the working result transport after a reference check |
-| Decimal `tonum` fidelity | Exact fixed-point parsing is medium work; radix paths already preserve bits |
+| `ord` boundary/count cases | Establish zero/negative counts and overruns with a trustworthy reference |
+| Decimal `tonum` fidelity | Exact fixed-point wrapping, rounding and exponent parsing |
+| Drawing-state completion | Verify table/reset returns and fractional clipping; display/secondary palettes need backend/fill-pattern work |
+| Rounded rectangles / ellipses | Reuse drawing primitives with reference raster and fill-pattern fixtures |
 
 Audio, coroutines, metatables, complete memory emulation and persistent saves require larger changes. These priorities are an effort assessment, not measured remaining time.
 
@@ -36,13 +36,13 @@ Supported means implemented within the stated audit gate, with no specific omiss
 | Subsystem | Supported | Partial | Missing | Total | Public host exercised |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | system | 2 | 2 | 8 | 12 | 1 |
-| graphics | 6 | 15 | 5 | 26 | 16 |
+| graphics | 6 | 15 | 5 | 26 | 17 |
 | tables | 5 | 2 | 0 | 7 | 6 |
 | input | 0 | 2 | 0 | 2 | 0 |
 | audio | 0 | 0 | 2 | 2 | 0 |
 | map | 0 | 3 | 1 | 4 | 2 |
 | memory | 0 | 0 | 10 | 10 | 0 |
-| math | 16 | 6 | 0 | 22 | 7 |
+| math | 16 | 6 | 0 | 22 | 13 |
 | menu | 0 | 0 | 1 | 1 | 0 |
 | strings | 0 | 7 | 0 | 7 | 7 |
 | persistence | 0 | 0 | 3 | 3 | 0 |

@@ -56,9 +56,10 @@ Directions map to PICO-8 buttons 0–3, A to 4 and B to 5. X or centre click pau
 
 ## Implemented starting set
 
-- Signed 16.16 fixed-point values, wrapping arithmetic and basic math/bit/string functions. Decimal literals round to fixed point. Numeric edge behavior and RNG sequences are not independently PICO-8-verified.
+- Signed 16.16 fixed-point values, including leading-dot hex/binary fractions, wrapping arithmetic and basic math/bit/string functions. Decimal literals round to fixed point. Numeric edge behavior and RNG sequences are not independently PICO-8-verified.
 - Nil, booleans, strings, arrays/record tables, insertion/deletion/counting, and frame-boundary garbage collection, including cycles through tables, closures and lexical cells.
 - Named, local and anonymous native functions; function values, methods, mutable captures, top-level locals, multiple returns and last-expression expansion. Up to 16 call arguments/results; no varargs.
+- Draw-palette numeric previous-register returns, bounded sparse/list table palettes and default mapping/transparency reset. Native bitwise functions convert operands with zero fallback; operator type checks remain strict. These use the existing partial numeric model and retain documented palette limits.
 - Raw table access/equality/length helpers, bounded `select` result tails, previous camera/cursor/clip state returns, transparency bitmasks and line continuation. See [small-gap details and remaining limits](../docs/SMALL-GAPS.md).
 - Lexical scopes, parallel/compound assignments, numeric `for`, built-in `all`/`pairs`/`ipairs` loops, `foreach`, `while`, `repeat`, `break`, conditionals and short-circuit logic.
 - `_init`, `_update`/`_update60`, `_draw`; basic pixel, rectangle, circle, line, text, sprite, map, clipping, camera and palette operations. Only documented implemented overloads are accepted.
@@ -96,14 +97,17 @@ python3 converter/coverage_report.py --check
 | `functions.p8` | 5,000 frames; captures, function values, methods and return expansion |
 | `api_overloads.p8` | 2,500 frames; raw helpers, select/native result lists, clipping/transparency pixels and line continuation |
 | `numeric_strings.p8` | 2,500 frames; numeric flags/radices, result counts, roundtrips, byte indexing and bounded `ord` |
-| Thirteen generated invalid API calls | Controlled select/raw-table/index/ord range/type/arity failures |
+| `fraction_literals.p8` | 2,500 frames; exact leading-dot hex/binary bits, signs and concatenation boundaries |
+| `palette_state.p8` | 2,500 frames; previous registers, sparse/list palettes, transparency, pixels and reset |
+| `bitwise_defaults.p8` | 2,500 frames; per-operand fallback/conversion, shifts/rotates and aliases |
+| Twenty-four generated invalid API/operator calls | Controlled select/raw-table/index/ord/palette type/range/arity failures and strict bitwise operator errors |
 | Generated infinite loop | Expected controlled instruction-budget failure |
 | Generated oversized table | Expected controlled table-entry failure |
 | Generated unsupported `reload` / `poke` | Explicit conversion rejection, no generated game output |
 | Semantic-fixture PNG roundtrip | Source/ROM identity plus 600 sanitized generated-native frames |
 | Original raw ROM containers | Four forms with source/data/generated-C identity and 600 sanitizer frames each; eight malformed inputs rejected |
 
-The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **44/108 functional API names across 20 sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
+The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **51/108 functional API names across 34 sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
 
 `test_png.py --arm-build` additionally builds UF2 when the SDK and Arm compiler are installed. `test_pipeline.py --external-cart /path/to/game.p8` explicitly adds a private local source check; repeated flags add more. This never downloads, publishes or flashes the supplied game, and the resulting coverage is labeled as including external sources.
 

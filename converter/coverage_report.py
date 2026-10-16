@@ -334,15 +334,15 @@ def make_status(manifest, summary):
         "| Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |",
         f"| Secondary weighted planning index | {summary['core_capability_score_percent']:.1f}% | Judgment-based rubric; not remaining time or compatibility |", "",
         "## Low-hanging work", "",
-        "The first batch added raw table helpers and drawing overloads. The second adds numeric conversion/formatting "
-        "flags, numeric-string selectors, string byte indexing, bounded in-range `ord` results, flag-index bounds and raw ROM input. "
-        "String/numeric APIs retain their documented partial limits; only the raw ROM gate closes in the second batch. "
+        "Three small-gap batches have added table helpers, drawing overloads, numeric/string behavior and raw ROM input. "
+        "The latest adds draw-palette state/table/reset support, leading-dot radix literals and bitwise function defaults. "
+        "These subfeature changes do not on their own earn an additional whole-gate credit. "
         "See [completed work and remaining small gaps](SMALL-GAPS.md) for evidence and scope.", "",
-        "| Next candidate | Why it is comparatively small |", "| --- | --- |",
-        "| Numeric `pal` previous-state return | Reuse the palette map after establishing return/reset semantics |",
-        "| Leading-dot hex/binary source literals | Small frontend change with valid/malformed literal fixtures |",
-        "| `ord` boundary/count cases | Extend the working result transport after a reference check |",
-        "| Decimal `tonum` fidelity | Exact fixed-point parsing is medium work; radix paths already preserve bits |", "",
+        "| Next candidate | Work still needed |", "| --- | --- |",
+        "| `ord` boundary/count cases | Establish zero/negative counts and overruns with a trustworthy reference |",
+        "| Decimal `tonum` fidelity | Exact fixed-point wrapping, rounding and exponent parsing |",
+        "| Drawing-state completion | Verify table/reset returns and fractional clipping; display/secondary palettes need backend/fill-pattern work |",
+        "| Rounded rectangles / ellipses | Reuse drawing primitives with reference raster and fill-pattern fixtures |", "",
         "Audio, coroutines, metatables, complete memory emulation and persistent saves require larger changes. "
         "These priorities are an effort assessment, not measured remaining time.", "",
         "## API coverage", "",

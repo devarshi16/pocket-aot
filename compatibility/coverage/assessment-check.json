@@ -40,7 +40,7 @@
         "supported": 6,
         "missing": 5
       },
-      "exercised": 16
+      "exercised": 17
     },
     {
       "name": "tables",
@@ -91,7 +91,7 @@
         "supported": 16,
         "partial": 6
       },
-      "exercised": 7
+      "exercised": 13
     },
     {
       "name": "menu",
@@ -138,14 +138,14 @@
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 44,
-  "regression_scenario_count": 20,
+  "regression_exercised_api_names": 51,
+  "regression_scenario_count": 34,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 48,
   "historical_regression_scenario_count": 8,
   "historical_evidence_date": "2026-10-16",
   "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
-  "recorded_rust_tests": 34,
+  "recorded_rust_tests": 37,
   "functional_api_name_presence_percent": 65.74074074074075,
   "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
   "sample_size": 20,

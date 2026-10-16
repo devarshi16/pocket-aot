@@ -37,6 +37,30 @@
     "origin": "original-public-fixture"
   },
   {
+    "test": "fraction-literals",
+    "frames": 2500,
+    "result": "AOT_HOST_OK frames=2500 entries=0 strings=0 operations=102542 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "palette-state",
+    "frames": 2500,
+    "result": "AOT_HOST_OK frames=2500 entries=2 strings=0 operations=40208 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "318e55e47b8b00565d5fc843058d9bf5c3903990c933c9209bdf640fbc0fe681",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "bitwise-defaults",
+    "frames": 2500,
+    "result": "AOT_HOST_OK frames=2500 entries=0 strings=0 operations=152871 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
     "test": "loop-budget",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: frame instruction budget exceeded frame=0",
@@ -145,6 +169,94 @@
     "frames": 1,
     "result": "CARTRIDGE_ERROR: rawget requires two arguments frame=0",
     "source_sha256": "cfedcf555c578f3b09ef3163627beac604111e08bbe60f8e3f9bb96c93006793",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-screen",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: only draw palette remapping is supported frame=0",
+    "source_sha256": "731c762f9215161425d240c0a57ea92082b5a21cbd1687c1f4669541377f7859",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-table-args",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: table pal accepts at most two arguments frame=0",
+    "source_sha256": "4a839d0102fe47c6dcf6539114b31065bb93ea2ca93c0d3d358dd8a60e2cc686",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-table-key",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: pal table keys must be integers from 0 to 16 frame=0",
+    "source_sha256": "8fe21e0ec8164fad836cc060b7783a84d5a7ef0d0a18be8f3789c73c35a6d7bd",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-table-value",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: pal table values must be numbers frame=0",
+    "source_sha256": "a0761ccc929fcac3d42ca713ec079f4100512f5a68379833df506d0ed3f40669",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-zero-aliases",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: pal table cannot contain both color zero indices frame=0",
+    "source_sha256": "1839e3008efef7dbe9ebce7b0b69ea81763271ea589a3b4dc4b08c6c5f33e73c",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-fractional-key",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: pal table keys must be integers from 0 to 16 frame=0",
+    "source_sha256": "a8be25944196812aa26d671844298516328ce682bf3a3c209657af56c75ae244",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-string-key",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: pal table keys must be integers from 0 to 16 frame=0",
+    "source_sha256": "2da15ecc0c273c999589cba1446cc26085ef197957a4272efddcc261d1f2bfdc",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "pal-alias-arity",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: pal accepts at most three arguments frame=0",
+    "source_sha256": "39b36d1269215b372c2969fbf9b249e6f7548a1a4da3d979055380dce06ebf8a",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "bit-operator-nil",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: number expected frame=0",
+    "source_sha256": "cf0bd018dc9bc5fbec8ffb17adf7e0e6b04625de66fddf829d8d461361165d26",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "bit-not-nil",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: number expected frame=0",
+    "source_sha256": "4fe2066f29168703f3ce2cd74aad054cb895d3f40d3810ad0ee5f0129189da58",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
+    "test": "bit-operator-string",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: number expected frame=0",
+    "source_sha256": "62d57e95bde3a3cd78ba99d60e2ad72dc3eb30389a303ffcb79eaeea2bdccfa5",
     "source_modified": false,
     "origin": "original-public-fixture"
   },

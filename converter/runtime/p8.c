@@ -221,6 +221,9 @@ static bool parse_fixed(V value,int32_t *result){
  if(stop!=end||!isfinite(number)||number< -32768.0||number>=32768.0)return false;
  *result=(int32_t)floor(number*65536.0);return true;
 }
+/* API bitwise operands follow numeric conversion with zero fallback.
+ * Operators continue to use p8_number and reject non-number values. */
+static int32_t bit_argument(V value){int32_t result;return parse_fixed(value,&result)?result:0;}
 static bool parse_raw_integer(V value,int32_t *result){
  if(value.tag!=P8_STR)return false;
  const char *at=string(value),*end=at+strlen(at);
@@ -276,7 +279,37 @@ V p8_api_id(int id,int argc,const V *argv){
   clip_x0=x;clip_y0=y;clip_x1=x1<x?x:x1;clip_y1=y1<y?y:y1;
   return p8_return(4,old);
  }
- if(IS(P8_API_pal)){if(!argc){for(int i=0;i<16;i++)palette[i]=i;return p8_nil();}if(I(2,0)!=0)p8_fail("screen palette remapping is not supported yet");palette[I(0,0)&15]=I(1,0)&15;return p8_nil();}
+ if(IS(P8_API_pal)){
+  if(argc>3)p8_fail("pal accepts at most three arguments");
+  bool table=A(0).tag==P8_TABLE;
+  if((table?I(1,0):argc==1?I(0,0):I(2,0))!=0)
+   p8_fail("only draw palette remapping is supported");
+  if(!argc||(!table&&argc==1)){
+   for(int i=0;i<16;i++){palette[i]=i;transparent[i]=(i==0);}
+   return p8_nil();
+  }
+  if(table){
+   if(argc>2)p8_fail("table pal accepts at most two arguments");
+   int tid=table_id(A(0));
+   /* Keep this overload bounded to the documented palette/list indices. */
+   for(int at=tables[tid].head;at;at=entries[at-1].next){
+    V key=entries[at-1].key,value=entries[at-1].value;
+    if(key.tag!=P8_NUM||(key.n&65535)||key.n<0||key.n>16*65536)
+     p8_fail("pal table keys must be integers from 0 to 16");
+    if(value.tag!=P8_NUM)p8_fail("pal table values must be numbers");
+   }
+   if(p8_get(A(0),p8_int(0)).tag!=P8_NIL&&p8_get(A(0),p8_int(16)).tag!=P8_NIL)
+    p8_fail("pal table cannot contain both color zero indices");
+   for(int i=0;i<=16;i++){
+    V value=p8_get(A(0),p8_int(i));
+    if(value.tag!=P8_NIL)palette[i&15]=integer(value)&15;
+   }
+   return p8_nil();
+  }
+  int color=I(0,0)&15,old=palette[color]|(transparent[color]<<4);
+  palette[color]=I(1,0)&15;
+  return p8_int(old);
+ }
  if(IS(P8_API_palt)){
   unsigned old=0;for(int i=0;i<16;i++)old|=(unsigned)transparent[i]<<(15-i);
   if(!argc){for(int i=0;i<16;i++)transparent[i]=(i==0);}
@@ -328,10 +361,10 @@ V p8_api_id(int id,int argc,const V *argv){
   }while(true);
   return out;
  }
- if(IS(P8_API_band)||IS(P8_API_bor)||IS(P8_API_bxor)){int32_t value=p8_number(A(0));for(int i=1;i<argc;i++){int32_t other=p8_number(A(i));if(IS(P8_API_band))value&=other;else if(IS(P8_API_bor))value|=other;else value^=other;}return p8_num(value);}
- if(IS(P8_API_bnot))return p8_num(~p8_number(A(0)));
+ if(IS(P8_API_band)||IS(P8_API_bor)||IS(P8_API_bxor)){int32_t value=bit_argument(A(0));for(int i=1;i<argc;i++){int32_t other=bit_argument(A(i));if(IS(P8_API_band))value&=other;else if(IS(P8_API_bor))value|=other;else value^=other;}return p8_num(value);}
+ if(IS(P8_API_bnot))return p8_num(~bit_argument(A(0)));
  if(IS(P8_API_shl)||IS(P8_API_shr)||IS(P8_API_lshr)||IS(P8_API_rotl)||IS(P8_API_rotr)){
-  int amount=I(1,0);uint32_t bits=(uint32_t)p8_number(A(0));bool left=IS(P8_API_shl)||IS(P8_API_rotl);
+  int amount=bit_argument(A(1))>>16;uint32_t bits=(uint32_t)bit_argument(A(0));bool left=IS(P8_API_shl)||IS(P8_API_rotl);
   if(amount<0){amount=-amount;left=!left;}unsigned n=(unsigned)amount;
   if(IS(P8_API_rotl)||IS(P8_API_rotr)){n&=31;if(!n)return p8_num((int32_t)bits);return p8_num((int32_t)(left?((bits<<n)|(bits>>(32-n))):((bits>>n)|(bits<<(32-n)))));}
   if(n>=32)return p8_num(!left&&IS(P8_API_shr)&&((int32_t)bits<0)?-1:0);

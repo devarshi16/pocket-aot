@@ -97,6 +97,9 @@ def main():
         check("functions", ROOT / "converter/tests/functions.p8", 5000)
         check("api-overloads", ROOT / "converter/tests/api_overloads.p8", 2500)
         check("numeric-strings", ROOT / "converter/tests/numeric_strings.p8", 2500)
+        check("fraction-literals", ROOT / "converter/tests/fraction_literals.p8", 2500)
+        check("palette-state", ROOT / "converter/tests/palette_state.p8", 2500)
+        check("bitwise-defaults", ROOT / "converter/tests/bitwise_defaults.p8", 2500)
         for name, body, expected in [
             ("loop-budget", "function _update() while true do end end", "frame instruction budget exceeded"),
             ("select-zero", "function _init() select(0,1) end", "select index out of range"),
@@ -112,6 +115,17 @@ def main():
             ("rawset-nil-key", "function _init() rawset({},nil,1) end", "nil table key"),
             ("rawlen-type", "function _init() rawlen(false) end", "table expected"),
             ("raw-alias-arity", "function _init() local get=rawget get({}) end", "rawget requires two arguments"),
+            ("pal-screen", "function _init() pal(8,9,1) end", "only draw palette remapping is supported"),
+            ("pal-table-args", "function _init() pal({},0,0) end", "table pal accepts at most two arguments"),
+            ("pal-table-key", "function _init() pal({[17]=8}) end", "pal table keys must be integers from 0 to 16"),
+            ("pal-table-value", "function _init() pal({[1]=false}) end", "pal table values must be numbers"),
+            ("pal-zero-aliases", "function _init() pal({[0]=1,[16]=2}) end", "pal table cannot contain both color zero indices"),
+            ("pal-fractional-key", "function _init() pal({[1.5]=8}) end", "pal table keys must be integers from 0 to 16"),
+            ("pal-string-key", 'function _init() pal({color=8}) end', "pal table keys must be integers from 0 to 16"),
+            ("pal-alias-arity", "function _init() local p=pal p(1,2,0,4) end", "pal accepts at most three arguments"),
+            ("bit-operator-nil", "function _init() local a=nil&1 end", "number expected"),
+            ("bit-not-nil", "function _init() local a=~nil end", "number expected"),
+            ("bit-operator-string", 'function _init() local a="4"|2 end', "number expected"),
             ("heap-bound", "function _init() local a={} for i=1,5000 do a[i]=i end end", "table entries exhausted"),
         ]:
             source = base / (name + ".p8")

@@ -28,24 +28,40 @@ The original [`api_overloads.p8`](../converter/tests/api_overloads.p8) fixture a
 | Sprite flag reads | `fget` returns zero/false outside sprite/bit bounds instead of wrapping into another entry; valid `fset` modes have assertions | Exact write-boundary behavior remains outside this pass |
 | Raw ROM input | `.rom`/`.p8.rom` accepted by the build helper and GUI; shared container path with PNG | Full 32 KB containers, optionally with a 32-byte trailer; code-only tiny ROMs and multi-cart exports are excluded |
 
-The new original [`numeric_strings.p8`](../converter/tests/numeric_strings.p8) asserts these behaviors for 2,500 sanitized frames. Six new controlled-error cases cover invalid selectors/index types and unsupported `ord` ranges. The public native profile now has 20 completed scenarios. [Container tests](../converter/test_containers.py) separately verify four original ROM forms (plain, legacy compression, modern compression, trailer), source/asset/generated-C identity, 600 sanitized frames per form, and eight malformed inputs. PNG decoding uses the same helper and retains its 600-frame check.
+The new original [`numeric_strings.p8`](../converter/tests/numeric_strings.p8) asserts these behaviors for 2,500 sanitized frames. Six new controlled-error cases cover invalid selectors/index types and unsupported `ord` ranges. At that checkpoint the public native profile had 20 completed scenarios. [Container tests](../converter/test_containers.py) separately verify four original ROM forms (plain, legacy compression, modern compression, trailer), source/asset/generated-C identity, 600 sanitized frames per form, and eight malformed inputs. PNG decoding uses the same helper and retains its 600-frame check.
 
 The numeric fixture also builds from a compressed raw ROM all the way to RP2040 UF2, with generated stack-budget checks. No device was flashed. A GUI test isolation fix removes launcher environment/executable-directory dependence; it now checks the current inventory rather than a frozen API total.
 
 The only newly closed rubric gate in this batch is **raw ROM input**. API name counts remain 71 functional / 108; the improved string/numeric APIs retain partial credit. The 0.75-point increase uses the same scope and weights and is not a game-compatibility claim.
 
+## Third batch (52.2% unchanged)
+
+| Gap | Implemented now | Still incomplete |
+| --- | --- | --- |
+| Numeric palette state | `pal(c0,c1[,0])` returns the previous draw register, including its transparency bit; remapping preserves transparency and existing pixels | Display/secondary palettes and memory-mapped palette state remain unsupported |
+| Palette tables and reset | Sparse/list draw tables with integer keys 0–16; index 16 addresses color 0; `pal()` and `pal(0)` restore default mapping/transparency | Conflicting keys 0 and 16, unsupported key/value forms and other palettes fail explicitly. Exact table/reset return semantics remain unverified |
+| Fractional source literals | Leading-dot hex/binary forms such as `0x.8` and `0b.1`, with exact fixed-point bits; empty, malformed and excess-precision forms are rejected | Existing limits of four hex/16 binary fractional digits and a 32-bit whole part remain; decimal fidelity is unchanged |
+| Native bitwise defaults | Each operand of the nine function forms falls back to zero when conversion fails; valid numeric strings use the existing parser. Operator forms retain strict type errors | Numeric-string conversion inherits the partial decimal/coercion behavior; this adds no independent reference validation |
+
+Original [`palette_state.p8`](../converter/tests/palette_state.p8), [`fraction_literals.p8`](../converter/tests/fraction_literals.p8) and [`bitwise_defaults.p8`](../converter/tests/bitwise_defaults.p8) cover saved mappings, pixel/sprite effects, reset, collection, exact fraction bits, numeric-string operands and zero fallback in each operand position. Negative cases cover unsupported palette forms, malformed literals and nonnumeric operator operands.
+
+Confirmed validation: **37 Rust tests and 34 completed sanitizer scenarios**, plus the existing PNG and four-form ROM checks. Each new original fixture passed 2,500 host frames and built to RP2040 UF2 with another 600 sanitized host frames and the stack-budget checks. No device was flashed.
+
+These close small behavior gaps within entries that already had implementation credit. The planning index stays **52.2%**: palette and numeric language coverage remain **partial**, with no new fully closed rubric gate or game-compatibility claim.
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |
 | --- | --- | --- |
-| 1 | Numeric `pal` previous-state return | Small: reuse the existing palette map, after establishing return shape and reset behavior; table and display-palette overloads remain larger gaps |
-| 2 | Leading-dot hex/binary source literals | Small frontend change: accept valid fractional forms and reject empty/malformed literals; runtime numeric strings already support fractions |
-| 3 | `ord` boundary/count behavior | Small implementation after a reference check: settle zero/negative counts, overruns and invalid-input result counts; the manual's multi-result example has an apparent string-length typo |
-| 4 | Decimal `tonum` fidelity | Medium: replace host floating-point parsing/flooring with exact fixed-point parsing, including wrapping, rounding and exponent boundaries |
-| 5 | Rounded rectangles / ellipses | Medium: reuse pixel/clipping primitives, but establish reference raster and fill-pattern behavior |
+| 1 | `ord` boundary/count behavior | Small implementation after obtaining a trustworthy reference oracle: settle zero/negative counts, overruns and invalid-input result counts; the manual's multi-result example has an apparent string-length typo |
+| 2 | Decimal `tonum` fidelity | Medium: replace host floating-point parsing/flooring with exact fixed-point parsing, including wrapping, rounding and exponent boundaries |
+| 3 | Drawing state and palette completion | Establish table/reset return behavior and exact off-screen/fractional clipping state; display palettes require backend work, while secondary palettes depend on fill patterns |
+| 4 | Rounded rectangles / ellipses | Medium: reuse pixel/clipping primitives, but establish reference raster and fill-pattern behavior |
 
 Audio, coroutines, metatables, full memory/register emulation and persistent saves are larger dependencies. A stub or a successful build would not close their acceptance gates.
 
 ## Semantics used
 
 The [official PICO-8 manual](https://www.lexaloffle.com/dl/docs/pico-8_manual.html) documents these drawing overloads and advanced Lua functions. The [official 0.2 release notes](https://www.lexaloffle.com/bbs/?tid=37695) establish previous-state returns, default `sset` color and line pen reset. The [PICO-8 author’s string-indexing explanation](https://www.lexaloffle.com/bbs/?pid=116744) establishes positive/negative single-byte indexing with empty out-of-range reads. The [Lua 5.2 base-library source](https://www.lua.org/source/5.2/lbaselib.c.html) specifies raw access, `select` range handling and assertion returns. These informed implementation and hand-authored assertions; they are **not an independent reference execution suite**.
+
+The [PICO-8 contributor's explanation of `pal` register returns](https://www.lexaloffle.com/bbs/?pid=76285) supplies the transparency-bit detail. The manual distinguishes native bitwise zero fallback from strict operator errors. Numeric-string conversion is corroborated by z8lua's [bitwise functions](https://github.com/samhocevar/z8lua/blob/zepto8/lpico8lib.c#L116-L155), [conversion helper](https://github.com/samhocevar/z8lua/blob/zepto8/lvm.c#L32-L40) and [API conversion](https://github.com/samhocevar/z8lua/blob/zepto8/lapi.c#L318-L327); this emulator implementation is supporting evidence, **not an independent PICO-8 oracle**.

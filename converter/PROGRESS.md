@@ -6,20 +6,20 @@ Open Pocket Arcade and choose **PROGRESS** for the interactive subsystem tables,
 
 **Functional API names: 71/108 (65.7%).** The inventory contains 33 supported, 38 partial and 37 missing entries. A functional name may implement only a subset of the official behavior. Silent audio stubs remain missing.
 
-**Observed in current public host regression: 44/108 API names** across 20 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
+**Observed in current public host regression: 51/108 API names** across 34 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
 
 **Historical frozen game sample: 1/20 native builds; 1/20 display/control confirmations.** The original cartridges and their firmware are not bundled. Independent PICO-8 reference conformance remains unmeasured.
 
 | API subsystem | Supported | Partial | Missing | Total | Exercised in host scenarios |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | system | 2 | 2 | 8 | 12 | 1 |
-| graphics | 6 | 15 | 5 | 26 | 16 |
+| graphics | 6 | 15 | 5 | 26 | 17 |
 | tables | 5 | 2 | 0 | 7 | 6 |
 | input | 0 | 2 | 0 | 2 | 0 |
 | audio | 0 | 0 | 2 | 2 | 0 |
 | map | 0 | 3 | 1 | 4 | 2 |
 | memory | 0 | 0 | 10 | 10 | 0 |
-| math | 16 | 6 | 0 | 22 | 7 |
+| math | 16 | 6 | 0 | 22 | 13 |
 | menu | 0 | 0 | 1 | 1 | 0 |
 | strings | 0 | 7 | 0 | 7 | 7 |
 | persistence | 0 | 0 | 3 | 3 | 0 |
@@ -75,7 +75,7 @@ The GUI, thumbnail browsing, import and USB flashing are supporting tooling. The
 - Historical frozen random sample: 1/20 built native firmware (5%). 1/20 also has owner-confirmed display and controls. This sample result is not universal game compatibility or proof that every scene in a game is correct.
 - Canonical API-name presence: 71/108 (65.7%) has some functional implementation. Aliases are counted once and silent audio stubs are excluded. Presence is not full API semantics.
 - Independent PICO-8 conformance: **not measured**. Existing assertions, sanitizers and hardware checks are useful evidence but do not compare against a separate PICO-8 reference implementation.
-- Public test evidence: 34 recorded passing Rust tests; native semantic/function/GC fixtures and controlled failures. Historical private evidence includes 20 fixed sampled cartridges and owner confirmation for Dusk Child. The dashboard uses recorded tests and host execution profiles; it does not reflash hardware when viewed or refreshed.
+- Public test evidence: 37 recorded passing Rust tests; native semantic/function/GC fixtures and controlled failures. Historical private evidence includes 20 fixed sampled cartridges and owner confirmation for Dusk Child. The dashboard uses recorded tests and host execution profiles; it does not reflash hardware when viewed or refreshed.
 
 A game needs every capability it uses. One missing memory or save API can reject an otherwise well-supported game, so a roughly half-built capability profile can coexist with a 5% sampled pass rate. Completing the checklist would still not make games exceeding the Pico's RAM, flash or processing capacity fit automatically.
 

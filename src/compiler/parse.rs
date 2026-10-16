@@ -868,6 +868,35 @@ mod tests {
         assert!(tokens.iter().any(|t| t.s == "0x1"));
     }
     #[test]
+    fn radix_fraction_tokens_preserve_signs_and_concat_boundaries() {
+        let tokens = lex("a=-0X.8 b=-0B.1 c=0x.8..'x' d=0b.1..'y'").unwrap();
+        let text: Vec<&str> = tokens.iter().map(|token| token.s.as_str()).collect();
+        assert_eq!(
+            text,
+            [
+                "a", "=", "-", "0X.8", "b", "=", "-", "0B.1", "c", "=", "0x.8", "..", "x", "d",
+                "=", "0b.1", "..", "y", "<eof>"
+            ]
+        );
+        let statements = Parser::new("x=-0X.8 y=-0B.1").unwrap().parse().unwrap();
+        for statement in statements {
+            let Stmt::Assign(_, values, _) = statement else {
+                panic!("expected a signed assignment")
+            };
+            assert!(
+                matches!(&values[0], Expr::Unary(op, value) if op == "-" && matches!(&**value, Expr::Num(_)))
+            );
+        }
+        let tokens = lex("0x.8... 0b.1.. 0x1..").unwrap();
+        assert_eq!(
+            tokens
+                .iter()
+                .map(|token| token.s.as_str())
+                .collect::<Vec<_>>(),
+            ["0x.8", "...", "0b.1", "..", "0x1", "..", "<eof>"]
+        );
+    }
+    #[test]
     fn multiple_returns_parentheses_and_table_tail() {
         let body = Parser::new("function f() return 1,g() end\na,b=f()\nc,d=(f())\nx={[99]=1, f(),}\ny={f(), z=1}\nz={(f())}\nfunction compact()return .5end").unwrap().parse().unwrap();
         let Stmt::Function(_, _, b) = &body[0] else {

@@ -64,9 +64,13 @@
       "tests": [
         "fixed_literals_wrap_hex_and_keep_fractions",
         "lex_binary_and_concat_compound_without_ambiguity",
-        "semantics.p8: _init"
+        "semantics.p8: _init",
+        "radix_fractions_without_integer_digits_keep_exact_fixed_bits",
+        "empty_malformed_or_excess_precision_radix_literals_are_rejected",
+        "radix_fraction_tokens_preserve_signs_and_concat_boundaries",
+        "converter/tests/fraction_literals.p8"
       ],
-      "limits": "Decimal/hex/binary literals and wrapping fixed arithmetic exist; power has a restricted finite range, and library math uses host libm rather than a PICO-8 accuracy oracle.",
+      "limits": "Leading-dot decimal/hex/binary literals, malformed-radix rejection and wrapping fixed arithmetic exist. Hex fractions remain limited to4 digits, binary to16 and whole radix text to u32. Decimal rounding, restricted power ranges and libm fidelity remain partial.",
       "reference_validated": false
     },
     {
@@ -270,9 +274,10 @@
       ],
       "tests": [
         "lex_binary_and_concat_compound_without_ambiguity",
-        "runtime_closures.c"
+        "runtime_closures.c",
+        "converter/tests/bitwise_defaults.p8"
       ],
-      "limits": "& | ^^ ~ << >> and builtin bit/shift/rotate APIs exist. Operator shifts reject counts outside0..31; full reference edge semantics and all operator spellings not covered.",
+      "limits": "Fixed-width operators remain strict for non-number operands. Native bitwise functions separately apply per-operand numeric conversion/zero fallback, with numeric-string behavior using the existing partial parser. No independent oracle.",
       "reference_validated": false
     },
     {
@@ -383,6 +388,7 @@
   "audit_notes": [
     "Rechecked optional host instrumentation; no language behavior or capability-status changes. Runtime source locations are file-level references to avoid stale line offsets.",
     "2026-10-16: native builtin multiple-result transport now preserves camera/cursor/clip/select/assert results. New original fixture covers scalar parentheses, aliases, empty tails and callback-result isolation. Existing 16-value bound keeps the language gate partial; varargs remain missing.",
-    "Second small-gap pass: string indexing added through value lookup with rawget remaining table-only. tonum/ord result lists share the existing native bridge; language strings and multiple-return gates remain partial."
+    "Second small-gap pass: string indexing added through value lookup with rawget remaining table-only. tonum/ord result lists share the existing native bridge; language strings and multiple-return gates remain partial.",
+    "Third small-gap pass retains numeric partial status while adding exact leading-dot radix literals and malformed-input tests. Native bitwise fallback is distinct from unchanged strict operator behavior; no syntax/arity expansion for omitted bitwise operands is claimed."
   ]
 }

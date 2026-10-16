@@ -33,42 +33,61 @@ pub struct Output {
     pub apis: Vec<String>,
     pub warnings: Vec<String>,
 }
+fn radix_number(body: &str, radix: u32, fractional_digits: usize) -> Result<i32, Error> {
+    let (whole, fraction) = body.split_once('.').unwrap_or((body, ""));
+    let invalid = || {
+        Error::new(
+            0,
+            if radix == 2 {
+                "invalid binary number"
+            } else {
+                "invalid hexadecimal number"
+            },
+        )
+    };
+    // At least one digit is required, including when the integer part is omitted.
+    // Checking the complete body also rejects a second point instead of silently
+    // accepting only the first fraction.
+    if (whole.is_empty() && fraction.is_empty())
+        || !whole.chars().all(|ch| ch.is_digit(radix))
+        || !fraction.chars().all(|ch| ch.is_digit(radix))
+    {
+        return Err(invalid());
+    }
+    if fraction.len() > fractional_digits {
+        return Err(Error::new(
+            0,
+            if radix == 2 {
+                "binary fractions support at most 16 bits"
+            } else {
+                "hex fractions support at most four digits"
+            },
+        ));
+    }
+    let whole = if whole.is_empty() {
+        0
+    } else {
+        u32::from_str_radix(whole, radix).map_err(|_| invalid())?
+    };
+    let fraction = if fraction.is_empty() {
+        0
+    } else {
+        let bits_per_digit = if radix == 2 { 1 } else { 4 };
+        u32::from_str_radix(fraction, radix).map_err(|_| invalid())?
+            << ((fractional_digits - fraction.len()) * bits_per_digit)
+    };
+    Ok((whole.wrapping_shl(16) | fraction) as i32)
+}
 fn number(s: &str) -> Result<i32, Error> {
     if s.starts_with("0b") || s.starts_with("0B") {
-        let mut p = s[2..].split('.');
-        let whole = u32::from_str_radix(p.next().unwrap_or("0"), 2)
-            .map_err(|_| Error::new(0, "invalid binary number"))?;
-        let frac = p.next().unwrap_or("");
-        if frac.len() > 16 {
-            return Err(Error::new(0, "binary fractions support at most 16 bits"));
-        }
-        let fraction = if frac.is_empty() {
-            0
-        } else {
-            u32::from_str_radix(&format!("{frac:0<16}"), 2)
-                .map_err(|_| Error::new(0, "invalid binary fraction"))?
-        };
-        return Ok((whole.wrapping_shl(16) | fraction) as i32);
+        return radix_number(&s[2..], 2, 16);
     }
-    let value = if s.starts_with("0x") || s.starts_with("0X") {
-        let mut p = s[2..].split('.');
-        let whole = u32::from_str_radix(p.next().unwrap_or("0"), 16)
-            .map_err(|_| Error::new(0, "invalid hexadecimal number"))?;
-        let frac = p.next().unwrap_or("");
-        if frac.len() > 4 {
-            return Err(Error::new(0, "hex fractions support at most four digits"));
-        }
-        let fraction = if frac.is_empty() {
-            0
-        } else {
-            u32::from_str_radix(&format!("{frac:0<4}"), 16)
-                .map_err(|_| Error::new(0, "invalid hex fraction"))?
-        };
-        return Ok((whole.wrapping_shl(16) | fraction) as i32);
-    } else {
-        s.parse::<f64>()
-            .map_err(|_| Error::new(0, "invalid decimal number"))?
-    };
+    if s.starts_with("0x") || s.starts_with("0X") {
+        return radix_number(&s[2..], 16, 4);
+    }
+    let value = s
+        .parse::<f64>()
+        .map_err(|_| Error::new(0, "invalid decimal number"))?;
     if !value.is_finite() || !(-32768.0..=32768.0).contains(&value) {
         return Err(Error::new(0, "number outside PICO-8 16.16 range"));
     }
@@ -200,6 +219,57 @@ mod tests {
     fn fixed_literals_wrap_hex_and_keep_fractions() {
         assert_eq!(number("0xffff.ffff").unwrap(), -1);
         assert_eq!(number("2.5").unwrap(), 163840);
+    }
+
+    #[test]
+    fn radix_fractions_without_integer_digits_keep_exact_fixed_bits() {
+        for (source, bits) in [
+            ("0x.8", 0x0000_8000),
+            ("0X.0001", 0x0000_0001),
+            ("0x.ffff", 0x0000_ffff),
+            ("0x8000.0001", 0x8000_0001),
+            ("0x10000.8", 0x0000_8000),
+            ("0x1.", 0x0001_0000),
+            ("0b.1", 0x0000_8000),
+            ("0B.0000000000000001", 0x0000_0001),
+            ("0b.1111111111111111", 0x0000_ffff),
+            ("0b1000000000000000.0000000000000001", 0x8000_0001),
+            ("0b1.", 0x0001_0000),
+        ] {
+            assert_eq!(number(source).unwrap() as u32, bits, "{source}");
+        }
+        let output = compile(
+            include_str!("../../converter/tests/fraction_literals.p8"),
+            "Fraction literals",
+        )
+        .unwrap();
+        assert!(output.c.contains("p8_num((int32_t)UINT32_C(32768))"));
+        assert!(output.c.contains("p8_num((int32_t)UINT32_C(1))"));
+    }
+
+    #[test]
+    fn empty_malformed_or_excess_precision_radix_literals_are_rejected() {
+        for literal in [
+            "0x",
+            "0X.",
+            "0b",
+            "0B.",
+            "0x.8.1",
+            "0x1.2.3",
+            "0b.1.0",
+            "0b1.0.1",
+            "0xg",
+            "0b2",
+            "0b.2",
+            "0x.00001",
+            "0b.00000000000000001",
+            "0x100000000",
+            "0b100000000000000000000000000000000",
+        ] {
+            assert!(number(literal).is_err(), "number accepted {literal}");
+            let source = format!("pico-8 cartridge\n__lua__\nx={literal}");
+            assert!(compile(&source, "invalid").is_err(), "compiled {literal}");
+        }
     }
 
     #[test]
