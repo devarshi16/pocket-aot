@@ -33,42 +33,61 @@ pub struct Output {
     pub apis: Vec<String>,
     pub warnings: Vec<String>,
 }
+fn radix_number(body: &str, radix: u32, fractional_digits: usize) -> Result<i32, Error> {
+    let (whole, fraction) = body.split_once('.').unwrap_or((body, ""));
+    let invalid = || {
+        Error::new(
+            0,
+            if radix == 2 {
+                "invalid binary number"
+            } else {
+                "invalid hexadecimal number"
+            },
+        )
+    };
+    // At least one digit is required, including when the integer part is omitted.
+    // Checking the complete body also rejects a second point instead of silently
+    // accepting only the first fraction.
+    if (whole.is_empty() && fraction.is_empty())
+        || !whole.chars().all(|ch| ch.is_digit(radix))
+        || !fraction.chars().all(|ch| ch.is_digit(radix))
+    {
+        return Err(invalid());
+    }
+    if fraction.len() > fractional_digits {
+        return Err(Error::new(
+            0,
+            if radix == 2 {
+                "binary fractions support at most 16 bits"
+            } else {
+                "hex fractions support at most four digits"
+            },
+        ));
+    }
+    let whole = if whole.is_empty() {
+        0
+    } else {
+        u32::from_str_radix(whole, radix).map_err(|_| invalid())?
+    };
+    let fraction = if fraction.is_empty() {
+        0
+    } else {
+        let bits_per_digit = if radix == 2 { 1 } else { 4 };
+        u32::from_str_radix(fraction, radix).map_err(|_| invalid())?
+            << ((fractional_digits - fraction.len()) * bits_per_digit)
+    };
+    Ok((whole.wrapping_shl(16) | fraction) as i32)
+}
 fn number(s: &str) -> Result<i32, Error> {
     if s.starts_with("0b") || s.starts_with("0B") {
-        let mut p = s[2..].split('.');
-        let whole = u32::from_str_radix(p.next().unwrap_or("0"), 2)
-            .map_err(|_| Error::new(0, "invalid binary number"))?;
-        let frac = p.next().unwrap_or("");
-        if frac.len() > 16 {
-            return Err(Error::new(0, "binary fractions support at most 16 bits"));
-        }
-        let fraction = if frac.is_empty() {
-            0
-        } else {
-            u32::from_str_radix(&format!("{frac:0<16}"), 2)
-                .map_err(|_| Error::new(0, "invalid binary fraction"))?
-        };
-        return Ok((whole.wrapping_shl(16) | fraction) as i32);
+        return radix_number(&s[2..], 2, 16);
     }
-    let value = if s.starts_with("0x") || s.starts_with("0X") {
-        let mut p = s[2..].split('.');
-        let whole = u32::from_str_radix(p.next().unwrap_or("0"), 16)
-            .map_err(|_| Error::new(0, "invalid hexadecimal number"))?;
-        let frac = p.next().unwrap_or("");
-        if frac.len() > 4 {
-            return Err(Error::new(0, "hex fractions support at most four digits"));
-        }
-        let fraction = if frac.is_empty() {
-            0
-        } else {
-            u32::from_str_radix(&format!("{frac:0<4}"), 16)
-                .map_err(|_| Error::new(0, "invalid hex fraction"))?
-        };
-        return Ok((whole.wrapping_shl(16) | fraction) as i32);
-    } else {
-        s.parse::<f64>()
-            .map_err(|_| Error::new(0, "invalid decimal number"))?
-    };
+    if s.starts_with("0x") || s.starts_with("0X") {
+        return radix_number(&s[2..], 16, 4);
+    }
+    let value = s
+        .parse::<f64>()
+        .map_err(|_| Error::new(0, "invalid decimal number"))?;
     if !value.is_finite() || !(-32768.0..=32768.0).contains(&value) {
         return Err(Error::new(0, "number outside PICO-8 16.16 range"));
     }
@@ -82,6 +101,56 @@ fn array(name: &str, bytes: &[u8]) -> String {
     }
     out.push_str("};\n");
     out
+}
+
+/// Music (0x3100) and SFX (0x3200) bytes in PICO-8 memory layout, from the
+/// text sections. An SFX line is 4 header bytes (editor mode, speed, loop
+/// start, loop end) then 32 notes of pitch(2) waveform(1) volume(1) effect(1)
+/// hex digits. A music line is a flag byte and four channel bytes.
+fn sound_rom(sfx: Option<&String>, music: Option<&String>) -> Result<Vec<u8>, Error> {
+    let mut rom = vec![0u8; 0x1200];
+    let hex = |text: &str| {
+        u32::from_str_radix(text, 16).map_err(|_| Error::new(0, "invalid hex sound data"))
+    };
+    if let Some(section) = sfx {
+        for (n, line) in section.lines().filter(|l| !l.trim().is_empty()).enumerate() {
+            let line = line.trim();
+            if n >= 64 || line.len() != 168 || !line.is_ascii() {
+                return Err(Error::new(0, "invalid __sfx__ dimensions"));
+            }
+            let base = 0x100 + n * 68;
+            for k in 0..4 {
+                rom[base + 64 + k] = hex(&line[k * 2..k * 2 + 2])? as u8;
+            }
+            for note in 0..32 {
+                let at = 8 + note * 5;
+                let pitch = hex(&line[at..at + 2])? & 63;
+                let wave = hex(&line[at + 2..at + 3])?;
+                let volume = hex(&line[at + 3..at + 4])? & 7;
+                let effect = hex(&line[at + 4..at + 5])? & 7;
+                let bits = pitch | (wave & 7) << 6 | volume << 9 | effect << 12 | (wave >> 3) << 15;
+                rom[base + note * 2] = bits as u8;
+                rom[base + note * 2 + 1] = (bits >> 8) as u8;
+            }
+        }
+    }
+    if let Some(section) = music {
+        for (n, line) in section.lines().filter(|l| !l.trim().is_empty()).enumerate() {
+            let fields: Vec<&str> = line.split_whitespace().collect();
+            if n >= 64 || fields.len() != 2 || fields[0].len() != 2 || fields[1].len() != 8 {
+                return Err(Error::new(0, "invalid __music__ row"));
+            }
+            let flags = hex(fields[0])?;
+            for ch in 0..4 {
+                let mut byte = hex(&fields[1][ch * 2..ch * 2 + 2])? as u8 & 0x7f;
+                if ch < 3 && flags & (1 << ch) != 0 {
+                    byte |= 0x80;
+                }
+                rom[n * 4 + ch] = byte;
+            }
+        }
+    }
+    Ok(rom)
 }
 
 pub fn compile(text: &str, title: &str) -> Result<Output, Error> {
@@ -153,10 +222,12 @@ pub fn compile(text: &str, title: &str) -> Result<Output, Error> {
             }
         }
     }
+    let sound = sound_rom(sections.get("__sfx__"), sections.get("__music__"))?;
     let assets = "#include <stdint.h>\n".to_string()
         + &array("p8_cart_gfx", &gfx)
         + &array("p8_cart_map", &map)
-        + &array("p8_cart_flags", &flags);
+        + &array("p8_cart_flags", &flags)
+        + &array("p8_cart_sound", &sound);
     let mut warnings = vec![
         "Experimental subset; not full PICO-8 compatibility.".into(),
         "Extended text glyphs use placeholders; RNG is not PICO-8-identical.".into(),
@@ -203,10 +274,64 @@ mod tests {
     }
 
     #[test]
+    fn radix_fractions_without_integer_digits_keep_exact_fixed_bits() {
+        for (source, bits) in [
+            ("0x.8", 0x0000_8000),
+            ("0X.0001", 0x0000_0001),
+            ("0x.ffff", 0x0000_ffff),
+            ("0x8000.0001", 0x8000_0001),
+            ("0x10000.8", 0x0000_8000),
+            ("0x1.", 0x0001_0000),
+            ("0b.1", 0x0000_8000),
+            ("0B.0000000000000001", 0x0000_0001),
+            ("0b.1111111111111111", 0x0000_ffff),
+            ("0b1000000000000000.0000000000000001", 0x8000_0001),
+            ("0b1.", 0x0001_0000),
+        ] {
+            assert_eq!(number(source).unwrap() as u32, bits, "{source}");
+        }
+        let output = compile(
+            include_str!("../../converter/tests/fraction_literals.p8"),
+            "Fraction literals",
+        )
+        .unwrap();
+        assert!(output.c.contains("p8_num((int32_t)UINT32_C(32768))"));
+        assert!(output.c.contains("p8_num((int32_t)UINT32_C(1))"));
+    }
+
+    #[test]
+    fn empty_malformed_or_excess_precision_radix_literals_are_rejected() {
+        for literal in [
+            "0x",
+            "0X.",
+            "0b",
+            "0B.",
+            "0x.8.1",
+            "0x1.2.3",
+            "0b.1.0",
+            "0b1.0.1",
+            "0xg",
+            "0b2",
+            "0b.2",
+            "0x.00001",
+            "0b.00000000000000001",
+            "0x100000000",
+            "0b100000000000000000000000000000000",
+        ] {
+            assert!(number(literal).is_err(), "number accepted {literal}");
+            let source = format!("pico-8 cartridge\n__lua__\nx={literal}");
+            assert!(compile(&source, "invalid").is_err(), "compiled {literal}");
+        }
+    }
+
+    #[test]
     fn unknown_apis_and_unsupported_overloads_stop_conversion() {
         for (call, reason) in [
-            ("peek(0)", "unsupported function/API"),
-            ("line()", "overload"),
+            ("cstore(0,0,0)", "unsupported function/API"),
+            ("serial(0x804,0,1)", "unsupported function/API"),
+            ("line(1,2,3,4,5,6)", "overload"),
+            ("rawset({},1)", "overload"),
+            ("select()", "overload"),
         ] {
             let source = format!("pico-8 cartridge\n__lua__\nfunction _draw() {call} end");
             assert!(compile(&source, "test")
@@ -215,6 +340,29 @@ mod tests {
                 .message
                 .contains(reason));
         }
+    }
+
+    #[test]
+    fn native_api_results_and_draw_overloads_compile() {
+        let output = compile(
+            "pico-8 cartridge\n__lua__\nfunction _init() local x,y=camera() local c=cursor local a,b=c() local r={select(1,4,5)} local q=assert(true,8,9) rawset({},1,rawlen({})) end\nfunction _draw() clip(0,0,8,8,true) palt(0) sset(0,0) line() line(7) line(1,2) line(3,4,9) end",
+            "native-results",
+        ).unwrap();
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_camera,argc,argv)"));
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_cursor,argc,argv)"));
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_select,argc,argv)"));
+        assert!(output
+            .c
+            .contains("return p8_api_id(P8_API_assert,argc,argv)"));
+        assert!(output
+            .c
+            .contains("V result=p8_api_id(P8_API_rawlen,argc,argv);return p8_return(1,&result)"));
     }
 
     #[test]

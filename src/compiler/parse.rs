@@ -38,6 +38,8 @@ pub enum Stmt {
     Return(Vec<Expr>),
     Break,
     Block(Vec<Stmt>),
+    Goto(String),
+    Label(String),
 }
 
 fn ident_start(ch: char) -> bool {
@@ -122,6 +124,13 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
             i += 1;
             continue;
         }
+        // PICO-8 also accepts C-style line comments; integer division uses a backslash.
+        if c[i] == '/' && c.get(i + 1) == Some(&'/') {
+            while i < c.len() && c[i] != '\n' {
+                i += 1;
+            }
+            continue;
+        }
         if c[i] == '-' && c.get(i + 1) == Some(&'-') {
             i += 2;
             if let Some((level, body)) = long_open(&c, i) {
@@ -165,10 +174,10 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                             i += 1;
                             digits += 1;
                         }
-                        if value == 0 || value > 255 {
+                        if value > 255 {
                             return Err(Error::new(
                                 line,
-                                "numeric string escape must be between 1 and 255 in this subset",
+                                "numeric string escape must be between 0 and 255",
                             ));
                         }
                         s.push(byte_char(value));
@@ -187,12 +196,6 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                                 })?;
                             value = value * 16 + digit;
                             i += 1;
-                        }
-                        if value == 0 {
-                            return Err(Error::new(
-                                line,
-                                "NUL string bytes are not supported by the runtime",
-                            ));
                         }
                         s.push(byte_char(value));
                         continue;
@@ -242,12 +245,6 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                 } else {
                     if c[i] == '\n' {
                         line += 1;
-                    }
-                    if c[i] == '\0' {
-                        return Err(Error::new(
-                            line,
-                            "NUL string bytes are not supported by the runtime",
-                        ));
                     }
                     s.push(c[i]);
                     i += 1;
@@ -325,34 +322,24 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
             });
             continue;
         }
-        let mut s = c[i].to_string();
-        i += 1;
+        // Longest operator first, including PICO-8's >>>, <<>, >>< and their compound forms.
+        const OPERATORS: &[&str] = &[
+            ">>>=", "<<>=", ">><=", "...", ">>>", "<<>", ">><", "..=", "^^=", "<<=", ">>=", "\\=",
+            "==", "~=", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "%=", "..", "<<", ">>", "^^",
+            "&=", "|=", "^=", "::",
+        ];
+        let rest: String = c[i..(i + 4).min(c.len())].iter().collect();
+        let mut s = OPERATORS
+            .iter()
+            .find(|op| rest.starts_with(**op))
+            .map(|op| op.to_string())
+            .unwrap_or_else(|| c[i].to_string());
+        i += s.chars().count();
         // PICO-8 spells integer division with a backslash; keep a common AST operator.
         if s == "\\" {
             s = "//".into();
-        }
-        if s == "//" && c.get(i) == Some(&'=') {
-            s.push('=');
-            i += 1;
-        }
-        if i < c.len() {
-            let pair = format!("{}{}", s, c[i]);
-            if [
-                "==", "~=", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "%=", "..", "//", "<<", ">>",
-                "^^", "&=", "|=", "::",
-            ]
-            .contains(&pair.as_str())
-            {
-                s = pair;
-                i += 1;
-            }
-        }
-        if s == ".." && c.get(i) == Some(&'.') {
-            s.push('.');
-            i += 1;
-        } else if ["..", "//", "<<", ">>", "^^"].contains(&s.as_str()) && c.get(i) == Some(&'=') {
-            s.push('=');
-            i += 1;
+        } else if s == "\\=" {
+            s = "//=".into();
         }
         out.push(Token {
             s,
@@ -483,7 +470,9 @@ impl Parser {
             let mut branches = vec![(cond, self.block(&["elseif", "else", "end"])?)];
             while self.eat("elseif") {
                 let e = self.expr(0)?;
-                self.need("then")?;
+                if !self.eat("do") {
+                    self.need("then")?;
+                }
                 branches.push((e, self.block(&["elseif", "else", "end"])?));
             }
             let other = if self.eat("else") {
@@ -562,8 +551,13 @@ impl Parser {
         if self.eat("break") {
             return Ok(Stmt::Break);
         }
-        if self.at("goto") || self.at("::") {
-            return Err(self.err("goto statements and labels are not supported yet"));
+        if self.eat("goto") {
+            return Ok(Stmt::Goto(self.name()?));
+        }
+        if self.eat("::") {
+            let label = self.name()?;
+            self.need("::")?;
+            return Ok(Stmt::Label(label));
         }
         if self.eat("?") {
             let line = self.current_line;
@@ -604,7 +598,8 @@ impl Parser {
             return Ok(Stmt::Assign(lhs, rhs, local));
         }
         if [
-            "+=", "-=", "*=", "/=", "%=", "&=", "|=", "..=", "//=", "<<=", ">>=", "^^=",
+            "+=", "-=", "*=", "/=", "%=", "&=", "|=", "..=", "//=", "<<=", ">>=", "^^=", "^=",
+            ">>>=", "<<>=", ">><=",
         ]
         .iter()
         .any(|s| self.at(s))
@@ -630,8 +625,10 @@ impl Parser {
         let mut args = Vec::new();
         if !self.at(")") {
             loop {
-                if self.at("...") {
-                    return Err(self.err("varargs are not supported yet"));
+                // A trailing `...` parameter is kept as the reserved name "...".
+                if self.eat("...") {
+                    args.push("...".into());
+                    break;
                 }
                 args.push(self.name()?);
                 if !self.eat(",") {
@@ -692,7 +689,10 @@ impl Parser {
                 "nil" => Expr::Nil,
                 "true" => Expr::Bool(true),
                 "false" => Expr::Bool(false),
-                "-" | "not" | "#" | "~" => Expr::Unary(t.s, Box::new(self.expr(11)?)),
+                // `@`, `%` and `$` read memory as peek, peek2 and peek4.
+                "-" | "not" | "#" | "~" | "@" | "%" | "$" => {
+                    Expr::Unary(t.s, Box::new(self.expr(11)?))
+                }
                 "(" => {
                     let e = self.expr(0)?;
                     self.need(")")?;
@@ -716,7 +716,9 @@ impl Parser {
                         } else {
                             let v = self.expr(0)?;
                             let k = Expr::Num(array.to_string());
-                            if matches!(v, Expr::Call(..) | Expr::MethodCall(..)) {
+                            if matches!(v, Expr::Call(..) | Expr::MethodCall(..))
+                                || matches!(&v, Expr::Var(n) if n == "...")
+                            {
                                 tail_index = Some(array);
                             }
                             array += 1;
@@ -739,7 +741,7 @@ impl Parser {
                     let (args, body) = self.function_body()?;
                     Expr::Function(args, body)
                 }
-                "..." => return Err(Error::new(t.line, "varargs are not supported yet")),
+                "..." => Expr::Var("...".into()),
                 _ => {
                     if t.s.chars().next().is_some_and(ident_start) && !is_keyword(&t.s) {
                         Expr::Var(t.s)
@@ -775,7 +777,10 @@ impl Parser {
                 e = Expr::Call(Box::new(e), a);
                 continue;
             }
-            let op = self.tok().s.clone();
+            if self.tok().kind != 0 {
+                break;
+            }
+            let mut op = self.tok().s.clone();
             let Some((l, r)) = binding(&op) else {
                 break;
             };
@@ -783,6 +788,10 @@ impl Parser {
                 break;
             }
             self.take();
+            // Binary `~` is exclusive or, the same operation as `^^`.
+            if op == "~" {
+                op = "^^".into();
+            }
             let rhs = self.expr(r)?;
             e = Expr::Binary(op, Box::new(e), Box::new(rhs));
         }
@@ -802,9 +811,9 @@ fn binding(op: &str) -> Option<(u8, u8)> {
         "and" => (2, 3),
         "==" | "~=" | "!=" | "<" | ">" | "<=" | ">=" => (3, 4),
         "|" => (4, 5),
-        "^^" => (5, 6),
+        "^^" | "~" => (5, 6),
         "&" => (6, 7),
-        "<<" | ">>" => (7, 8),
+        "<<" | ">>" | ">>>" | "<<>" | ">><" => (7, 8),
         ".." => (8, 8),
         "+" | "-" => (9, 10),
         "*" | "/" | "//" | "%" => (10, 11),
@@ -866,6 +875,35 @@ mod tests {
         assert!(tokens.iter().any(|t| t.s == "..="));
         assert!(tokens.iter().any(|t| t.s == ">>="));
         assert!(tokens.iter().any(|t| t.s == "0x1"));
+    }
+    #[test]
+    fn radix_fraction_tokens_preserve_signs_and_concat_boundaries() {
+        let tokens = lex("a=-0X.8 b=-0B.1 c=0x.8..'x' d=0b.1..'y'").unwrap();
+        let text: Vec<&str> = tokens.iter().map(|token| token.s.as_str()).collect();
+        assert_eq!(
+            text,
+            [
+                "a", "=", "-", "0X.8", "b", "=", "-", "0B.1", "c", "=", "0x.8", "..", "x", "d",
+                "=", "0b.1", "..", "y", "<eof>"
+            ]
+        );
+        let statements = Parser::new("x=-0X.8 y=-0B.1").unwrap().parse().unwrap();
+        for statement in statements {
+            let Stmt::Assign(_, values, _) = statement else {
+                panic!("expected a signed assignment")
+            };
+            assert!(
+                matches!(&values[0], Expr::Unary(op, value) if op == "-" && matches!(&**value, Expr::Num(_)))
+            );
+        }
+        let tokens = lex("0x.8... 0b.1.. 0x1..").unwrap();
+        assert_eq!(
+            tokens
+                .iter()
+                .map(|token| token.s.as_str())
+                .collect::<Vec<_>>(),
+            ["0x.8", "...", "0b.1", "..", "0x1", "..", "<eof>"]
+        );
     }
     #[test]
     fn multiple_returns_parentheses_and_table_tail() {

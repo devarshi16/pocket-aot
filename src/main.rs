@@ -578,7 +578,9 @@ impl Arcade {
                             .color(GOLD),
                     );
                 }
-                if (c.source_file.ends_with(".p8") || c.source_file.ends_with(".png"))
+                if [".p8", ".png", ".rom"]
+                    .iter()
+                    .any(|ext| c.source_file.to_ascii_lowercase().ends_with(ext))
                     && c.status != "source_only"
                     && ui
                         .add_enabled(
@@ -941,7 +943,7 @@ impl Arcade {
         let mut convert = false;
         if self.import_open {
             egui::Window::new("Add a PICO-8 cartridge").open(&mut self.import_open).default_width(650.).show(ctx,|ui|{
-   ui.label("Choose a local .p8 or .p8.png cartridge, or drag it into Pocket Arcade.");ui.add_space(6.);
+   ui.label("Choose a local .p8, .p8.png or .p8.rom cartridge, or drag it into Pocket Arcade.");ui.add_space(6.);
    ui.label("Cartridge path");ui.add(egui::TextEdit::singleline(&mut self.import_path).desired_width(620.));
    ui.label("Title (optional)");ui.add(egui::TextEdit::singleline(&mut self.import_title).desired_width(620.));ui.add_space(8.);
    ui.label("Conversion runs on this computer. Unsupported features are reported. A prepared cartridge is added only after build checks pass.");
@@ -1067,7 +1069,8 @@ fn main() -> eframe::Result {
 mod tests {
     use super::*;
     fn app() -> (egui::Context, Arcade) {
-        let root = flasher::root_dir();
+        // Tests must read this checkout, regardless of a running launcher's environment.
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let mut cat = flasher::load_catalog(&root).unwrap();
         // UI tests use controlled metadata, independent of locally built UF2s.
         for c in &mut cat.cartridges {
@@ -1171,7 +1174,17 @@ mod tests {
         assert_eq!(a.screen, Screen::Progress);
         let dashboard = a.dashboard.as_ref().unwrap();
         assert_eq!(dashboard.api_counts.total(), 108);
-        assert_eq!(dashboard.api_counts.functional(), 66);
+        let inventory: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(a.root.join("compatibility/coverage/api-audit.json")).unwrap(),
+        )
+        .unwrap();
+        let implemented = inventory["apis"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|row| row["implemented"].as_bool() == Some(true))
+            .count();
+        assert_eq!(dashboard.api_counts.functional(), implemented);
         assert_eq!(dashboard.sample_built, 1);
         assert_eq!(dashboard.sample_confirmed, 1);
         assert!(a.receiver.is_none());

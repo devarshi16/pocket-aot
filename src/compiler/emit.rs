@@ -4,13 +4,125 @@ use super::{
 };
 use std::collections::{BTreeMap, BTreeSet};
 pub const APIS: &[&str] = &[
-    "cls", "pset", "pget", "rectfill", "rect", "line", "circfill", "circ", "print", "spr", "sspr",
-    "sget", "sset", "mget", "mset", "map", "fget", "fset", "camera", "clip", "pal", "palt",
-    "color", "cursor", "btn", "btnp", "add", "del", "deli", "count", "flr", "ceil", "abs", "min",
-    "max", "mid", "sgn", "sqrt", "sin", "cos", "atan2", "rnd", "srand", "time", "t", "tostr",
-    "tonum", "type", "sub", "sfx", "music", "assert", "foreach", "split", "band", "bor", "bxor",
-    "bnot", "shl", "shr", "lshr", "rotl", "rotr", "ord", "chr", "stat", "printh",
+    "cls",
+    "pset",
+    "pget",
+    "rectfill",
+    "rect",
+    "line",
+    "circfill",
+    "circ",
+    "print",
+    "spr",
+    "sspr",
+    "sget",
+    "sset",
+    "mget",
+    "mset",
+    "map",
+    "fget",
+    "fset",
+    "camera",
+    "clip",
+    "pal",
+    "palt",
+    "color",
+    "cursor",
+    "btn",
+    "btnp",
+    "add",
+    "del",
+    "deli",
+    "count",
+    "flr",
+    "ceil",
+    "abs",
+    "min",
+    "max",
+    "mid",
+    "sgn",
+    "sqrt",
+    "sin",
+    "cos",
+    "atan2",
+    "rnd",
+    "srand",
+    "time",
+    "t",
+    "tostr",
+    "tonum",
+    "type",
+    "sub",
+    "sfx",
+    "music",
+    "assert",
+    "foreach",
+    "split",
+    "band",
+    "bor",
+    "bxor",
+    "bnot",
+    "shl",
+    "shr",
+    "lshr",
+    "rotl",
+    "rotr",
+    "ord",
+    "chr",
+    "stat",
+    "printh",
+    "rawget",
+    "rawset",
+    "rawequal",
+    "rawlen",
+    "select",
+    "peek",
+    "poke",
+    "peek2",
+    "poke2",
+    "peek4",
+    "poke4",
+    "memcpy",
+    "memset",
+    "reload",
+    "cartdata",
+    "dget",
+    "dset",
+    "menuitem",
+    "flip",
+    "run",
+    "reset",
+    "stop",
+    "extcmd",
+    "oval",
+    "ovalfill",
+    "rrect",
+    "rrectfill",
+    "fillp",
+    "tline",
+    "setmetatable",
+    "getmetatable",
+    "all",
+    "pairs",
+    "ipairs",
+    "next",
+    "unpack",
+    "pack",
+    "cocreate",
+    "coresume",
+    "costatus",
+    "yield",
 ];
+/// Builtins that publish their own result list (possibly empty or several values).
+const MULTI_RESULT_APIS: &[&str] = &[
+    "camera", "cursor", "clip", "select", "assert", "tonum", "ord", "peek", "peek2", "peek4",
+    "next", "pairs", "ipairs", "unpack", "coresume", "yield",
+];
+/// Values per expression list. A final multi-value expression may add up to
+/// EXPANSION values beyond the fixed entries; this bounds each call site's
+/// stack array for the Pico's 16 KB stack.
+const MAX_LIST: usize = 64;
+const EXPANSION: usize = 16;
 #[derive(Clone)]
 struct Binding {
     c: String,
@@ -35,6 +147,10 @@ struct Emitter {
     functions: Vec<(usize, String)>,
     next_fn: usize,
     assigned: BTreeSet<String>,
+    /// Index of the first `...` value in argv, inside a vararg function.
+    vararg: Option<usize>,
+    /// Visible goto labels, innermost block last, mapped to unique C labels.
+    labels: Vec<BTreeMap<String, String>>,
 }
 impl Emitter {
     fn line(&mut self, s: impl AsRef<str>) {
@@ -121,6 +237,12 @@ impl Emitter {
         let saved_scopes = std::mem::take(&mut self.scopes);
         let saved_loops = self.loops;
         let saved_captures = std::mem::replace(&mut self.captures, nested_uses(body));
+        let saved_labels = std::mem::take(&mut self.labels);
+        let (args, vararg) = match args.split_last() {
+            Some((last, named)) if last == "..." => (named, Some(named.len())),
+            _ => (args, None),
+        };
+        let saved_vararg = std::mem::replace(&mut self.vararg, vararg);
         self.loops = 0;
         let mut scope = BTreeMap::new();
         for (i, (n, b)) in visible.iter().enumerate() {
@@ -148,6 +270,8 @@ impl Emitter {
         self.scopes = saved_scopes;
         self.loops = saved_loops;
         self.captures = saved_captures;
+        self.labels = saved_labels;
+        self.vararg = saved_vararg;
         self.functions.push((id, def));
         let caps = if visible.is_empty() {
             "NULL".into()
@@ -164,28 +288,43 @@ impl Emitter {
         Ok(self.val(format!("p8_closure({id},{},{caps})", visible.len())))
     }
     fn multi(e: &Expr) -> bool {
-        matches!(e, Expr::Call(..) | Expr::MethodCall(..))
+        matches!(e, Expr::Call(..) | Expr::MethodCall(..)) || is_vararg(e)
+    }
+    fn vararg_base(&self) -> Result<usize, Error> {
+        self.vararg
+            .ok_or_else(|| Error::new(0, "'...' used outside a vararg function"))
+    }
+    /// Append a final multi-value expression (call results or `...`) to `a`.
+    fn expand(&mut self, e: &Expr, a: &str, n: &str, capacity: usize) -> Result<(), Error> {
+        if is_vararg(e) {
+            let base = self.vararg_base()?;
+            self.line(format!("for(int j={base};j<argc;j++){{if({n}>={capacity})p8_fail(\"too many values in expression list\");{a}[{n}++]=argv[j];}}"));
+        } else {
+            self.expr(e)?;
+            self.line(format!("if({n}+p8_result_count()>{capacity})p8_fail(\"too many values in expression list\");for(int j=0;j<p8_result_count();j++){a}[{n}++]=p8_result(j);"));
+        }
+        Ok(())
     }
     fn args(&mut self, args: &[Expr]) -> Result<(String, String), Error> {
-        if args.len() > 16 {
+        if args.len() > MAX_LIST {
             return Err(Error::new(
                 0,
-                "at most 16 values per expression list are supported",
+                "at most 64 values per expression list are supported",
             ));
         }
         let a = self.fresh();
         let n = self.fresh();
         let capacity = if args.last().is_some_and(Self::multi) {
-            16
+            args.len() - 1 + EXPANSION
         } else {
             args.len() + 1
         };
         self.line(format!("V {a}[{capacity}];int {n}=0;"));
         for (i, e) in args.iter().enumerate() {
-            let v = self.expr(e)?;
             if i + 1 == args.len() && Self::multi(e) {
-                self.line(format!("if({n}+p8_result_count()>16)p8_fail(\"more than 16 values\");for(int j=0;j<p8_result_count();j++){a}[{n}++]=p8_result(j);"));
+                self.expand(e, &a, &n, capacity)?;
             } else {
+                let v = self.expr(e)?;
                 self.line(format!("{a}[{n}++]={v};"));
             }
         }
@@ -200,13 +339,22 @@ impl Emitter {
                 super::number(s)? as u32
             )),
             Expr::Str(s) => {
-                if cbytes(s) > 8191 {
+                let length = cbytes(s);
+                if length > 8191 {
                     return Err(Error::new(
                         0,
                         "strings longer than 8191 bytes are not supported yet",
                     ));
                 }
-                self.val(format!("p8_str({})", cstr(s)))
+                if super::charset::bytes(s).contains(&0) {
+                    self.val(format!("p8_strn({},{length})", cstr(s)))
+                } else {
+                    self.val(format!("p8_str({})", cstr(s)))
+                }
+            }
+            Expr::Var(n) if n == "..." => {
+                let base = self.vararg_base()?;
+                self.val(format!("argc>{base}?argv[{base}]:p8_nil()"))
             }
             Expr::Var(n) => {
                 if APIS.contains(&n.as_str()) {
@@ -215,6 +363,12 @@ impl Emitter {
                 self.val(self.read(n))
             }
             Expr::Unary(op, a) => {
+                match op.as_str() {
+                    "@" => self.apis.insert("peek".into()),
+                    "%" => self.apis.insert("peek2".into()),
+                    "$" => self.apis.insert("peek4".into()),
+                    _ => false,
+                };
                 let a = self.expr(a)?;
                 self.val(format!("p8_unary({},{a})", cstr(op)))
             }
@@ -251,8 +405,15 @@ impl Emitter {
             Expr::Scalar(e) => self.expr(e)?,
             Expr::TableTail(items, start, tail) => {
                 let t = self.expr(&Expr::Table(items.clone()))?;
-                self.expr(tail)?;
-                self.line(format!("for(int j=0;j<p8_result_count();j++)p8_set({t},p8_int({start}+j),p8_result(j));"));
+                if is_vararg(tail) {
+                    let base = self.vararg_base()?;
+                    self.line(format!(
+                        "for(int j={base};j<argc;j++)p8_set({t},p8_int({start}+j-{base}),argv[j]);"
+                    ));
+                } else {
+                    self.expr(tail)?;
+                    self.line(format!("for(int j=0;j<p8_result_count();j++)p8_set({t},p8_int({start}+j),p8_result(j));"));
+                }
                 t
             }
             Expr::Function(a, b) => self.function(a, b)?,
@@ -260,7 +421,12 @@ impl Emitter {
                 let object = self.expr(object)?;
                 let f = self.val(format!("p8_get({object},p8_str({}))", cstr(name)));
                 let (n, a) = self.args(args)?;
-                self.line(format!("if({n}>=16)p8_fail(\"more than 16 method arguments\");for(int j={n};j>0;j--){a}[j]={a}[j-1];{a}[0]={object};{n}++;"));
+                let room = if args.last().is_some_and(Self::multi) {
+                    args.len() - 1 + EXPANSION
+                } else {
+                    args.len() + 1
+                };
+                self.line(format!("if({n}>={room})p8_fail(\"too many method arguments\");for(int j={n};j>0;j--){a}[j]={a}[j-1];{a}[0]={object};{n}++;"));
                 self.val(format!("p8_call({f},{n},{n}?{a}:NULL)"))
             }
             Expr::Call(f, args) => {
@@ -281,6 +447,21 @@ impl Emitter {
         })
     }
     fn body(&mut self, b: &[Stmt]) -> Result<(), Error> {
+        let mut labels = BTreeMap::new();
+        for s in b {
+            if let Stmt::Label(name) = s {
+                let c = format!("L{}", self.fresh());
+                if labels.insert(name.clone(), c).is_some() {
+                    return Err(Error::new(0, &format!("label '{name}' already defined")));
+                }
+            }
+        }
+        self.labels.push(labels);
+        let result = self.statements(b);
+        self.labels.pop();
+        result
+    }
+    fn statements(&mut self, b: &[Stmt]) -> Result<(), Error> {
         for s in b {
             let scoped = !matches!(s, Stmt::Assign(_, _, true) | Stmt::LocalFunction(..));
             if scoped {
@@ -307,6 +488,25 @@ impl Emitter {
                         }
                         _ => return Err(Error::new(0, "unsupported assignment destination")),
                     }
+                }
+                if *local {
+                    // Locals outlive their statement, so evaluate the values in an
+                    // inner block: its argument array then does not stay on the
+                    // native stack for the rest of the enclosing block.
+                    let temps: Vec<String> = dest.iter().map(|_| self.fresh()).collect();
+                    for t in &temps {
+                        self.line(format!("V {t}=p8_nil();"));
+                    }
+                    self.line("{");
+                    let (count, vals) = self.args(rhs)?;
+                    for (i, t) in temps.iter().enumerate() {
+                        self.line(format!("if({count}>{i}){t}={vals}[{i}];"));
+                    }
+                    self.line("}");
+                    for ((n, _, _), t) in dest.into_iter().zip(temps) {
+                        self.local(&n.expect("local destination"), &t);
+                    }
+                    return Ok(());
                 }
                 let (count, vals) = self.args(rhs)?;
                 for (i, (n, t, k)) in dest.into_iter().enumerate() {
@@ -387,34 +587,30 @@ impl Emitter {
                 self.line("}}");
             }
             Stmt::ForIn(names, values, body) => {
-                let [Expr::Call(f, args)] = values.as_slice() else {
-                    return Err(Error::new(
-                        0,
-                        "generic loops currently require all(), pairs() or ipairs()",
-                    ));
+                let builtin = match values.as_slice() {
+                    [Expr::Call(f, args)] => match f.as_ref() {
+                        Expr::Var(kind)
+                            if ["all", "pairs", "ipairs"].contains(&kind.as_str())
+                                && args.len() == 1
+                                && !self.scopes.iter().any(|s| s.contains_key(kind))
+                                && !self.assigned.contains(kind) =>
+                        {
+                            Some((kind.clone(), args[0].clone()))
+                        }
+                        _ => None,
+                    },
+                    _ => None,
                 };
-                let Expr::Var(kind) = f.as_ref() else {
-                    return Err(Error::new(
-                        0,
-                        "custom generic iterators are not supported yet",
-                    ));
+                let Some((kind, table)) = builtin else {
+                    return self.generic_for(names, values, body);
                 };
-                if !["all", "pairs", "ipairs"].contains(&kind.as_str())
-                    || args.len() != 1
-                    || self.scopes.iter().any(|s| s.contains_key(kind))
-                    || self.assigned.contains(kind)
-                {
-                    return Err(Error::new(
-                        0,
-                        "custom generic iterators are not supported yet",
-                    ));
-                }
+                let args = [table];
                 let t = self.expr(&args[0])?;
                 let c = self.fresh();
                 let last = self.fresh();
                 let k = self.fresh();
                 let v = self.fresh();
-                self.line(format!("{{int {c}=0;V {last}=p8_nil(),{k},{v};while(p8_iter_next({},{t},&{c},&{last},&{k},&{v})){{p8_tick();",cstr(kind)));
+                self.line(format!("{{int {c}=0;V {last}=p8_nil(),{k},{v};while(p8_iter_next({},{t},&{c},&{last},&{k},&{v})){{p8_tick();",cstr(&kind)));
                 self.scopes.push(BTreeMap::new());
                 for (i, n) in names.iter().enumerate() {
                     let value = if kind == "all" {
@@ -444,8 +640,11 @@ impl Emitter {
             }
             Stmt::LocalFunction(n, a, b) => {
                 self.local(n, "p8_nil()");
+                // The closure's capture list is a block-scoped compound literal.
+                self.line("{");
                 let f = self.function(a, b)?;
                 self.write(n, &f);
+                self.line("}");
             }
             Stmt::Return(e) => {
                 let (n, a) = self.args(e)?;
@@ -458,7 +657,57 @@ impl Emitter {
                 self.line("break;");
             }
             Stmt::Block(b) => self.scoped(b)?,
+            Stmt::Label(name) => {
+                let c = self.labels.last().and_then(|l| l.get(name)).cloned();
+                let c = c.ok_or_else(|| Error::new(0, "internal label lookup failed"))?;
+                self.line(format!("{c}:;"));
+            }
+            Stmt::Goto(name) => {
+                let target = self.labels.iter().rev().find_map(|l| l.get(name)).cloned();
+                let Some(c) = target else {
+                    return Err(Error::new(
+                        0,
+                        &format!("no visible label '{name}' for goto"),
+                    ));
+                };
+                // Backward jumps can loop, so each goto spends instruction budget.
+                self.line(format!("p8_tick();goto {c};"));
+            }
         }
+        Ok(())
+    }
+    /// `for names in explist`: call f(s, control) until the first result is nil.
+    fn generic_for(
+        &mut self,
+        names: &[String],
+        values: &[Expr],
+        body: &[Stmt],
+    ) -> Result<(), Error> {
+        let (count, list) = self.args(values)?;
+        let f = self.fresh();
+        let state = self.fresh();
+        let control = self.fresh();
+        self.line(format!("{{V {f}={count}>0?{list}[0]:p8_nil(),{state}={count}>1?{list}[1]:p8_nil(),{control}={count}>2?{list}[2]:p8_nil();"));
+        self.line(format!(
+            "while(1){{p8_tick();{{V step[2]={{{state},{control}}};p8_call({f},2,step);}}"
+        ));
+        let results: Vec<String> = names.iter().map(|_| self.fresh()).collect();
+        for (i, r) in results.iter().enumerate() {
+            self.line(format!("V {r}=p8_result({i});"));
+        }
+        let first = results
+            .first()
+            .ok_or_else(|| Error::new(0, "generic for needs a variable"))?;
+        self.line(format!("if({first}.tag==P8_NIL)break;{control}={first};"));
+        self.scopes.push(BTreeMap::new());
+        for (n, r) in names.iter().zip(&results) {
+            self.local(n, r);
+        }
+        self.loops += 1;
+        self.body(body)?;
+        self.loops -= 1;
+        self.scopes.pop();
+        self.line("}}");
         Ok(())
     }
     fn branch(&mut self, b: &[(Expr, Vec<Stmt>)], other: &[Stmt]) -> Result<(), Error> {
@@ -475,6 +724,9 @@ impl Emitter {
         Ok(())
     }
 }
+fn is_vararg(e: &Expr) -> bool {
+    matches!(e, Expr::Var(n) if n == "...")
+}
 fn cbytes(s: &str) -> usize {
     super::charset::bytes(s).len()
 }
@@ -490,33 +742,48 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "chr" => (0, 16),
         "pset" => (2, 3),
         "pget" | "sget" | "mget" => (2, 2),
-        "rectfill" | "rect" | "line" => (4, 5),
+        "rectfill" | "rect" => (4, 5),
+        "line" => (0, 5),
+        "rawget" | "rawequal" => (2, 2),
+        "rawset" => (3, 3),
+        "select" => (1, 16),
         "circfill" | "circ" => (2, 4),
         "print" => (1, 4),
         "spr" => (3, 7),
         "sspr" => (6, 10),
-        "sset" | "mset" => (3, 3),
+        "sset" => (2, 3),
+        "mset" => (3, 3),
         "map" => (0, 7),
-        "fget" | "count" | "tostr" | "deli" => (1, 2),
+        "fget" | "count" | "tonum" | "deli" => (1, 2),
+        "tostr" => (0, 2),
         "fset" | "add" | "sub" => (2, 3),
         "camera" | "btn" | "btnp" => (0, 2),
         "cursor" => (0, 3),
-        "clip" => (0, 4),
+        "clip" => (0, 5),
         "pal" => (0, 3),
         "palt" => (0, 2),
         "min" | "max" | "atan2" | "del" => (2, 2),
         "mid" => (3, 3),
         "sfx" => (1, 4),
         "music" => (0, 4),
-        "assert" => (1, 2),
+        "assert" => (1, 16),
+        "printh" => (1, 4),
+        "peek" | "peek2" | "peek4" | "next" => (1, 2),
+        "poke" | "poke2" | "poke4" | "coresume" => (1, 64),
+        "memcpy" | "memset" => (3, 3),
+        "reload" => (0, 4),
+        "dset" | "setmetatable" => (2, 2),
+        "menuitem" | "extcmd" | "unpack" => (1, 3),
+        "flip" | "reset" => (0, 0),
+        "run" | "fillp" => (0, 1),
+        "stop" => (0, 4),
+        "oval" | "ovalfill" => (4, 5),
+        "rrect" | "rrectfill" => (4, 6),
+        "tline" => (6, 9),
+        "pack" | "yield" => (0, 64),
         _ => (1, 1),
     };
-    if n < min
-        || n > max
-        || (name == "clip" && n != 0 && n != 4)
-        || (name == "palt" && n == 1)
-        || (name == "pal" && n == 1)
-    {
+    if n < min || n > max || (name == "clip" && n != 0 && n != 4 && n != 5) {
         Err(Error::new(
             0,
             &format!("unsupported {name}() overload with {n} arguments"),
@@ -827,6 +1094,8 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
         functions: Vec::new(),
         next_fn: 0,
         assigned: set,
+        vararg: None,
+        labels: Vec::new(),
     };
     e.line("void p8_program_init(void) { p8_enter();");
     for (i, n) in APIS.iter().enumerate() {
@@ -863,11 +1132,20 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
     }
     for (i, n) in APIS.iter().enumerate() {
         if names.contains(*n) {
-            e.line(format!(
-                "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
-                10000 + i,
-                n
-            ));
+            // These builtins publish their own result list, including zero results.
+            // Keep other APIs scalar: e.g. foreach may leave callback results behind.
+            if MULTI_RESULT_APIS.contains(n) {
+                e.line(format!(
+                    "case {}:return p8_api_id(P8_API_{},argc,argv);",
+                    10000 + i,
+                    n
+                ));
+            } else {
+                e.line(format!(
+                    "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
+                    10000 + i, n
+                ));
+            }
         }
     }
     e.line("default:p8_fail(\"invalid native function\");return p8_nil();}}");

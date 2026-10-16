@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-OWN_CARTS = {"converter/tests/semantics.p8", "converter/tests/functions.p8"}
+OWN_CARTS = {"converter/tests/semantics.p8", "converter/tests/functions.p8", "converter/tests/api_overloads.p8", "converter/tests/numeric_strings.p8", "converter/tests/fraction_literals.p8", "converter/tests/palette_state.p8", "converter/tests/bitwise_defaults.p8", "converter/tests/extended_features.p8"}
 DENIED_ROOTS = {
     "recovery", "firmware", "converted", "target", "bin", "logs",
     ".cache", ".toolchain", ".python-tools", ".venv", "local-carts",
@@ -27,7 +27,7 @@ def main():
         suffix = path.suffix.lower()
         if path.parts[0] in DENIED_ROOTS or ".git" in path.parts or "__pycache__" in path.parts:
             failures.append(f"Private/build directory: {name}")
-        if name.startswith("compatibility/carts/") or re.match(r"compatibility/top200/\d+/", name):
+        if name.startswith("compatibility/carts/") or re.match(r"compatibility/top(?:100|200)/\d+/", name):
             failures.append(f"External cartridge directory: {name}")
         if suffix in {".uf2", ".elf", ".bin", ".rom", ".o", ".pyc", ".p64"} or name.lower().endswith(".p8.png"):
             failures.append(f"Firmware/cartridge/binary content: {name}")

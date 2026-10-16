@@ -33,6 +33,7 @@ jobs:
         run: |
           python converter/test_pipeline.py
           python converter/test_png.py
+          python converter/test_containers.py
       - name: Check publication scope and capability audit
         run: |
           python scripts/check_publication.py

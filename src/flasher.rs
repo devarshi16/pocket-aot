@@ -360,7 +360,7 @@ mod tests {
     }
     #[test]
     fn catalog_images_are_real_and_corruption_is_rejected() {
-        let root = root_dir();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let catalog = load_catalog(&root).unwrap();
         for cart in catalog.cartridges.iter().chain(catalog.recovery.iter()) {
             if !cart.ready() {
@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn unsupported_entries_never_reach_usb_or_file_transfer() {
-        let root = root_dir();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let mut cart = load_catalog(&root).unwrap().cartridges[0].clone();
         cart.status = "unsupported".into();
         cart.reason = "closures not supported".into();
