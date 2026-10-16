@@ -7,7 +7,7 @@
     "source_url": "https://www.lexaloffle.com/dl/docs/pico-8_manual.html",
     "retrieved_date": "2026-10-16",
     "source_sha256": "db53e8070ee7ffa392b034b08ebdaafbe59563330549372917f72cc5b1c9a852",
-    "scope": "Canonical named functions documented in API Reference sections 6.1\u20136.14, plus sgn documented in the syntax primer. Include runtime cartridge lifecycle/filesystem and advanced Lua functions; exclude four host/editor command functions below. Input-device GPIO/mouse/keyboard facilities expressed via peek/poke/stat share those API rows; their subfeatures are not counted twice.",
+    "scope": "Canonical named functions documented in API Reference sections 6.1–6.14, plus sgn documented in the syntax primer. Include runtime cartridge lifecycle/filesystem and advanced Lua functions; exclude four host/editor command functions below. Input-device GPIO/mouse/keyboard facilities expressed via peek/poke/stat share those API rows; their subfeatures are not counted twice.",
     "denominator_policy": "One row per canonical name, not per alias or overload. time/t count once; overloads affect status, never denominator. Callback hooks _init/_update/_update60/_draw and syntax are measured separately. ipairs is a converter extension not counted in this official inventory.",
     "excluded": [
       {
@@ -36,41 +36,37 @@
   },
   "summary": {
     "canonical_api_count": 108,
-    "implemented_partial": 71,
-    "missing_or_noop": 37,
+    "implemented_partial": 103,
+    "missing_or_noop": 5,
     "complete": 0,
-    "compiler_bound_canonical_names": 73,
-    "accepted_noops": [
-      "sfx",
-      "music"
-    ],
-    "functional_name_presence_percent": 65.7,
+    "compiler_bound_canonical_names": 103,
+    "accepted_noops": [],
+    "functional_name_presence_percent": 95.4,
     "warning": "Name presence percentage is not project completion, API semantic fidelity, games compatibility or estimated remaining effort.",
     "capability_status_counts": {
-      "missing": 37,
-      "supported": 33,
-      "partial": 38
+      "missing": 5,
+      "partial": 61,
+      "supported": 42
     }
   },
   "categories": {
     "system": {
       "total": 12,
-      "implemented_partial": 4,
-      "missing_or_noop": 8,
+      "implemented_partial": 9,
+      "missing_or_noop": 3,
       "capability_status_counts": {
-        "missing": 8,
-        "supported": 2,
-        "partial": 2
+        "missing": 3,
+        "partial": 5,
+        "supported": 4
       }
     },
     "graphics": {
       "total": 26,
-      "implemented_partial": 21,
-      "missing_or_noop": 5,
+      "implemented_partial": 26,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "partial": 15,
-        "supported": 6,
-        "missing": 5
+        "partial": 20,
+        "supported": 6
       }
     },
     "tables": {
@@ -78,8 +74,7 @@
       "implemented_partial": 7,
       "missing_or_noop": 0,
       "capability_status_counts": {
-        "supported": 5,
-        "partial": 2
+        "supported": 7
       }
     },
     "input": {
@@ -87,32 +82,32 @@
       "implemented_partial": 2,
       "missing_or_noop": 0,
       "capability_status_counts": {
-        "partial": 2
+        "supported": 2
       }
     },
     "audio": {
       "total": 2,
-      "implemented_partial": 0,
-      "missing_or_noop": 2,
+      "implemented_partial": 2,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "missing": 2
+        "partial": 2
       }
     },
     "map": {
       "total": 4,
-      "implemented_partial": 3,
-      "missing_or_noop": 1,
+      "implemented_partial": 4,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "partial": 3,
-        "missing": 1
+        "partial": 4
       }
     },
     "memory": {
       "total": 10,
-      "implemented_partial": 0,
-      "missing_or_noop": 10,
+      "implemented_partial": 9,
+      "missing_or_noop": 1,
       "capability_status_counts": {
-        "missing": 10
+        "partial": 9,
+        "missing": 1
       }
     },
     "math": {
@@ -126,10 +121,10 @@
     },
     "menu": {
       "total": 1,
-      "implemented_partial": 0,
-      "missing_or_noop": 1,
+      "implemented_partial": 1,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "missing": 1
+        "partial": 1
       }
     },
     "strings": {
@@ -142,10 +137,10 @@
     },
     "persistence": {
       "total": 3,
-      "implemented_partial": 0,
-      "missing_or_noop": 3,
+      "implemented_partial": 3,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "missing": 3
+        "partial": 3
       }
     },
     "gpio": {
@@ -158,18 +153,17 @@
     },
     "advanced_lua": {
       "total": 11,
-      "implemented_partial": 5,
-      "missing_or_noop": 6,
+      "implemented_partial": 11,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "missing": 6,
-        "supported": 4,
-        "partial": 1
+        "supported": 7,
+        "partial": 4
       }
     }
   },
   "source_evidence": {
-    "src/compiler/emit.rs": "5fbf15331c1359f26e777ee8cdd477b2f04d8ae46d28fbf2c4f5fc585c76a2ad",
-    "converter/runtime/p8.c": "4b7e137ff149094ca2514303bfd37232e6b3dd23c30d53f218cc422b35220f1e",
+    "src/compiler/emit.rs": "9638e06d460349cf2d3f163d4ad142534a06c29087885826411574e9dbfd0198",
+    "converter/runtime/p8.c": "c7a193cdf07b21833d3b21a0ea82164f6810bf1174f2ab172f97d850e39e6e73",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
   },
   "apis": [
@@ -234,38 +228,44 @@
       "name": "run",
       "aliases": [],
       "category": "system",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Restarts the cartridge through the backend guard on both targets. The optional breadcrumb parameter is not stored for stat(6).",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1112"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "stop",
       "aliases": [],
       "category": "system",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Halts with the optional message shown on the error screen; resuming is not available.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1118"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -297,38 +297,44 @@
       "name": "reset",
       "aliases": [],
       "category": "system",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Resets draw palette, transparency, screen and secondary palettes, camera, cursor, clip, colour and fill pattern.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1113"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
       "known_limit": false,
-      "capability_status": "missing",
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "flip",
       "aliases": [],
       "category": "system",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Presents the frame drawn so far from inside generated code, advances audio and input state, collects garbage without moving strings and continues in the same call stack, on both the desktop host and the Pico frame loop.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1111"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
       "known_limit": false,
-      "capability_status": "missing",
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
@@ -339,12 +345,14 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Single-string host console output present; filename/overwrite/desktop/clipboard forms rejected.",
+      "reason": "Console output for strings and values; filename, overwrite and clipboard targets are ignored.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:427"
+        "converter/runtime/p8.c:1038"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
       "known_limit": true,
@@ -381,12 +389,14 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Only stat(1), reporting native instruction-budget usage rather than PICO-8 CPU utilization. All other indices fail.",
+      "reason": "Memory, CPU (native budget ratio), version, frame rates, audio channel/note/pattern state (16-26, 46-57), idle mouse/keyboard queries and frame-derived clock values. Other indices fail explicitly; CPU and clock are not PICO-8-equivalent.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:428"
+        "converter/runtime/p8.c:1039"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
       "known_limit": true,
@@ -397,19 +407,22 @@
       "name": "extcmd",
       "aliases": [],
       "category": "system",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "reset, pause and shutdown act on the device. Screenshot, recording, label and audio-capture commands need the PICO-8 host and are ignored.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1119"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -726,38 +739,44 @@
       "name": "oval",
       "aliases": [],
       "category": "graphics",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Ellipse outline inside the inclusive bounding box with fill-pattern support; pixel-exact equivalence with PICO-8 is unverified.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1128"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "ovalfill",
       "aliases": [],
       "category": "graphics",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Filled ellipse inside the inclusive bounding box with fill-pattern support; pixel-exact equivalence is unverified.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1128"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -829,38 +848,44 @@
       "name": "rrect",
       "aliases": [],
       "category": "graphics",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Rounded-rectangle outline with clamped corner radius and fill-pattern support; pixel-exact equivalence is unverified.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1129"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "rrectfill",
       "aliases": [],
       "category": "graphics",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Filled rounded rectangle with clamped corner radius and fill-pattern support; pixel-exact equivalence is unverified.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1129"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -871,12 +896,13 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Draw-palette numeric remaps return the previous mapping plus transparency bit. pal()/pal(0) reset mappings and transparency; bounded table palettes accept integer keys0..16, excluding conflicting0/16. Display/secondary palettes, extended mapped registers and table/reset previous-state returns remain unsupported/unverified.",
+      "reason": "Draw, screen (including colours 128-143 on the LCD) and secondary palettes with numeric and bounded table forms and per-palette or full resets. Table/reset previous-state returns remain unverified.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:282"
+        "converter/runtime/p8.c:872"
       ],
       "selected_regression_tests": [
+        "converter/tests/extended_features.p8",
         "converter/tests/palette_state.p8"
       ],
       "implemented": true,
@@ -952,19 +978,22 @@
       "name": "fillp",
       "aliases": [],
       "category": "graphics",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "16-bit pattern with transparency bit and two-colour fills for shapes, lines and pixels, mirrored at 0x5f31-0x5f33. Sprite and secondary-palette pattern flags are not implemented.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1130"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1062,18 +1091,19 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Compiler lowers direct generic-for all(table); first-class iterator values/protocol are unsupported.",
+      "reason": "Direct generic-for lowering plus a first-class iterator closure; both revisit a slot after del() shifts.",
       "evidence": [
-        "src/compiler/emit.rs:390",
-        "converter/runtime/p8.c"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1158"
       ],
       "selected_regression_tests": [
+        "converter/tests/extended_features.p8",
         "converter/tests/functions.p8"
       ],
       "implemented": true,
       "reference_validated": false,
-      "known_limit": true,
-      "capability_status": "partial",
+      "known_limit": false,
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1106,18 +1136,19 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Compiler lowers direct generic-for pairs(table); first-class iterator values/protocol are unsupported.",
+      "reason": "Direct generic-for lowering plus first-class next/table/nil triples, __pairs, and safe clearing of fields during traversal.",
       "evidence": [
-        "src/compiler/emit.rs:390",
-        "converter/runtime/p8.c"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1152"
       ],
       "selected_regression_tests": [
+        "converter/tests/extended_features.p8",
         "converter/tests/functions.p8"
       ],
       "implemented": true,
       "reference_validated": false,
-      "known_limit": true,
-      "capability_status": "partial",
+      "known_limit": false,
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1128,16 +1159,18 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Single-player six-button reads present; players 1..7 rejected.",
+      "reason": "Six-button reads and bitfield for player one; documented players 1..7 have no controller attached and read as idle.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:329"
+        "converter/runtime/p8.c:926"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
-      "known_limit": true,
-      "capability_status": "partial",
+      "known_limit": false,
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1148,12 +1181,36 @@
       "binding_present": true,
       "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Single-player presses/repeat present; players 1..7 and configurable repeat registers unsupported.",
+      "reason": "Presses with held-button repeat honouring 0x5f5c delay and 0x5f5d interval (255 disables); players 1..7 read as idle.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:329"
+        "converter/runtime/p8.c:926"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
+      "reference_validated": false,
+      "known_limit": false,
+      "capability_status": "supported",
+      "no_reference_equivalence_suite": true
+    },
+    {
+      "name": "sfx",
+      "aliases": [],
+      "category": "audio",
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
+      "reference_equivalence_verified": false,
+      "reason": "Silent on this LCD target, but stateful: channel allocation, offsets, lengths, loops, release and stop update a sequencer visible through stat(). No waveform output.",
+      "evidence": [
+        "src/compiler/emit.rs:6",
+        "converter/runtime/p8.c:1025"
+      ],
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
       "implemented": true,
       "reference_validated": false,
       "known_limit": true,
@@ -1161,43 +1218,25 @@
       "no_reference_equivalence_suite": true
     },
     {
-      "name": "sfx",
-      "aliases": [],
-      "category": "audio",
-      "status": "missing",
-      "binding_present": true,
-      "functional_credit": false,
-      "reference_equivalence_verified": false,
-      "reason": "Accepted as a silent no-op; no audio synthesis, sequencing or channel state. Zero functional credit.",
-      "evidence": [
-        "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:426"
-      ],
-      "selected_regression_tests": [],
-      "implemented": false,
-      "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
-      "no_reference_equivalence_suite": true
-    },
-    {
       "name": "music",
       "aliases": [],
       "category": "audio",
-      "status": "missing",
+      "status": "implemented_partial",
       "binding_present": true,
-      "functional_credit": false,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "Accepted as a silent no-op; no audio synthesis, sequencing or channel state. Zero functional credit.",
+      "reason": "Silent but stateful pattern sequencing with loop/stop flags, channel masks and pattern counters visible through stat(). Fades and waveform output are not implemented.",
       "evidence": [
         "src/compiler/emit.rs:6",
-        "converter/runtime/p8.c:426"
+        "converter/runtime/p8.c:1035"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1268,171 +1307,198 @@
       "name": "tline",
       "aliases": [],
       "category": "map",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Textured lines through map space with default and custom map steps, layer masks and 0x5f38-0x5f3b wrapping. The precision-bits overload and 0x5f36 options are unsupported.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1135"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "peek",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Base RAM 0x0000-0x7fff maps onto sprite, map, flag, sound, user, cartdata, draw-state and screen memory, with multi-value counts. Upper memory 0x8000-0xffff reads zero and several hardware registers are stored without effect.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1069"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "poke",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Writes the same base-RAM map, including draw-state and screen registers, with multiple values. Upper memory writes fail explicitly; screen-mode and other hardware registers are stored only.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1079"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "peek2",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Signed 16-bit little-endian reads over the base-RAM map, plus the % operator. Same upper-memory and register limits as peek.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1069"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "poke2",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "16-bit little-endian writes over the base-RAM map. Same upper-memory and register limits as poke.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1079"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "peek4",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "32-bit fixed-point reads over the base-RAM map, plus the $ operator. Same upper-memory and register limits as peek.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1069"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "poke4",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "32-bit fixed-point writes over the base-RAM map. Same upper-memory and register limits as poke.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1079"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "memcpy",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Overlap-safe copies across the base-RAM map with range checks. Upper memory is unavailable.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1088"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "reload",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Copies original cartridge ROM (sprites, map, flags, sound) into RAM, with defaults for a full reload. Loading from another cartridge file fails explicitly.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1095"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1458,19 +1524,22 @@
       "name": "memset",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Fills across the base-RAM map with range checks. Upper memory is unavailable.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1094"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -1946,19 +2015,22 @@
       "name": "menuitem",
       "aliases": [],
       "category": "menu",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Registers, replaces and removes up to five items. The Pico pause menu lists them and calls the callback with the button bitfield; a callback returning true does not keep the menu open, and the desktop host check has no menu.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1105"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -2125,57 +2197,66 @@
       "name": "cartdata",
       "aliases": [],
       "category": "persistence",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Opens the 64-number store once per run with a string id and returns false. Values are not persisted across power cycles yet.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1101"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "dget",
       "aliases": [],
       "category": "persistence",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Reads the 64 fixed-point values at 0x5e00; out-of-range indices read zero. No persistence across power cycles.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1102"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "dset",
       "aliases": [],
       "category": "persistence",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Writes the 64 fixed-point values at 0x5e00. No persistence across power cycles.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1103"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -2201,38 +2282,44 @@
       "name": "setmetatable",
       "aliases": [],
       "category": "advanced_lua",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Assigns or clears a table metatable and returns the table.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1141"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
       "known_limit": false,
-      "capability_status": "missing",
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "getmetatable",
       "aliases": [],
       "category": "advanced_lua",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Returns the metatable, or its __metatable field when present; non-tables return nil.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1144"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
       "known_limit": false,
-      "capability_status": "missing",
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
@@ -2356,76 +2443,88 @@
       "name": "cocreate",
       "aliases": [],
       "category": "advanced_lua",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Creates a coroutine with its own native stack. The pool is 4 coroutines of 3 KB on the Pico (8 on the host) and errors inside a coroutine stop the cartridge instead of returning false from coresume.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1169"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "coresume",
       "aliases": [],
       "category": "advanced_lua",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Resumes with arguments and returns true plus yielded or returned values; dead or running coroutines return false and a message. Same pool and error-propagation limits as cocreate.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1169"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "costatus",
       "aliases": [],
       "category": "advanced_lua",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Reports suspended, running, normal or dead.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1169"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
       "known_limit": false,
-      "capability_status": "missing",
+      "capability_status": "supported",
       "no_reference_equivalence_suite": true
     },
     {
       "name": "yield",
       "aliases": [],
       "category": "advanced_lua",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Suspends with values and returns the next resume arguments, including from nested native calls. Same pool and error-propagation limits as cocreate.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:79",
+        "converter/runtime/p8.c:1169"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     }
   ],
@@ -2433,7 +2532,8 @@
     "2026-10-16: rechecked bindings and runtime after adding conditional host API profiling; capability statuses unchanged.",
     "2026-10-16 small API gaps: four raw helpers and partial select added; camera/cursor previous returns and palt bitmask/state gate omissions closed. Clip, line and sset overloads improved but remain partial. Assert multi-results fixed. New original sanitizer fixture and negative cases; no reference-conformance or game-compatibility claims. See docs/SMALL-GAPS.md.",
     "Second small-gap pass: numeric-string selectors; shared radix parser for tonum/split; numeric tostr/tonum flags; zero-result tonum failures; and bounded in-range multi-result ord. Existing API statuses remain unchanged because decimal, bounded-result and string limits remain. Original numeric_strings.p8 and controlled errors provide host evidence; no independent reference comparison. Added flag-index boundary assertions and zero/false invalid reads instead of wrapping; valid fset modes exercised.",
-    "Third small-gap pass: draw pal previous-register/table/reset behavior, strict leading-dot radix literals and native bitwise per-operand defaults added. Conflicting palette keys0/16 and unsupported forms fail explicitly; strict bitwise operators retain errors. New original fixtures exercise these subfeatures. Canonical implementation labels, scope, weights and reference-validation flags are unchanged."
+    "Third small-gap pass: draw pal previous-register/table/reset behavior, strict leading-dot radix literals and native bitwise per-operand defaults added. Conflicting palette keys0/16 and unsupported forms fail explicitly; strict bitwise operators retain errors. New original fixtures exercise these subfeatures. Canonical implementation labels, scope, weights and reference-validation flags are unchanged.",
+    "Coverage pass (2026-10-16): memory map, cartdata, menuitem, flip, run/reset/stop/extcmd, shapes, fillp, tline, metatables, first-class iterators, coroutines and stateful silent audio added and re-audited against original fixture converter/tests/extended_features.p8 and new expected-error cases. sfx/music are no longer accepted no-ops: they drive observable sequencer state. Partial statuses record upper-memory, persistence, pool, pixel-equivalence and synthesis limits. No reference conformance is claimed."
   ],
   "public_review": "2026-10-16: independently authored compact ASCII font; print remains partial. API implementation/status unchanged. Default public suite uses only original fixtures; external fixture pointers denote unbundled historical evidence. Small-gap follow-up uses only an original API boundary fixture and generated invalid-input cases; no external game source or device flashing."
 }

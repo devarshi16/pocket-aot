@@ -49,6 +49,18 @@ Confirmed validation: **37 Rust tests and 34 completed sanitizer scenarios**, pl
 
 These close small behavior gaps within entries that already had implementation credit. The planning index stays **52.2%**: palette and numeric language coverage remain **partial**, with no new fully closed rubric gate or game-compatibility claim.
 
+## Fourth batch (52.2% to 72.6%)
+
+A broad pass over the APIs and language features that most often stopped real cartridges from converting:
+
+- Memory: `peek`/`poke` (1, 2 and 4 bytes, with the `@`, `%` and `$` operators), `memcpy`, `memset` and `reload` over the full base-RAM map, including draw-state registers and screen memory. Upper memory 0x8000+ is not mapped.
+- Saves and system: `cartdata`/`dget`/`dset` (not persisted across power-off), `menuitem` with a Pico pause menu, `flip`, `run`, `reset`, `stop` and `extcmd`.
+- Graphics: `oval`/`ovalfill`, `rrect`/`rrectfill`, `fillp` and `tline`, plus screen and secondary palettes.
+- Language: `goto`/labels, varargs, metatables, first-class iterators (`next`, `pairs`, `ipairs`, `all`), coroutines on native stacks, NUL-safe strings, `//` comments and the rotate/logical-shift operators.
+- Runtime: allocation-triggered garbage collection mid-frame, and stateful silent `sfx`/`music` visible through `stat()`.
+
+All are exercised by the original fixture `converter/tests/extended_features.p8` and new expected-error scenarios. Pixel output for the new shapes is not checked against a PICO-8 reference.
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |
@@ -56,9 +68,8 @@ These close small behavior gaps within entries that already had implementation c
 | 1 | `ord` boundary/count behavior | Small implementation after obtaining a trustworthy reference oracle: settle zero/negative counts, overruns and invalid-input result counts; the manual's multi-result example has an apparent string-length typo |
 | 2 | Decimal `tonum` fidelity | Medium: replace host floating-point parsing/flooring with exact fixed-point parsing, including wrapping, rounding and exponent boundaries |
 | 3 | Drawing state and palette completion | Establish table/reset return behavior and exact off-screen/fractional clipping state; display palettes require backend work, while secondary palettes depend on fill patterns |
-| 4 | Rounded rectangles / ellipses | Medium: reuse pixel/clipping primitives, but establish reference raster and fill-pattern behavior |
 
-Audio, coroutines, metatables, full memory/register emulation and persistent saves are larger dependencies. A stub or a successful build would not close their acceptance gates.
+Audio synthesis, upper memory, flash-backed saves and `#include` are larger dependencies. A stub or a successful build would not close their acceptance gates.
 
 ## Semantics used
 

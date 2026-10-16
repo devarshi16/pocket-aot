@@ -8,13 +8,13 @@ Inspired by the subsystem reporting style of [AnyPS5](https://boykopovar.github.
 
 | Measure | Result | Meaning |
 | --- | ---: | --- |
-| Functional API names | 71/108 (65.7%) | Some implemented behavior, including partial support |
-| API inventory | 33 supported · 38 partial · 37 missing | Fixed set of canonical names; aliases counted once |
-| Current public host execution | 51/108 | Entry points reached in 34 completed original-fixture sanitizer scenarios |
-| Historical private host execution | 48/108 | Earlier 8-scenario run, including external cartridges that are not bundled |
+| Functional API names | 103/108 (95.4%) | Some implemented behavior, including partial support |
+| API inventory | 42 supported · 61 partial · 5 missing | Fixed set of canonical names; aliases counted once |
+| Current public host execution | 82/108 | Entry points reached in 41 completed original-fixture sanitizer scenarios |
+| Historical private host execution | 49/108 | Earlier 8-scenario run, including external cartridges that are not bundled |
 | Historical random game sample | 1/20 built; 1/20 owner-confirmed | Earlier RP2040/Waveshare display and controls check; not a new public-suite result |
 | Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |
-| Secondary weighted planning index | 52.2% | Judgment-based rubric; not remaining time or compatibility |
+| Secondary weighted planning index | 72.6% | Judgment-based rubric; not remaining time or compatibility |
 
 ## Low-hanging work
 
@@ -35,19 +35,19 @@ Supported means implemented within the stated audit gate, with no specific omiss
 
 | Subsystem | Supported | Partial | Missing | Total | Public host exercised |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| system | 2 | 2 | 8 | 12 | 1 |
-| graphics | 6 | 15 | 5 | 26 | 17 |
-| tables | 5 | 2 | 0 | 7 | 6 |
-| input | 0 | 2 | 0 | 2 | 0 |
-| audio | 0 | 0 | 2 | 2 | 0 |
-| map | 0 | 3 | 1 | 4 | 2 |
-| memory | 0 | 0 | 10 | 10 | 0 |
+| system | 4 | 5 | 3 | 12 | 4 |
+| graphics | 6 | 20 | 0 | 26 | 23 |
+| tables | 7 | 0 | 0 | 7 | 6 |
+| input | 2 | 0 | 0 | 2 | 1 |
+| audio | 0 | 2 | 0 | 2 | 2 |
+| map | 0 | 4 | 0 | 4 | 3 |
+| memory | 0 | 9 | 1 | 10 | 8 |
 | math | 16 | 6 | 0 | 22 | 13 |
-| menu | 0 | 0 | 1 | 1 | 0 |
+| menu | 0 | 1 | 0 | 1 | 1 |
 | strings | 0 | 7 | 0 | 7 | 7 |
-| persistence | 0 | 0 | 3 | 3 | 0 |
+| persistence | 0 | 3 | 0 | 3 | 3 |
 | gpio | 0 | 0 | 1 | 1 | 0 |
-| advanced_lua | 4 | 1 | 6 | 11 | 5 |
+| advanced_lua | 7 | 4 | 0 | 11 | 11 |
 
 ## Whole translation pipeline
 
@@ -56,17 +56,17 @@ The frozen scope has **173 acceptance gates** across ten components. The GUI, br
 | Component | Supported | Partial | Missing | Gates | Weight | Component score |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Cartridge formats and assets | 7 | 1 | 0 | 8 | 6% | 93.8% |
-| Source language and frontend | 7 | 1 | 3 | 11 | 12% | 68.2% |
-| Values, functions and native semantics | 5 | 6 | 3 | 14 | 18% | 57.1% |
-| Graphics, maps and text | 6 | 18 | 6 | 30 | 18% | 50.0% |
-| Math, tables, strings and advanced Lua APIs | 25 | 16 | 6 | 47 | 8% | 70.2% |
-| Input and program lifecycle | 2 | 3 | 3 | 8 | 8% | 43.8% |
-| Memory, saves and system services | 2 | 2 | 23 | 27 | 8% | 11.1% |
-| Audio behavior and observable timing | 0 | 0 | 8 | 8 | 8% | 0.0% |
+| Source language and frontend | 9 | 1 | 1 | 11 | 12% | 86.4% |
+| Values, functions and native semantics | 9 | 5 | 0 | 14 | 18% | 82.1% |
+| Graphics, maps and text | 6 | 24 | 0 | 30 | 18% | 60.0% |
+| Math, tables, strings and advanced Lua APIs | 30 | 17 | 0 | 47 | 8% | 81.9% |
+| Input and program lifecycle | 6 | 2 | 0 | 8 | 8% | 87.5% |
+| Memory, saves and system services | 4 | 18 | 5 | 27 | 8% | 48.1% |
+| Audio behavior and observable timing | 3 | 3 | 2 | 8 | 8% | 56.2% |
 | RP2040 build and resource handling | 6 | 4 | 0 | 10 | 8% | 80.0% |
 | Correctness and compatibility validation | 4 | 1 | 5 | 10 | 6% | 45.0% |
 
-Component score = 100 × (supported + 0.5 × partial) / gates. The overall index is the weighted sum of component scores. Weights and the half-credit rule are fixed judgment calls. Changing partial credit from 0.25 to 0.75 changes the same snapshot from 44.6% to 59.8%; that is scoring sensitivity, not a confidence interval.
+Component score = 100 × (supported + 0.5 × partial) / gates. The overall index is the weighted sum of component scores. Weights and the half-credit rule are fixed judgment calls. Changing partial credit from 0.25 to 0.75 changes the same snapshot from 62.7% to 82.5%; that is scoring sensitivity, not a confidence interval.
 
 ## Evidence and reproducibility
 

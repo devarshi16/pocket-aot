@@ -98,12 +98,13 @@
         "converter/runtime/p8.c"
       ],
       "tests": [
+        "converter/tests/extended_features.p8: NUL strings",
+        "converter/tests/numeric_strings.p8",
         "every_cartridge_character_maps_back_to_its_byte",
         "functions.p8: _init",
-        "runtime_closures.c",
-        "converter/tests/numeric_strings.p8"
+        "runtime_closures.c"
       ],
-      "limits": "P8SCII byte indexing with positive/negative positions and empty out-of-range reads is tested, alongside roundtrips/long strings. NUL bytes remain unsupported, strings max8191 bytes, arena32KB/256slots. Fractional/non-numeric index coercion and glyph fidelity are not fully modeled.",
+      "limits": "P8SCII byte indexing with positive/negative positions and empty out-of-range reads is tested, alongside roundtrips/long strings. Strings carry explicit lengths, so NUL bytes from escapes and chr(0) are preserved. Strings max 8191 bytes, arena 32KB/256 slots. Fractional/non-numeric index coercion and glyph fidelity are not fully modeled.",
       "reference_validated": false
     },
     {
@@ -210,12 +211,13 @@
         "converter/runtime/p8.c"
       ],
       "tests": [
-        "multiple_returns_parentheses_and_table_tail",
-        "functions.p8: _init",
         "converter/tests/api_overloads.p8: native_results",
-        "converter/tests/numeric_strings.p8"
+        "converter/tests/extended_features.p8: varargs",
+        "converter/tests/numeric_strings.p8",
+        "functions.p8: _init",
+        "multiple_returns_parentheses_and_table_tail"
       ],
-      "limits": "Final-call expansion in assignments/args/return/table tails and native builtin result lists tested, but at most 16 values per expression list/result. Varargs remain a separate missing feature. tonum failure has zero results; ord now transports bounded in-range byte lists.",
+      "limits": "Final-call and vararg expansion in assignments/args/return/table tails and native builtin result lists tested. Lists hold up to 64 fixed values; a final expansion adds at most 16 at a call site and results are limited to 32.",
       "reference_validated": false
     },
     {
@@ -251,16 +253,17 @@
     {
       "id": "language.iteration_builtin",
       "name": "Built-in all/pairs/ipairs and foreach",
-      "status": "partial",
+      "status": "supported",
       "evidence": [
         "src/compiler/emit.rs",
         "converter/runtime/p8.c"
       ],
       "tests": [
+        "converter/tests/extended_features.p8: iterators",
         "functions.p8: _init",
         "runtime_closures.c"
       ],
-      "limits": "Direct generic-for built-in forms supported, including all+del shift handling. Not first-class iterator values, arbitrary iterator triples or custom iterators.",
+      "limits": "Direct generic-for built-ins, including all+del shift handling, plus first-class all/pairs/ipairs/next values through the general iterator protocol.",
       "reference_validated": false
     },
     {
@@ -300,74 +303,94 @@
     {
       "id": "language.gc",
       "name": "Object lifetime and bounded memory management",
-      "status": "partial",
+      "status": "supported",
       "evidence": [
-        "converter/runtime/p8.c",
-        "converter/runtime/p8.c"
+        "converter/runtime/p8.c:336",
+        "converter/runtime/p8.c:287"
       ],
       "tests": [
+        "converter/tests/extended_features.p8: per-frame garbage and flip",
         "functions.p8: _update",
-        "runtime_closures.c",
-        "heap-bound"
+        "heap-bound",
+        "runtime_closures.c"
       ],
-      "limits": "Frame-boundary tracing handles cycles and compacts strings. No mid-callback allocation-triggered collection; fixed pools and max graph traversal depth128 can reject valid larger cartridges.",
+      "limits": "Frame-boundary tracing with string compaction, plus allocation-triggered mid-frame collection that scans native and coroutine stacks conservatively and does not move strings. An explicit grey stack replaces the recursion depth limit. Weak tables are honoured. Fixed pools bound live data.",
       "reference_validated": false
     },
     {
       "id": "language.varargs",
       "name": "Variable arguments (...)",
-      "status": "missing",
+      "status": "supported",
       "evidence": [
         "src/compiler/parse.rs:628",
-        "src/compiler/parse.rs:742"
+        "src/compiler/emit.rs:293",
+        "src/compiler/emit.rs:298"
       ],
-      "tests": [],
-      "limits": "Explicitly rejected in declarations and expressions.",
+      "tests": [
+        "converter/tests/extended_features.p8: sum/pass/first",
+        "vararg-limit",
+        "vararg-outside"
+      ],
+      "limits": "Vararg parameters, `...` as a single value, final expansion in calls/returns/assignments, {...} table tails and select(\"#\",...). Expansion obeys the bounded expression-list limits with explicit errors.",
       "reference_validated": false
     },
     {
       "id": "language.goto",
       "name": "Goto and labels",
-      "status": "missing",
+      "status": "supported",
       "evidence": [
-        "src/compiler/parse.rs:565"
+        "src/compiler/parse.rs:554",
+        "src/compiler/emit.rs:665"
       ],
-      "tests": [],
-      "limits": "Explicitly rejected; current blocker in Picohot, Lab Cat and SUPER World of Goo.",
+      "tests": [
+        "converter/tests/extended_features.p8: goto continue",
+        "goto-without-label"
+      ],
+      "limits": "Block-scoped labels lowered to unique C labels per function, visible from nested blocks; forward and backward jumps, continue-style labels and loops. Each goto spends instruction budget. Invalid jumps into a local scope are not diagnosed.",
       "reference_validated": false
     },
     {
       "id": "language.custom_iterators",
       "name": "Custom generic iteration and iterator values",
-      "status": "missing",
+      "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs"
+        "src/compiler/emit.rs:680",
+        "converter/runtime/p8.c:1172"
       ],
-      "tests": [],
-      "limits": "Generic-for emitter requires exactly one direct all/pairs/ipairs call with one argument.",
+      "tests": [
+        "converter/tests/extended_features.p8: next/closure/ipairs/all iterators"
+      ],
+      "limits": "Generic for evaluates any explist to an f,s,control triple and calls f until the first result is nil. next, pairs, ipairs and all are first-class values; the direct all/pairs/ipairs fast path remains.",
       "reference_validated": false
     },
     {
       "id": "language.coroutines",
       "name": "Coroutine/yield execution state",
-      "status": "missing",
+      "status": "partial",
       "evidence": [
-        "src/compiler/emit.rs"
+        "converter/runtime/p8.c:781",
+        "converter/runtime/p8.c:704"
       ],
-      "tests": [],
-      "limits": "Coroutine APIs are absent and costatus is a live Picowars blocker; generated native stack has no resumable continuation mechanism.",
+      "tests": [
+        "converter/tests/extended_features.p8: cocreate/coresume/yield",
+        "yield-outside"
+      ],
+      "limits": "Coroutines run native code on dedicated stacks with x86-64, AArch64 and ARMv6-M context switches; yield works from nested calls and the collector scans suspended stacks. The Pico pool is 4 coroutines of 3 KB; errors inside a coroutine stop the cartridge rather than returning false from coresume.",
       "reference_validated": false
     },
     {
       "id": "language.metatables",
       "name": "Metatables and metamethods",
-      "status": "missing",
+      "status": "supported",
       "evidence": [
-        "src/compiler/emit.rs",
-        "converter/runtime/p8.c"
+        "converter/runtime/p8.c:136",
+        "converter/runtime/p8.c:371"
       ],
-      "tests": [],
-      "limits": "No metatable storage/dispatch or metatable APIs; table access and arithmetic are direct.",
+      "tests": [
+        "converter/tests/extended_features.p8: metatables",
+        "index-chain"
+      ],
+      "limits": "Per-table metatables with __index/__newindex (tables or functions), __call, arithmetic, bitwise, __concat, __unm, __len, __eq, __lt, __le, __tostring, __metatable, __pairs and weak __mode tables; rawget/rawset/rawlen bypass them.",
       "reference_validated": false
     },
     {
@@ -389,6 +412,7 @@
     "Rechecked optional host instrumentation; no language behavior or capability-status changes. Runtime source locations are file-level references to avoid stale line offsets.",
     "2026-10-16: native builtin multiple-result transport now preserves camera/cursor/clip/select/assert results. New original fixture covers scalar parentheses, aliases, empty tails and callback-result isolation. Existing 16-value bound keeps the language gate partial; varargs remain missing.",
     "Second small-gap pass: string indexing added through value lookup with rawget remaining table-only. tonum/ord result lists share the existing native bridge; language strings and multiple-return gates remain partial.",
-    "Third small-gap pass retains numeric partial status while adding exact leading-dot radix literals and malformed-input tests. Native bitwise fallback is distinct from unchanged strict operator behavior; no syntax/arity expansion for omitted bitwise operands is claimed."
+    "Third small-gap pass retains numeric partial status while adding exact leading-dot radix literals and malformed-input tests. Native bitwise fallback is distinct from unchanged strict operator behavior; no syntax/arity expansion for omitted bitwise operands is claimed.",
+    "Coverage pass (2026-10-16): varargs, goto/labels, general iterators, metatables, coroutines, NUL strings and allocation-triggered collection re-audited with original fixture converter/tests/extended_features.p8 and expected-error scenarios."
   ]
 }

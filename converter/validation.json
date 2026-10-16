@@ -15,7 +15,7 @@
   {
     "test": "functions",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=4 strings=4 operations=210179 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=5000 entries=4 strings=5 operations=210179 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "source_modified": false,
     "origin": "original-public-fixture"
