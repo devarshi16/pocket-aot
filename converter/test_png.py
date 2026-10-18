@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "converter/vendor/shrinko8"))
 from pico_cart import read_cart
 from test_pipeline import find_compiler
+from cartridge_input import prepare_source
 
 
 def run(args, cwd=None):
@@ -35,7 +36,7 @@ def main():
         Image.new("RGBA", (160, 205), (22, 27, 40, 255)).save(template)
         tool = ROOT / "converter/vendor/shrinko8/shrinko8.py"
         run([sys.executable, tool, source, png, "--template-image", template, "--template-only"])
-        run([sys.executable, tool, png, decoded])
+        decoded = prepare_source(png, folder / "decoded")
         original, roundtrip = read_cart(str(source)), read_cart(str(decoded))
         assert original.code == roundtrip.code, "Fixture source changed during container conversion"
         assert bytes(original.rom) == bytes(roundtrip.rom), "Cartridge ROM data changed"

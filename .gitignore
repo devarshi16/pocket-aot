@@ -8,6 +8,7 @@
 /local-carts/
 /compatibility/carts/
 /compatibility/top200/[0-9]*/
+/compatibility/top100/[0-9]*/
 /.cache/
 /.venv/
 /.toolchain/

@@ -25,16 +25,18 @@ Assessed **16 October 2026** against a frozen inventory based on the PICO-8 v0.2
 
 | Measurement | Recorded result | Meaning |
 | --- | --- | --- |
-| API implementation | **26 supported · 40 partial · 42 missing**, out of 108 | 66 names have some functional behavior (**61.1%**); partial support has documented limitations |
-| Public fixture regression | **33/108** functional API names reached in 5 sanitizer scenarios | Reproducible using only the original fixtures included here |
-| Full development regression | **48/108** functional API names reached in 8 sanitizer scenarios | Historical execution evidence; external game fixtures are deliberately unbundled |
+| API implementation | **42 supported · 61 partial · 5 missing**, out of 108 | 103 names have some functional behavior (**95.4%**); partial support has documented limitations |
+| Public fixture regression | **82/108** functional API names reached in 41 sanitizer scenarios | Reproducible using only the original fixtures included here |
+| Full development regression | **49/108** functional API names reached in 8 sanitizer scenarios | Historical execution evidence; external game fixtures are deliberately unbundled |
 | Fixed random game sample | **1/20** built; **1/20** display/control confirmed on a Pico | The same 20 sampled games, without substitutions; not a universal compatibility rate |
 | Independent reference conformance | **Unmeasured** | No separate PICO-8 oracle or systematic golden-frame suite yet |
-| Weighted planning index | **49.8%** across 173 core gates | Secondary engineering estimate with explicit weights and half-credit for partial support |
+| Weighted planning index | **72.6%** across 173 core gates | Secondary engineering estimate with explicit weights and half-credit for partial support |
 
-The [detailed status](docs/STATUS.md) also records the smaller, reproducible public-fixture regression. A called API is not proof that its outputs match PICO-8. Silent `sfx`/`music` stubs earn no functional credit. A successful build does not guarantee complete gameplay or sufficient performance.
+The [small-gap assessment](docs/SMALL-GAPS.md) records the latest implemented helpers/overloads and ranks the next inexpensive improvements.
 
-The largest gaps are memory mapping (`peek`/`poke` and related APIs), persistent saves, menu callbacks, coroutines, `goto`/varargs, audio, remaining graphics overloads, and independent reference tests. Unsupported syntax and APIs stop conversion. Resource exhaustion and unsupported runtime argument cases produce explicit errors.
+The [detailed status](docs/STATUS.md) also records the smaller, reproducible public-fixture regression. A called API is not proof that its outputs match PICO-8. `sfx`/`music` are silent but keep observable sequencer state; no waveform synthesis yet. A successful build does not guarantee complete gameplay or sufficient performance.
+
+The largest gaps are audio synthesis and effects, persistent saves across power-off, upper memory (0x8000+), `#include`, `load`/`save`/`ls`/`cstore`/`serial`, and independent reference tests. Coroutines are limited to a pool of 4 on the Pico. Unsupported syntax and APIs stop conversion. Resource exhaustion and unsupported runtime argument cases produce explicit errors.
 
 [Full checklist and methodology](converter/PROGRESS.md) · [Machine-readable audits](compatibility/coverage/) · [Historical 20-game results](compatibility/top200/results.json)
 

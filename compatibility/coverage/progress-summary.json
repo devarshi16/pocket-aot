@@ -2,52 +2,50 @@
   "rubric_version": "pocket-aot-capabilities-v1",
   "assessed_date": "2026-10-16",
   "label": "Secondary weighted planning index; implementation and regression counts are primary",
-  "core_capability_score_percent": 49.78248518620859,
-  "supported_only_points": 33.73199574263404,
-  "partial_credit_points": 16.05048944357455,
-  "sensitivity_partial_credit_25_percent": 41.757240464421315,
-  "sensitivity_partial_credit_75_percent": 57.80772990799586,
+  "core_capability_score_percent": 72.5793939905642,
+  "supported_only_points": 52.73117855351898,
+  "partial_credit_points": 19.848215437045223,
+  "sensitivity_partial_credit_25_percent": 62.65528627204159,
+  "sensitivity_partial_credit_75_percent": 82.50350170908682,
   "core_gate_count": 173,
   "status_counts": {
-    "supported": 56,
-    "partial": 54,
-    "missing": 63
+    "supported": 84,
+    "partial": 76,
+    "missing": 13
   },
   "supporting_tooling_score_percent": 75.0,
-  "functional_api_names": 66,
+  "functional_api_names": 103,
   "canonical_api_count": 108,
   "api_status_counts": {
-    "missing": 42,
-    "supported": 26,
-    "partial": 40
+    "missing": 5,
+    "partial": 61,
+    "supported": 42
   },
   "api_subsystems": [
     {
       "name": "system",
       "total": 12,
       "status_counts": {
-        "missing": 8,
-        "supported": 2,
-        "partial": 2
+        "missing": 3,
+        "partial": 5,
+        "supported": 4
       },
-      "exercised": 1
+      "exercised": 4
     },
     {
       "name": "graphics",
       "total": 26,
       "status_counts": {
-        "partial": 18,
-        "supported": 3,
-        "missing": 5
+        "partial": 20,
+        "supported": 6
       },
-      "exercised": 10
+      "exercised": 23
     },
     {
       "name": "tables",
       "total": 7,
       "status_counts": {
-        "supported": 5,
-        "partial": 2
+        "supported": 7
       },
       "exercised": 6
     },
@@ -55,34 +53,34 @@
       "name": "input",
       "total": 2,
       "status_counts": {
-        "partial": 2
+        "supported": 2
       },
-      "exercised": 0
+      "exercised": 1
     },
     {
       "name": "audio",
       "total": 2,
       "status_counts": {
-        "missing": 2
+        "partial": 2
       },
-      "exercised": 0
+      "exercised": 2
     },
     {
       "name": "map",
       "total": 4,
       "status_counts": {
-        "partial": 3,
-        "missing": 1
+        "partial": 4
       },
-      "exercised": 2
+      "exercised": 3
     },
     {
       "name": "memory",
       "total": 10,
       "status_counts": {
-        "missing": 10
+        "partial": 9,
+        "missing": 1
       },
-      "exercised": 0
+      "exercised": 8
     },
     {
       "name": "math",
@@ -91,15 +89,15 @@
         "supported": 16,
         "partial": 6
       },
-      "exercised": 7
+      "exercised": 13
     },
     {
       "name": "menu",
       "total": 1,
       "status_counts": {
-        "missing": 1
+        "partial": 1
       },
-      "exercised": 0
+      "exercised": 1
     },
     {
       "name": "strings",
@@ -113,9 +111,9 @@
       "name": "persistence",
       "total": 3,
       "status_counts": {
-        "missing": 3
+        "partial": 3
       },
-      "exercised": 0
+      "exercised": 3
     },
     {
       "name": "gpio",
@@ -129,22 +127,23 @@
       "name": "advanced_lua",
       "total": 11,
       "status_counts": {
-        "missing": 11
+        "supported": 7,
+        "partial": 4
       },
-      "exercised": 0
+      "exercised": 11
     }
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 33,
-  "regression_scenario_count": 5,
+  "regression_exercised_api_names": 82,
+  "regression_scenario_count": 41,
   "regression_suite": "public-original-fixtures",
-  "historical_regression_exercised_api_names": 48,
+  "historical_regression_exercised_api_names": 49,
   "historical_regression_scenario_count": 8,
   "historical_evidence_date": "2026-10-16",
   "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
-  "recorded_rust_tests": 33,
-  "functional_api_name_presence_percent": 61.111111111111114,
+  "recorded_rust_tests": null,
+  "functional_api_name_presence_percent": 95.37037037037037,
   "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
   "sample_size": 20,
   "sample_built": 1,
@@ -178,12 +177,11 @@
         "formats.validation",
         "formats.rom"
       ],
-      "score_percent": 81.25,
-      "weighted_points": 4.875,
+      "score_percent": 93.75,
+      "weighted_points": 5.625,
       "status_counts": {
-        "supported": 6,
-        "partial": 1,
-        "missing": 1
+        "supported": 7,
+        "partial": 1
       }
     },
     {
@@ -203,12 +201,12 @@
         "language.goto",
         "language.includes"
       ],
-      "score_percent": 68.18181818181819,
-      "weighted_points": 8.181818181818182,
+      "score_percent": 86.36363636363636,
+      "weighted_points": 10.363636363636363,
       "status_counts": {
-        "supported": 7,
+        "supported": 9,
         "partial": 1,
-        "missing": 3
+        "missing": 1
       }
     },
     {
@@ -231,12 +229,11 @@
         "language.coroutines",
         "language.metatables"
       ],
-      "score_percent": 57.142857142857146,
-      "weighted_points": 10.285714285714286,
+      "score_percent": 82.14285714285714,
+      "weighted_points": 14.785714285714286,
       "status_counts": {
-        "supported": 5,
-        "partial": 6,
-        "missing": 3
+        "supported": 9,
+        "partial": 5
       }
     },
     {
@@ -275,12 +272,11 @@
         "api.map",
         "api.tline"
       ],
-      "score_percent": 45.0,
-      "weighted_points": 8.1,
+      "score_percent": 60.0,
+      "weighted_points": 10.8,
       "status_counts": {
-        "partial": 21,
-        "supported": 3,
-        "missing": 6
+        "partial": 24,
+        "supported": 6
       }
     },
     {
@@ -336,12 +332,11 @@
         "api.costatus",
         "api.yield"
       ],
-      "score_percent": 60.638297872340424,
-      "weighted_points": 4.851063829787234,
+      "score_percent": 81.91489361702128,
+      "weighted_points": 6.553191489361702,
       "status_counts": {
-        "supported": 21,
-        "partial": 15,
-        "missing": 11
+        "supported": 30,
+        "partial": 17
       }
     },
     {
@@ -358,12 +353,11 @@
         "input.extended",
         "input.repeat"
       ],
-      "score_percent": 43.75,
-      "weighted_points": 3.5,
+      "score_percent": 87.5,
+      "weighted_points": 7.0,
       "status_counts": {
-        "partial": 3,
-        "supported": 2,
-        "missing": 3
+        "supported": 6,
+        "partial": 2
       }
     },
     {
@@ -399,12 +393,12 @@
         "api.dset",
         "api.serial"
       ],
-      "score_percent": 11.11111111111111,
-      "weighted_points": 0.8888888888888888,
+      "score_percent": 48.148148148148145,
+      "weighted_points": 3.8518518518518516,
       "status_counts": {
-        "missing": 23,
-        "supported": 2,
-        "partial": 2
+        "missing": 5,
+        "partial": 18,
+        "supported": 4
       }
     },
     {
@@ -421,10 +415,12 @@
         "audio.queries",
         "audio.silentmode"
       ],
-      "score_percent": 0.0,
-      "weighted_points": 0.0,
+      "score_percent": 56.25,
+      "weighted_points": 4.5,
       "status_counts": {
-        "missing": 8
+        "partial": 3,
+        "supported": 3,
+        "missing": 2
       }
     },
     {
@@ -476,22 +472,30 @@
     }
   ],
   "source_hashes": {
-    "src/compiler/parse.rs": "c0e84cb64152bdec55f527d58590a9e35f854a0596e6f1a38bd6921b4dfa75a3",
-    "src/compiler/emit.rs": "4afa768c24ff9cce0c87f3d20c3ca1322f7193c464fcbf8d71be0a237f91dcc5",
-    "src/compiler/mod.rs": "bc3fdb860f22c89b7aabb14f77b5778ac1d9d7ca354fe7ccd17e6c6c1e755e97",
+    "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
+    "src/compiler/emit.rs": "53ebdc2008e95cae3956ec0345d7c690d1f906ee0914d1f1e463bdc71cc17964",
+    "src/compiler/mod.rs": "d72cc1e96e50e817ff8ba240c5e335f89a46b8fb014e781015fde4bf57f027f6",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "8f5039dd4d2433d987734ac39ff8a09ffd4493a4bc0661cfc7c3de34f7510f08",
-    "converter/runtime/p8.h": "835b876a01b092437c39f8ea0f7c57326353a5407aa498758987960948be842b",
-    "converter/runtime/pico.c": "b50a2a1721f0d6919665b68af6242c317d0f4eab9ce4f8fbb3b942c666f70601",
-    "converter/runtime/host.c": "d0b8a4bf90659f956425860f249921ecaf606c9c2d0f9478185153eed684797d",
-    "converter/build.py": "b61c3744536c4e667df6e0132db99e242fdb1c375a8503c2ac7017840470030a",
+    "converter/runtime/p8.c": "3314267681487ee846432edd8f92f533600faaf1b99083eb146af02f551ed7b4",
+    "converter/runtime/p8.h": "05a01ed8452e87050a25b77de223be628f228e3cc02c6d5cd17fb2d42779da39",
+    "converter/runtime/pico.c": "31bff3e0512362fed7a46f43e621f715bbf106c7ad8b4d86e642d8f08e08ec62",
+    "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
+    "converter/build.py": "6c51d3ed3945be1944eb75e13a20a1df63cd37617b060e4736f8bb882dadf56a",
     "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "1694877990f06aef468fa73c846251cf990bef869652d0539a18936d946eeaad",
-    "converter/test_png.py": "332f7e7041f22af18141f660a9cb0827d892a08db307ba3d19187643bdfa995d",
+    "converter/test_pipeline.py": "f05d2db1de61c242c261f1444be33e3b0cafc0ad1f45ba201bd9f1a495c62b4a",
+    "converter/test_png.py": "76bee5ccb5038430e45393c8420fe6de905fdbcb447f13a9831031938f916635",
     "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
-    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
+    "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
+    "converter/tests/api_overloads.p8": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864",
+    "converter/cartridge_input.py": "21e634578ca8ef2fa34ee4e380c78fee19b1bd641c96bd9acb1e6859af22c8f8",
+    "converter/test_containers.py": "c78934234733d7ec43379ca0460e0cdb4cd54f0d040ea2a1b01c2fc35932d9d6",
+    "converter/tests/numeric_strings.p8": "2437099687700752d71306f733b9b9654fbda813af575afe06465cbf620f5c5f",
+    "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
+    "converter/tests/palette_state.p8": "318e55e47b8b00565d5fc843058d9bf5c3903990c933c9209bdf640fbc0fe681",
+    "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
+    "converter/tests/extended_features.p8": "c86209abfd937285b14d2cf1d7ce69f0684bc19cd7376bec9e594ab8a4577c2d"
   }
 }

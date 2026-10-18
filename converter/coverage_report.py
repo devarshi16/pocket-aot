@@ -333,6 +333,18 @@ def make_status(manifest, summary):
         f"| Historical random game sample | {summary['sample_built']}/{summary['sample_size']} built; {summary['sample_owner_confirmed']}/{summary['sample_size']} owner-confirmed | Earlier RP2040/Waveshare display and controls check; not a new public-suite result |",
         "| Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |",
         f"| Secondary weighted planning index | {summary['core_capability_score_percent']:.1f}% | Judgment-based rubric; not remaining time or compatibility |", "",
+        "## Low-hanging work", "",
+        "Three small-gap batches have added table helpers, drawing overloads, numeric/string behavior and raw ROM input. "
+        "The latest adds draw-palette state/table/reset support, leading-dot radix literals and bitwise function defaults. "
+        "These subfeature changes do not on their own earn an additional whole-gate credit. "
+        "See [completed work and remaining small gaps](SMALL-GAPS.md) for evidence and scope.", "",
+        "| Next candidate | Work still needed |", "| --- | --- |",
+        "| `ord` boundary/count cases | Establish zero/negative counts and overruns with a trustworthy reference |",
+        "| Decimal `tonum` fidelity | Exact fixed-point wrapping, rounding and exponent parsing |",
+        "| Drawing-state completion | Verify table/reset returns and fractional clipping; display/secondary palettes need backend/fill-pattern work |",
+        "| Rounded rectangles / ellipses | Reuse drawing primitives with reference raster and fill-pattern fixtures |", "",
+        "Audio, coroutines, metatables, complete memory emulation and persistent saves require larger changes. "
+        "These priorities are an effort assessment, not measured remaining time.", "",
         "## API coverage", "",
         "Supported means implemented within the stated audit gate, with no specific omission identified. "
         "Partial means a known limitation. Missing includes silent no-ops. Audio stubs receive no functional credit. "
@@ -361,9 +373,10 @@ def make_status(manifest, summary):
              f"Its source hashes are **{'fresh' if fresh else 'stale or unavailable'}**. "
              "The runner profiles only scenarios whose success or expected controlled failure was checked. "
              "Two additional original fixtures check explicit rejection of unsupported APIs. "
-             "A separate PNG test roundtrips the original semantic fixture and executes the generated C for 600 sanitized frames.", "",
+             "Separate container tests verify four original ROM forms and eight malformed inputs; each positive form executes for 600 sanitized frames. "
+             "A PNG test roundtrips the original semantic fixture through the shared decoder and executes for 600 sanitized frames.", "",
              "```sh", "cargo test --locked", "cargo build --release --locked --bin pocket-aot",
-             "python3 converter/test_pipeline.py", "python3 converter/test_png.py",
+             "python3 converter/test_pipeline.py", "python3 converter/test_png.py", "python3 converter/test_containers.py",
              "python3 converter/coverage_report.py --check", "```", "",
              "The public suite needs no external cartridges, network downloads, Pico SDK or connected board. "
              "The optional `test_png.py --arm-build` adds a UF2 build when the SDK and Arm compiler are installed. "
@@ -465,6 +478,7 @@ def main():
         (ROOT / "converter/PROGRESS.md").write_text(make_overview(manifest, summary))
         (DEST / "CHECKLIST.md").write_text(make_checklist(manifest, entries, summary))
         (DEST / "progress-summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+        (DEST / "assessment-check.json").write_text(json.dumps({k: v for k, v in summary.items() if k not in ("categories", "source_hashes")}, indent=2) + "\n")
         (ROOT / "docs").mkdir(exist_ok=True)
         (ROOT / "docs/STATUS.md").write_text(make_status(manifest, summary))
         (ROOT / "docs/status.svg").write_text(make_status_svg(manifest, summary))

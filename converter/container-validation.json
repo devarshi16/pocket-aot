@@ -1,0 +1,60 @@
+{
+  "suite": "original-rom-containers",
+  "cases": [
+    {
+      "format": "plain",
+      "bytes": 32768,
+      "source_unchanged": true,
+      "code_and_data_identical": true,
+      "generated_c_identical": true,
+      "sanitized_frames": 600
+    },
+    {
+      "format": "pxa",
+      "bytes": 32768,
+      "source_unchanged": true,
+      "code_and_data_identical": true,
+      "generated_c_identical": true,
+      "sanitized_frames": 600
+    },
+    {
+      "format": "legacy",
+      "bytes": 32768,
+      "source_unchanged": true,
+      "code_and_data_identical": true,
+      "generated_c_identical": true,
+      "sanitized_frames": 600
+    },
+    {
+      "format": "trailer",
+      "bytes": 32800,
+      "source_unchanged": true,
+      "code_and_data_identical": true,
+      "generated_c_identical": true,
+      "sanitized_frames": 600
+    }
+  ],
+  "rejected": [
+    "size-0",
+    "size-1",
+    "size-32767",
+    "size-32769",
+    "size-32799",
+    "size-32801",
+    "bad-hash",
+    "bad-compression"
+  ],
+  "source_sha256": {
+    "converter/cartridge_input.py": "21e634578ca8ef2fa34ee4e380c78fee19b1bd641c96bd9acb1e6859af22c8f8",
+    "converter/test_containers.py": "c78934234733d7ec43379ca0460e0cdb4cd54f0d040ea2a1b01c2fc35932d9d6",
+    "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
+    "converter/runtime/p8.c": "3314267681487ee846432edd8f92f533600faaf1b99083eb146af02f551ed7b4",
+    "converter/runtime/p8.h": "05a01ed8452e87050a25b77de223be628f228e3cc02c6d5cd17fb2d42779da39",
+    "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
+    "src/compiler/emit.rs": "53ebdc2008e95cae3956ec0345d7c690d1f906ee0914d1f1e463bdc71cc17964",
+    "src/compiler/mod.rs": "d72cc1e96e50e817ff8ba240c5e335f89a46b8fb014e781015fde4bf57f027f6",
+    "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
+    "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"
+  },
+  "meaning": "Source/data/generated-C identity and host assertions; no device flashing or independent PICO-8 reference comparison."
+}

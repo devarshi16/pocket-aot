@@ -3,6 +3,8 @@
 from pathlib import Path
 import argparse, hashlib, json, os, re, shutil, struct, subprocess, sys
 
+from cartridge_input import prepare_source
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -41,22 +43,18 @@ def main():
     parser.add_argument('--frames', type=int, default=1200)
     args = parser.parse_args()
     source = args.source.expanduser().resolve()
-    if source.suffix.lower() not in ('.p8','.png'):
-        raise ValueError('Choose a PICO-8 .p8 or .p8.png cartridge.')
+    if source.suffix.lower() not in ('.p8','.png','.rom'):
+        raise ValueError('Choose a PICO-8 .p8, .p8.png or .p8.rom cartridge.')
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     slug = re.sub('[^a-z0-9]+', '-', source.stem.lower()).strip('-')[:32] or 'cartridge'
     cart_id = 'aot-' + slug + '-' + digest[:8]
     dest = ROOT / 'converted' / cart_id
     title = args.title or source.stem.replace('_', ' ').replace('-', ' ').title()
+    if source.suffix.lower() != '.p8':
+        print('Decoding the PICO-8 cartridge container...', flush=True)
+    input_source = prepare_source(source, dest)
     compiler = compiler_binary()
-    input_source = source
     output = ''
-    if source.suffix.lower() == '.png':
-        dest.mkdir(parents=True, exist_ok=True)
-        input_source = dest / 'decoded.p8'
-        decoder = ROOT / 'converter/vendor/shrinko8/shrinko8.py'
-        print('Decoding the PICO-8 PNG cartridge...', flush=True)
-        output += command([sys.executable, decoder, source, input_source], timeout=30)
     print('Translating PICO-8 source to native C...', flush=True)
     output += command([compiler, input_source, dest, title])
     runtime = ROOT / 'converter/runtime'
@@ -109,7 +107,7 @@ def main():
             f.write(data[256 * i:256 * (i + 1)].ljust(256, b'\xff') + bytes(220) + struct.pack('<I', 0x0ab16f30))
     (dest / 'build.log').write_text(output)
     report = json.loads((dest / 'conversion.json').read_text())
-    report.update(original_source=str(source), original_sha256=digest, input_format='p8.png' if source.suffix.lower()=='.png' else 'p8', uf2_sha256=hashlib.sha256(firmware.read_bytes()).hexdigest(), host_frames=args.frames,
+    report.update(original_source=str(source), original_sha256=digest, input_format={'.png':'p8.png','.rom':'p8.rom','.p8':'p8'}[source.suffix.lower()], uf2_sha256=hashlib.sha256(firmware.read_bytes()).hexdigest(), host_frames=args.frames,
                   host_result=next((s for s in output.splitlines() if s.startswith('AOT_HOST_OK')), ''),
                   firmware_bytes=len(data), stack_max_call_transition=largest+dispatcher, stack_initial_frame=initial, hardware_tested=False)
     (dest / 'conversion.json').write_text(json.dumps(report, indent=2) + '\n')

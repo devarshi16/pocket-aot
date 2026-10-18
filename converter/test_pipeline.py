@@ -35,7 +35,7 @@ def find_compiler(value=None):
 def command(args, cwd=None, timeout=60, ok=True):
     process = subprocess.run([str(a) for a in args], cwd=cwd, text=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
-    if ok and process.returncode:
+    if ok and (process.returncode or "runtime error:" in process.stdout):
         raise AssertionError(process.stdout)
     return process
 
@@ -95,16 +95,54 @@ def main():
 
         check("semantics", ROOT / "converter/tests/semantics.p8", 5000)
         check("functions", ROOT / "converter/tests/functions.p8", 5000)
+        check("api-overloads", ROOT / "converter/tests/api_overloads.p8", 2500)
+        check("numeric-strings", ROOT / "converter/tests/numeric_strings.p8", 2500)
+        check("fraction-literals", ROOT / "converter/tests/fraction_literals.p8", 2500)
+        check("palette-state", ROOT / "converter/tests/palette_state.p8", 2500)
+        check("bitwise-defaults", ROOT / "converter/tests/bitwise_defaults.p8", 2500)
+        check("extended-features", ROOT / "converter/tests/extended_features.p8", 600)
         for name, body, expected in [
             ("loop-budget", "function _update() while true do end end", "frame instruction budget exceeded"),
+            ("select-zero", "function _init() select(0,1) end", "select index out of range"),
+            ("select-negative", "function _init() select(-3,1,2) end", "select index out of range"),
+            ("select-type", 'function _init() select("bad",1) end', "number expected"),
+            ("select-bad-radix", 'function _init() select("0b2",1) end', "number expected"),
+            ("rawget-string", 'function _init() rawget("text",1) end', "table expected"),
+            ("string-index-type", 'function _init() local s="abc" printh(s[false]) end', "number expected"),
+            ("ord-overrun", 'function _init() ord("ab",2,2) end', "ord result range outside string unsupported"),
+            ("ord-zero", 'function _init() ord("ab",1,0) end', "ord count must be 1 to 32"),
+            ("ord-large", 'function _init() ord("abcdefghijklmnopqrstuvwxyzabcdefghij",1,33) end', "ord count must be 1 to 32"),
+            ("rawget-type", "function _init() rawget(1,2) end", "table expected"),
+            ("rawset-nil-key", "function _init() rawset({},nil,1) end", "nil table key"),
+            ("rawlen-type", "function _init() rawlen(false) end", "table expected"),
+            ("raw-alias-arity", "function _init() local get=rawget get({}) end", "rawget requires two arguments"),
+            ("pal-selector", "function _init() pal(8,9,3) end", "pal palette selector must be 0, 1 or 2"),
+            ("upper-memory", "function _init() poke(0x8000,1) end", "upper memory 0x8000-0xffff is not available"),
+            ("yield-outside", "function _init() yield() end", "yield called outside a coroutine"),
+            ("cartdata-twice", 'function _init() cartdata("a") cartdata("a") end', "cartdata() may only be called once"),
+            ("memcpy-range", "function _init() memcpy(0xfff0,0,32) end", "memory range outside 64 KB address space"),
+            ("index-chain", "function _init() local t={} setmetatable(t,{__index=t}) local x=t.missing end", "__index chain too long"),
+            ("vararg-limit", "function f(...) return ... end function _init() local t={} for i=1,40 do t[i]=i end f(unpack(t,1,33)) end", "unpack exceeds the result limit"),
+            ("pal-table-args", "function _init() pal({},0,0) end", "table pal accepts at most two arguments"),
+            ("pal-table-key", "function _init() pal({[17]=8}) end", "pal table keys must be integers from 0 to 16"),
+            ("pal-table-value", "function _init() pal({[1]=false}) end", "pal table values must be numbers"),
+            ("pal-zero-aliases", "function _init() pal({[0]=1,[16]=2}) end", "pal table cannot contain both color zero indices"),
+            ("pal-fractional-key", "function _init() pal({[1.5]=8}) end", "pal table keys must be integers from 0 to 16"),
+            ("pal-string-key", 'function _init() pal({color=8}) end', "pal table keys must be integers from 0 to 16"),
+            ("pal-alias-arity", "function _init() local p=pal p(1,2,0,4) end", "pal accepts at most three arguments"),
+            ("bit-operator-nil", "function _init() local a=nil&1 end", "number expected"),
+            ("bit-not-nil", "function _init() local a=~nil end", "number expected"),
+            ("bit-operator-string", 'function _init() local a="4"|2 end', "number expected"),
             ("heap-bound", "function _init() local a={} for i=1,5000 do a[i]=i end end", "table entries exhausted"),
         ]:
             source = base / (name + ".p8")
             source.write_text("pico-8 cartridge\n__lua__\n" + body + "\nfunction _draw() cls() end\n")
             check(name, source, 1, expected)
         for name, body, expected in [
-            ("unsupported-reload", "reload()", "unsupported function/API 'reload'"),
-            ("unsupported-poke", "poke(0,1)", "unsupported function/API 'poke'"),
+            ("unsupported-cstore", "cstore(0,0,1)", "unsupported function/API 'cstore'"),
+            ("unsupported-serial", "serial(0x804,0,1)", "unsupported function/API 'serial'"),
+            ("goto-without-label", "goto nowhere", "no visible label 'nowhere' for goto"),
+            ("vararg-outside", "local a=...", "'...' used outside a vararg function"),
         ]:
             source = base / (name + ".p8")
             source.write_text("pico-8 cartridge\n__lua__\nfunction _draw() " + body + " end\n")

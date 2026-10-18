@@ -1,6 +1,6 @@
 # Pocket AOT converter
 
-A self-contained `.p8` source cartridge or decoded `.p8.png` becomes generated C, links against a bounded C runtime, and compiles to an RP2040 UF2. Rust handles parsing and code generation on the computer. After flashing, the program runs independently on the Pico, without a Lua interpreter, desktop game process or network service.
+A self-contained `.p8` source cartridge, decoded `.p8.png` or full-size `.p8.rom` becomes generated C, links against a bounded C runtime, and compiles to an RP2040 UF2. Rust handles parsing and code generation on the computer. After flashing, the program runs independently on the Pico, without a Lua interpreter, desktop game process or network service.
 
 This is an experimental PICO-8 language/API subset. The [Status page](../docs/STATUS.md) separates implementation coverage, executed tests, historical game outcomes and the weighted planning estimate. Unsupported syntax/APIs stop conversion; unsupported runtime arguments and exhausted resource pools produce controlled errors.
 
@@ -19,7 +19,7 @@ The Rust stage can be used without the Pico SDK:
 target/release/pocket-aot /path/to/game.p8 /path/to/generated 'My Game'
 ```
 
-It writes `game.c`, `assets.c` and `conversion.json`; the input is not rewritten. The frontend accepts decoded `.p8` text. `build.py` accepts `.p8.png` through the vendored, MIT-licensed Shrinko8 format decoder; it does not execute or minify cartridge Lua.
+It writes `game.c`, `assets.c` and `conversion.json`; the input is not rewritten. The frontend accepts decoded `.p8` text. `build.py` accepts `.p8.png` and full-size `.rom`/`.p8.rom` through the vendored, MIT-licensed Shrinko8 format decoder; it does not execute or minify cartridge Lua.
 
 ## Build RP2040 firmware
 
@@ -32,9 +32,11 @@ python3 converter/build.py /path/to/game.p8 --title 'My Game' --library
 
 If the Arm compiler is outside `PATH`, set `PICO_TOOLCHAIN_PATH` to its installation directory. `POCKET_AOT_BIN` can point to a prebuilt compiler executable; otherwise the build helper asks Cargo to build the release compiler. `CARGO_TARGET_DIR` is honored.
 
+Raw ROM input must be 32,768 bytes, optionally followed by a 32-byte trailer. Plain, legacy-compressed and modern-compressed code are supported; a present nonzero trailer hash is verified. Code-only tiny ROMs and multi-cart exports are excluded. Sources are not rewritten.
+
 The helper translates, runs generated C with ASan/UBSan, compiles firmware, checks generated stack usage, and records source/firmware hashes. `--library` adds a shelf card only after these stages succeed. Omit it to build without changing the shelf. Conversion does not flash hardware. Output goes to ignored `converted/` and `firmware/` directories.
 
-In Pocket Arcade, use **+ ADD CARTRIDGE**, choose a local `.p8` or `.p8.png`, then **CONVERT + ADD TO COLLECTION**. Drag and drop also works. Select a successfully built card and press **FLASH TO PICO**. The grid/list browser supports search, status filters, sorting and artwork fallback. Use **PROGRESS** for the subsystem dashboard and searchable API matrix.
+In Pocket Arcade, use **+ ADD CARTRIDGE**, choose a local `.p8`, `.p8.png` or `.p8.rom`, then **CONVERT + ADD TO COLLECTION**. Drag and drop also works. Select a successfully built card and press **FLASH TO PICO**. The grid/list browser supports search, status filters, sorting and artwork fallback. Use **PROGRESS** for the subsystem dashboard and searchable API matrix.
 
 ## Hardware scope
 
@@ -54,15 +56,18 @@ Directions map to PICO-8 buttons 0–3, A to 4 and B to 5. X or centre click pau
 
 ## Implemented starting set
 
-- Signed 16.16 fixed-point values, wrapping arithmetic and basic math/bit/string functions. Decimal literals round to fixed point. Numeric edge behavior and RNG sequences are not independently PICO-8-verified.
+- Signed 16.16 fixed-point values, including leading-dot hex/binary fractions, wrapping arithmetic and basic math/bit/string functions. Decimal literals round to fixed point. Numeric edge behavior and RNG sequences are not independently PICO-8-verified.
 - Nil, booleans, strings, arrays/record tables, insertion/deletion/counting, and frame-boundary garbage collection, including cycles through tables, closures and lexical cells.
 - Named, local and anonymous native functions; function values, methods, mutable captures, top-level locals, multiple returns and last-expression expansion. Up to 16 call arguments/results; no varargs.
+- Draw-palette numeric previous-register returns, bounded sparse/list table palettes and default mapping/transparency reset. Native bitwise functions convert operands with zero fallback; operator type checks remain strict. These use the existing partial numeric model and retain documented palette limits.
+- Raw table access/equality/length helpers, bounded `select` result tails, previous camera/cursor/clip state returns, transparency bitmasks and line continuation. See [small-gap details and remaining limits](../docs/SMALL-GAPS.md).
 - Lexical scopes, parallel/compound assignments, numeric `for`, built-in `all`/`pairs`/`ipairs` loops, `foreach`, `while`, `repeat`, `break`, conditionals and short-circuit logic.
 - `_init`, `_update`/`_update60`, `_draw`; basic pixel, rectangle, circle, line, text, sprite, map, clipping, camera and palette operations. Only documented implemented overloads are accepted.
 - Sprite/map/flag import and shared lower-sprite/map memory; player-one `btn`/`btnp` with default held-button repeat.
+- Numeric-string selectors, exact hex/binary string parsing, numeric formatting/conversion flags, bounded in-range multi-result `ord`, and positive/negative string byte indexing. Decimal conversion and NUL strings remain partial.
 - P8SCII source-byte conversion. Text uses an independently authored compact ASCII font; extended glyph and advanced text behavior are approximate.
 
-See [API audit](../compatibility/coverage/api-audit.json) and [full checklist](../compatibility/coverage/CHECKLIST.md) for per-entry limitations. The fixed API inventory has **26 supported, 40 partial and 42 missing entries**; a functional name is not a claim of complete behavior.
+See [API audit](../compatibility/coverage/api-audit.json) and [full checklist](../compatibility/coverage/CHECKLIST.md) for per-entry limitations. The fixed API inventory has **33 supported, 38 partial and 37 missing entries**; a functional name is not a claim of complete behavior.
 
 ## Limits and recovery
 
@@ -81,6 +86,7 @@ cargo test --locked
 cargo build --release --locked --bin pocket-aot
 python3 converter/test_pipeline.py
 python3 converter/test_png.py
+python3 converter/test_containers.py
 python3 converter/coverage_report.py --check
 ```
 
@@ -89,12 +95,19 @@ python3 converter/coverage_report.py --check
 | Runtime/closure C assertions | 2,100 frames; cells, iterators, multiple returns and string arena |
 | `semantics.p8` | 5,000 generated-native frames; arithmetic, ordering, scopes, tables, cyclic GC, graphics/shared memory |
 | `functions.p8` | 5,000 frames; captures, function values, methods and return expansion |
+| `api_overloads.p8` | 2,500 frames; raw helpers, select/native result lists, clipping/transparency pixels and line continuation |
+| `numeric_strings.p8` | 2,500 frames; numeric flags/radices, result counts, roundtrips, byte indexing and bounded `ord` |
+| `fraction_literals.p8` | 2,500 frames; exact leading-dot hex/binary bits, signs and concatenation boundaries |
+| `palette_state.p8` | 2,500 frames; previous registers, sparse/list palettes, transparency, pixels and reset |
+| `bitwise_defaults.p8` | 2,500 frames; per-operand fallback/conversion, shifts/rotates and aliases |
+| Twenty-four generated invalid API/operator calls | Controlled select/raw-table/index/ord/palette type/range/arity failures and strict bitwise operator errors |
 | Generated infinite loop | Expected controlled instruction-budget failure |
 | Generated oversized table | Expected controlled table-entry failure |
 | Generated unsupported `reload` / `poke` | Explicit conversion rejection, no generated game output |
 | Semantic-fixture PNG roundtrip | Source/ROM identity plus 600 sanitized generated-native frames |
+| Original raw ROM containers | Four forms with source/data/generated-C identity and 600 sanitizer frames each; eight malformed inputs rejected |
 
-The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **33/108 functional API names across five sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
+The native runner records only completed positive or expected-error cases in [runtime-api-coverage.json](../compatibility/coverage/runtime-api-coverage.json). Its current public suite reaches **51/108 functional API names across 34 sanitizer scenarios**. Two rejection checks and the PNG check are separate. Entry hits do not prove correct outputs, all overloads or independent reference conformance. Profiling is compiled out of Pico firmware.
 
 `test_png.py --arm-build` additionally builds UF2 when the SDK and Arm compiler are installed. `test_pipeline.py --external-cart /path/to/game.p8` explicitly adds a private local source check; repeated flags add more. This never downloads, publishes or flashes the supplied game, and the resulting coverage is labeled as including external sources.
 
