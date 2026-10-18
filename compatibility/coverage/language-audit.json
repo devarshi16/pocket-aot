@@ -104,7 +104,7 @@
         "functions.p8: _init",
         "runtime_closures.c"
       ],
-      "limits": "P8SCII byte indexing with positive/negative positions and empty out-of-range reads is tested, alongside roundtrips/long strings. Strings carry explicit lengths, so NUL bytes from escapes and chr(0) are preserved. Strings max 8191 bytes, arena 32KB/1024 slots. Fractional/non-numeric index coercion and glyph fidelity are not fully modeled.",
+      "limits": "P8SCII byte indexing with positive/negative positions and empty out-of-range reads is tested, alongside roundtrips/long strings. Strings carry explicit lengths, so NUL bytes from escapes and chr(0) are preserved. Strings max 8191 bytes, arena 32KB/768 slots. Fractional/non-numeric index coercion and glyph fidelity are not fully modeled.",
       "reference_validated": false
     },
     {

@@ -8,7 +8,7 @@
 
 #define NT 1280
 #define NE 4352
-#define NS 1024
+#define NS 768
 #define SL (P8_MAX_STRING+1)
 #define STRING_BYTES 32768
 #define NC 1536
@@ -249,8 +249,12 @@ bool p8_iter_next(const char *kind,V t,int *cursor,V *last,V *key,V *value){
  p8_fail("unsupported generic iterator");return false;
 }
 /* Tracing collector with an explicit grey stack: deep lists no longer hit a
- * recursion limit. Overflow falls back to rescanning marked objects. */
-static V grey[512];
+ * recursion limit. Overflow falls back to rescanning marked objects. The
+ * grey stack is empty once marking ends, so sweep reuses its RAM to order
+ * strings for compaction. */
+static union {V grey[512];uint16_t order[NS];} gc_work;
+_Static_assert(sizeof(uint16_t[NS])<=sizeof(V[512]),"string order must fit in the grey stack");
+#define grey gc_work.grey
 static int grey_count;
 static bool grey_overflow;
 static bool object_live(V v){
@@ -343,12 +347,12 @@ static void sweep(bool compact){
  for(int i=0;i<NT;i++)if(tables[i].used&&!tables[i].mark){int at=tables[i].head;while(at){int next=entries[at-1].next;entries[at-1].key_tag=P8_NIL;at=next;}tables[i].used=0;}
  for(int i=0;i<NC;i++)if(cells[i].used&&!cells[i].mark)cells[i].used=0;
  for(int i=0;i<NF;i++)if(closures[i].used&&!closures[i].mark){int at=closures[i].head;while(at){int next=captures[at-1].next;captures[at-1].cell=NO_LINK;at=next;}closures[i].used=0;}
- p8_heap_strings=p8_heap_entries=0;static uint16_t order[NS];int count=0;
+ p8_heap_strings=p8_heap_entries=0;uint16_t *order=gc_work.order;int count=0;
  for(int i=0;i<NS;i++){if(strings[i].used&&!strings[i].mark)strings[i].used=0;if(strings[i].used)order[count++]=(uint16_t)i;p8_heap_strings+=strings[i].used;}
  /* Compaction moves bytes, so it only runs at frame boundaries where no C
   * temporary holds a string pointer. Moving in offset order never overwrites
   * a string that has not moved yet. */
- if(compact){qsort(order,(size_t)count,sizeof order[0],by_string_offset);size_t offset=0;for(int n=0;n<count;n++){int id=order[n];size_t len=strings[id].length+1;memmove(string_data+offset,string_data+strings[id].offset,len);strings[id].offset=(uint16_t)offset;offset+=len;}string_top=offset;}
+ if(compact){qsort(order,(size_t)count,sizeof *order,by_string_offset);size_t offset=0;for(int n=0;n<count;n++){int id=order[n];size_t len=strings[id].length+1;memmove(string_data+offset,string_data+strings[id].offset,len);strings[id].offset=(uint16_t)offset;offset+=len;}string_top=offset;}
  for(int i=0;i<NE;i++)p8_heap_entries+=ENTRY_USED(i);
  sweep_coroutines();
 }
