@@ -47,10 +47,10 @@ int main(int argc,char **argv){
 #endif
  return 1;}
  // run() restarts the cartridge without resetting the scripted frame count.
- p8_reset();p8_program_init();p8_program_draw();p8_collect();
- if(!title_written){write_frame("title.idx");title_written=true;}
+ p8_reset();p8_program_init();p8_collect();
  for(;frame_no<frames;frame_no++){
   p8_begin_frame(scripted_input(frame_no));p8_program_update();p8_program_draw();p8_end_frame();
+  if(!title_written){write_frame("title.idx");title_written=true;}
   if(frame_no==300)write_frame("gameplay.idx");
  }
  finish();
