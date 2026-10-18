@@ -155,19 +155,20 @@ static void status(void);
 static int menu_cursor;
 /* Pause overlay: cartridge menuitem() entries followed by CONTINUE. */
 static void draw_pause_menu(void) {
-    static uint8_t saved[128*128];
-    memcpy(saved,game_frame,sizeof saved);
+    /* Only the menu box is drawn over, so only it is saved: six rows at most. */
+    static uint8_t saved[(6*8+8)*80];
     int items=p8_menu_count(),rows=items+1,h=rows*8+8,y0=64-h/2;
+    for (int y=0;y<h;y++) memcpy(saved+y*80,game_frame+(y0+y)*128+24,80);
     for (int y=y0;y<y0+h;y++) memset(game_frame+y*128+24,0,80);
     int row=0;
     for (int i=1;i<=5;i++) {
         const char *label=p8_menu_label(i); if(!label) continue;
-        p8_text(label,36,y0+5+row*8,menu_cursor==row?7:6); row++;
+        char text[17];snprintf(text,sizeof text,"%s",label);p8_overlay_text(text,36,y0+5+row*8,menu_cursor==row?7:6); row++;
     }
-    p8_text("continue",36,y0+5+row*8,menu_cursor==row?7:6);
-    p8_text(">",28,y0+5+menu_cursor*8,7);
+    p8_overlay_text("continue",36,y0+5+row*8,menu_cursor==row?7:6);
+    p8_overlay_text(">",28,y0+5+menu_cursor*8,7);
     publish();
-    memcpy(game_frame,saved,sizeof saved);
+    for (int y=0;y<h;y++) memcpy(game_frame+(y0+y)*128+24,saved+y*80,80);
 }
 static int menu_entry(int row) { int seen=0; for (int i=1;i<=5;i++) if (p8_menu_label(i)) { if (seen==row) return i; seen++; } return 0; }
 /* Returns true while the game should stay paused. */

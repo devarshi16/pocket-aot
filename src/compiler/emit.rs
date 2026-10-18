@@ -112,16 +112,69 @@ pub const APIS: &[&str] = &[
     "coresume",
     "costatus",
     "yield",
+    "load",
+    "ls",
+    "serial",
 ];
 /// Builtins that publish their own result list (possibly empty or several values).
 const MULTI_RESULT_APIS: &[&str] = &[
     "camera", "cursor", "clip", "select", "assert", "tonum", "ord", "peek", "peek2", "peek4",
     "next", "pairs", "ipairs", "unpack", "coresume", "yield",
 ];
+/// Builtins that always produce exactly one value. A trailing call to one of
+/// them needs one slot rather than a whole expansion area, which keeps nested
+/// calls such as `mid(0,flr(rnd(8)),max(1,n))` small on the Pico stack.
+const SINGLE_RESULT_APIS: &[&str] = &[
+    "flr",
+    "ceil",
+    "abs",
+    "sgn",
+    "sqrt",
+    "sin",
+    "cos",
+    "atan2",
+    "min",
+    "max",
+    "mid",
+    "rnd",
+    "band",
+    "bor",
+    "bxor",
+    "bnot",
+    "shl",
+    "shr",
+    "lshr",
+    "rotl",
+    "rotr",
+    "tostr",
+    "chr",
+    "sub",
+    "type",
+    "count",
+    "btn",
+    "btnp",
+    "pget",
+    "sget",
+    "mget",
+    "fget",
+    "stat",
+    "time",
+    "t",
+    "split",
+    "rawget",
+    "rawequal",
+    "rawlen",
+    "getmetatable",
+    "setmetatable",
+    "costatus",
+    "cocreate",
+    "all",
+    "dget",
+];
 /// Canonical PICO-8 APIs this target does not provide. Calling one stops the
 /// conversion, because deferring would hide a real capability gap behind a
 /// runtime error; an undefined cart-local name is not in this set.
-const UNIMPLEMENTED_APIS: &[&str] = &["load", "save", "ls", "cstore", "serial"];
+const UNIMPLEMENTED_APIS: &[&str] = &["save", "cstore"];
 /// Values per expression list. A final multi-value expression may add up to
 /// EXPANSION values beyond the fixed entries; this bounds each call site's
 /// stack array for the Pico's 16 KB stack.
@@ -167,7 +220,13 @@ impl Emitter {
     }
     fn val(&mut self, s: String) -> String {
         let n = self.fresh();
-        self.line(format!("V {n}={s};"));
+        // Copy globals field by field: GCC gives each whole-struct copy of a
+        // static global its own stack slot, which grows long functions' frames.
+        if s.starts_with("g_") && s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_') {
+            self.line(format!("V {n}={{{s}.n,{s}.tag}};"));
+        } else {
+            self.line(format!("V {n}={s};"));
+        }
         n
     }
     fn binding(&self, n: &str) -> Binding {
@@ -291,7 +350,17 @@ impl Emitter {
         };
         Ok(self.val(format!("p8_closure({id},{},{caps})", visible.len())))
     }
-    fn multi(e: &Expr) -> bool {
+    fn multi(&self, e: &Expr) -> bool {
+        if let Expr::Call(f, _) = e {
+            if let Expr::Var(n) = f.as_ref() {
+                if SINGLE_RESULT_APIS.contains(&n.as_str())
+                    && !self.assigned.contains(n)
+                    && !self.scopes.iter().any(|s| s.contains_key(n))
+                {
+                    return false;
+                }
+            }
+        }
         matches!(e, Expr::Call(..) | Expr::MethodCall(..)) || is_vararg(e)
     }
     fn vararg_base(&self) -> Result<usize, Error> {
@@ -318,14 +387,14 @@ impl Emitter {
         }
         let a = self.fresh();
         let n = self.fresh();
-        let capacity = if args.last().is_some_and(Self::multi) {
+        let capacity = if args.last().is_some_and(|e| self.multi(e)) {
             args.len() - 1 + EXPANSION
         } else {
             args.len() + 1
         };
         self.line(format!("V {a}[{capacity}];int {n}=0;"));
         for (i, e) in args.iter().enumerate() {
-            if i + 1 == args.len() && Self::multi(e) {
+            if i + 1 == args.len() && self.multi(e) {
                 self.expand(e, &a, &n, capacity)?;
             } else {
                 let v = self.expr(e)?;
@@ -363,6 +432,13 @@ impl Emitter {
             Expr::Var(n) => {
                 if APIS.contains(&n.as_str()) {
                     self.apis.insert(n.clone());
+                }
+                // Only assignment statements change an uncaptured local, and no
+                // statement runs inside an expression, so it needs no copy.
+                if let Some(b) = self.scopes.iter().rev().find_map(|s| s.get(n)) {
+                    if !b.cell {
+                        return Ok(b.c.clone());
+                    }
                 }
                 self.val(self.read(n))
             }
@@ -425,7 +501,7 @@ impl Emitter {
                 let object = self.expr(object)?;
                 let f = self.val(format!("p8_get({object},p8_str({}))", cstr(name)));
                 let (n, a) = self.args(args)?;
-                let room = if args.last().is_some_and(Self::multi) {
+                let room = if args.last().is_some_and(|e| self.multi(e)) {
                     args.len() - 1 + EXPANSION
                 } else {
                     args.len() + 1
@@ -440,7 +516,7 @@ impl Emitter {
                         if APIS.contains(&n.as_str()) {
                             // A trailing call or '...' expands to an unknown number of
                             // values, so the syntactic count is not the runtime count.
-                            if !args.last().is_some_and(Self::multi) {
+                            if !args.last().is_some_and(|e| self.multi(e)) {
                                 validate_api(n, args.len())?;
                             }
                         } else if UNIMPLEMENTED_APIS.contains(&n.as_str()) {
@@ -504,7 +580,13 @@ impl Emitter {
                     // Locals outlive their statement, so evaluate the values in an
                     // inner block: its argument array then does not stay on the
                     // native stack for the rest of the enclosing block.
-                    let temps: Vec<String> = dest.iter().map(|_| self.fresh()).collect();
+                    // An uncaptured local is the C variable itself; binding it only
+                    // after the values keeps `local x=x` reading the outer x.
+                    let names: Vec<String> = dest
+                        .into_iter()
+                        .map(|(n, _, _)| n.expect("local destination"))
+                        .collect();
+                    let temps: Vec<String> = names.iter().map(|_| self.fresh()).collect();
                     for t in &temps {
                         self.line(format!("V {t}=p8_nil();"));
                     }
@@ -514,8 +596,13 @@ impl Emitter {
                         self.line(format!("if({count}>{i}){t}={vals}[{i}];"));
                     }
                     self.line("}");
-                    for ((n, _, _), t) in dest.into_iter().zip(temps) {
-                        self.local(&n.expect("local destination"), &t);
+                    for (n, t) in names.into_iter().zip(temps) {
+                        if self.captures.contains(&n) {
+                            self.local(&n, &t);
+                        } else {
+                            let scope = self.scopes.last_mut().unwrap();
+                            scope.insert(n, Binding { c: t, cell: false });
+                        }
                     }
                     return Ok(());
                 }
@@ -802,6 +889,9 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "rrect" | "rrectfill" => (4, 6),
         "tline" => (6, 9),
         "pack" | "yield" => (0, 64),
+        "load" => (1, 3),
+        "ls" => (0, 1),
+        "serial" => (3, 3),
         _ => (1, 1),
     };
     if n < min || n > max {

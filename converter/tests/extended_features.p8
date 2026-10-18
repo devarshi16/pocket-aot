@@ -84,6 +84,11 @@ function _init()
  check("stat audio",stat(49)==3 and stat(46)==1 and stat(54)==0)
  poke(0x5f5c,255)
  check("btn p2",btn(0,1)==false)
+ check("ls",type(ls())=="table" and #ls()==0)
+ check("serial",serial(0x804,0x4300,4)==0)
+ check("nested builtins",mid(0,flr(rnd(1)),max(1,min(5,3)))==0 and select("#",flr(2.5))==1)
+ local q=5 do local q=q+1 check("local shadow",q==6) end check("outer local",q==5)
+ local p1,p2=q,q+1 p1,p2=p2,p1 check("local swap",p1==6 and p2==5)
  printh("FEATURES_OK "..#log)
 end
 frames=0

@@ -61,6 +61,17 @@ A broad pass over the APIs and language features that most often stopped real ca
 
 All are exercised by the original fixture `converter/tests/extended_features.p8` and new expected-error scenarios. Pixel output for the new shapes is not checked against a PICO-8 reference.
 
+## Fifth batch (72.6% to 72.9%)
+
+Aimed at the blockers measured on the frozen top-100 run (22/100 firmware builds), not at the planning index:
+
+- Pico stack budget: generated C copies globals field by field, binds new locals directly and gives trailing single-result builtins one slot instead of a 16-value expansion area. Long functions in stress fixtures shrink from 1.5–3.5 KB to 0.25–1.8 KB of stack.
+- Pools: 1024 string slots (was 256), 1280 tables (768), 4352 table entries (4096), with free-slot searches that resume where the last one stopped. The pause menu now saves only its own box, which frees 12 KB of RAM for this.
+- The per-frame instruction guard is 1,000,000 ticks (was 200,000); it only stops runaway loops.
+- `load` converts and stops the cart only if it is called; `ls` returns an empty table and `serial` transfers nothing.
+
+The top-100 effect is unmeasured until the benchmark is re-run on a machine that can download the cartridges.
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |

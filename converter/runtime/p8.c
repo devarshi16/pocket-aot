@@ -6,9 +6,9 @@
 #include <limits.h>
 #include "font.h"
 
-#define NT 768
-#define NE 4096
-#define NS 256
+#define NT 1280
+#define NE 4352
+#define NS 1024
 #define SL (P8_MAX_STRING+1)
 #define STRING_BYTES 32768
 #define NC 1536
@@ -64,6 +64,9 @@ const uint8_t pico_palette_extended[32][3]={
 jmp_buf p8_guard;
 char p8_error[128];
 uint32_t p8_frames,p8_operations,p8_heap_entries,p8_heap_strings;
+/* Instruction ticks per frame. This only stops runaway loops: a frame that
+ * uses more simply runs slow on PICO-8, so the guard is generous. */
+#define P8_FRAME_BUDGET 1000000u
 static unsigned budget,depth;
 static uint8_t palette[16],transparent[16],secondary_palette[16],previous,pressed;
 static uint16_t held_frames[6];
@@ -107,8 +110,15 @@ const char *p8_describe(V v,char *out,size_t n){switch(v.tag){
  case P8_NIL:snprintf(out,n,"nil");break;case P8_FUNCTION:snprintf(out,n,"function");break;
  case P8_THREAD:snprintf(out,n,"thread");break;
  default:{V text;if(v.tag==P8_TABLE&&meta_call1(v,"__tostring",&text)&&text.tag==P8_STR){snprintf(out,n,"%s",string(text));break;}snprintf(out,n,"table");}}return out;}
-static int string_slot(void){for(int i=0;i<NS;i++)if(!strings[i].used)return i;return -1;}
+/* Free-slot searches resume where the last one stopped, so a long frame of
+ * allocations does not rescan the occupied front of each pool. */
+static int string_hint,table_hint,entry_hint;
+#define NEXT_FREE(count,hint,is_free) for(int k=0;k<(count);k++){int i=((hint)+k)%(count);if(is_free){(hint)=i+1;return i;}}return -1
+static int string_slot(void){NEXT_FREE(NS,string_hint,!strings[i].used);}
+/* Every live string ends at or below string_top, so new strings can be placed there directly. */
+static size_t string_top;
 static bool string_place(size_t len,size_t *at){
+ if(string_top+len+1<=STRING_BYTES){*at=string_top;return true;}
  size_t offset=0;
  /* Find a free interval without moving strings still held by C temporaries. */
  for(;;){bool moved=false;for(int i=0;i<NS;i++)if(strings[i].used){size_t begin=strings[i].offset,end=begin+strings[i].length+1;if(offset<end&&offset+len+1>begin){offset=end;moved=true;break;}}if(!moved)break;}
@@ -125,15 +135,15 @@ static V string_bytes(const char *s,size_t len){
  if(id<0)p8_fail("string slots exhausted in one frame");
  if(!fits)p8_fail("32KB string arena exhausted in one frame");
  memmove(string_data+offset,s,len);string_data[offset+len]=0;
- strings[id].offset=(uint16_t)offset;strings[id].length=(uint16_t)len;strings[id].used=1;strings[id].mark=0;return(V){id,P8_STR};
+ strings[id].offset=(uint16_t)offset;strings[id].length=(uint16_t)len;strings[id].used=1;strings[id].mark=0;if(offset+len+1>string_top)string_top=offset+len+1;return(V){id,P8_STR};
 }
 V p8_str(const char *s){return string_bytes(s,strlen(s));}
 V p8_strn(const char *s,size_t length){return string_bytes(s,length);}
 static int table_id(V t){if(t.tag!=P8_TABLE||(unsigned)t.n>=NT||!tables[t.n].used)p8_fail("table expected");return t.n;}
-static int table_slot(void){for(int i=0;i<NT;i++)if(!tables[i].used)return i;return -1;}
+static int table_slot(void){NEXT_FREE(NT,table_hint,!tables[i].used);}
 V p8_table(void){int i=table_slot();if(i<0&&can_collect()){collect_now(false);i=table_slot();}if(i<0)p8_fail("table pool exhausted");tables[i].used=1;tables[i].head=0;tables[i].meta=0;tables[i].mark=0;return(V){i,P8_TABLE};}
 static V raw_get(V t,V key){int id=table_id(t);for(int at=tables[id].head;at;at=entries[at-1].next){if(entries[at-1].key==key.n&&entries[at-1].key_tag==key.tag)return ENTRY_VALUE(at-1);}return p8_nil();}
-static int entry_slot(void){for(int i=0;i<NE;i++)if(!ENTRY_USED(i))return i;return -1;}
+static int entry_slot(void){NEXT_FREE(NE,entry_hint,!ENTRY_USED(i));}
 static void raw_set(V t,V key,V value){int id=table_id(t);if(key.tag==P8_NIL)p8_fail("nil table key");uint16_t *link=&tables[id].head;
  while(*link){int i=*link-1;if(entries[i].key==key.n&&entries[i].key_tag==key.tag){if(value.tag==P8_NIL){*link=entries[i].next;entries[i].key_tag=P8_NIL;}else{entries[i].value=value.n;entries[i].value_tag=value.tag;}return;}link=&entries[i].next;}
  if(value.tag==P8_NIL)return;
@@ -327,16 +337,18 @@ static void clear_weak_entries(void){
    if(dead){*link=entries[i].next;entries[i].key_tag=P8_NIL;}else link=&entries[i].next;}
  }
 }
+static int by_string_offset(const void *a,const void *b){return (int)strings[*(const uint16_t*)a].offset-(int)strings[*(const uint16_t*)b].offset;}
 static void sweep(bool compact){
  clear_weak_entries();
  for(int i=0;i<NT;i++)if(tables[i].used&&!tables[i].mark){int at=tables[i].head;while(at){int next=entries[at-1].next;entries[at-1].key_tag=P8_NIL;at=next;}tables[i].used=0;}
  for(int i=0;i<NC;i++)if(cells[i].used&&!cells[i].mark)cells[i].used=0;
  for(int i=0;i<NF;i++)if(closures[i].used&&!closures[i].mark){int at=closures[i].head;while(at){int next=captures[at-1].next;captures[at-1].cell=NO_LINK;at=next;}closures[i].used=0;}
- p8_heap_strings=p8_heap_entries=0;uint16_t order[NS];int count=0;
- for(int i=0;i<NS;i++){if(strings[i].used&&!strings[i].mark)strings[i].used=0;if(strings[i].used){int at=count;while(at&&strings[order[at-1]].offset>strings[i].offset){order[at]=order[at-1];at--;}order[at]=i;count++;}p8_heap_strings+=strings[i].used;}
+ p8_heap_strings=p8_heap_entries=0;static uint16_t order[NS];int count=0;
+ for(int i=0;i<NS;i++){if(strings[i].used&&!strings[i].mark)strings[i].used=0;if(strings[i].used)order[count++]=(uint16_t)i;p8_heap_strings+=strings[i].used;}
  /* Compaction moves bytes, so it only runs at frame boundaries where no C
-  * temporary holds a string pointer. */
- if(compact){size_t offset=0;for(int n=0;n<count;n++){int id=order[n];size_t len=strings[id].length+1;memmove(string_data+offset,string_data+strings[id].offset,len);strings[id].offset=(uint16_t)offset;offset+=len;}}
+  * temporary holds a string pointer. Moving in offset order never overwrites
+  * a string that has not moved yet. */
+ if(compact){qsort(order,(size_t)count,sizeof order[0],by_string_offset);size_t offset=0;for(int n=0;n<count;n++){int id=order[n];size_t len=strings[id].length+1;memmove(string_data+offset,string_data+strings[id].offset,len);strings[id].offset=(uint16_t)offset;offset+=len;}string_top=offset;}
  for(int i=0;i<NE;i++)p8_heap_entries+=ENTRY_USED(i);
  sweep_coroutines();
 }
@@ -482,6 +494,8 @@ static void rounded_rect(int x,int y,int w,int h,int r,int c,bool fill){
   yy++;if(err<0)err+=2*yy+1;else{xx--;err+=2*(yy-xx)+1;}
  }
 }
+/* System text (pause menu): raw screen pixels, unaffected by the cart's camera, clip and palette. */
+void p8_overlay_text(const char *s,int x,int y,int c){for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s&127;for(int row=0;row<6;row++)for(int col=0;col<4;col++){int px=x+col,py=y+row;if((p8_font[ch*6+row]&(1<<col))&&(unsigned)px<128&&(unsigned)py<128)game_frame[py*128+px]=(uint8_t)(c&15);}}}
 void p8_text(const char *s,int x,int y,int c){int origin=x;for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s;if(ch=='\n'){x=origin-4;y+=6;continue;}
  // Source strings use P8SCII bytes. Common button icons match the physical A/B labels.
  if(ch>=128){if(ch==142)ch='a';else if(ch==151)ch='b';else ch='?';}
@@ -686,7 +700,7 @@ int p8_menu_count(void){int n=0;for(int i=0;i<5;i++)n+=menu_items[i].label.tag==
 const char *p8_menu_label(int index){if(index<1||index>5||menu_items[index-1].label.tag!=P8_STR)return NULL;return string(menu_items[index-1].label);}
 void p8_menu_select(int index,int buttons){
  if(index<1||index>5||menu_items[index-1].callback.tag!=P8_FUNCTION)return;
- budget=200000;V b=p8_int(buttons);p8_call(menu_items[index-1].callback,1,&b);
+ budget=P8_FRAME_BUDGET;V b=p8_int(buttons);p8_call(menu_items[index-1].callback,1,&b);
 }
 
 /* ---- Runtime-native closures (iterator values, all(), next, coroutines) ---- */
@@ -1053,7 +1067,7 @@ V p8_api_id(int id,int argc,const V *argv){
   int n=I(0,-1);
   switch(n){
    case 0:return p8_num((int32_t)(((uint64_t)p8_heap_entries*2048*65536)/NE));/* approximate Lua memory use, KB */
-   case 1:case 2:/* Native budget ratio, not an emulated PICO-8 CPU measurement. */return p8_num((int32_t)(((uint64_t)(200000-budget)*65536)/200000));
+   case 1:case 2:/* Native budget ratio, not an emulated PICO-8 CPU measurement. */return p8_num((int32_t)(((uint64_t)(P8_FRAME_BUDGET-budget)*65536)/P8_FRAME_BUDGET));
    case 4:case 6:return p8_str("");
    case 5:return p8_int(41);
    case 7:case 8:case 9:return p8_int((int)p8_target_hz);
@@ -1179,6 +1193,13 @@ V p8_api_id(int id,int argc,const V *argv){
   V out[P8_MAX_RESULTS];for(int i=first;i<=last;i++)out[i-first]=p8_get(A(0),p8_int(i));return p8_return(last-first+1,out);
  }
  if(IS(P8_API_pack)){V t=p8_table();for(int i=0;i<argc;i++)p8_set(t,p8_int(i+1),argv[i]);p8_set(t,p8_str("n"),p8_int(argc));return t;}
+ /* ---- Cartridge files and serial: one bundled cartridge, no host file system ---- */
+ if(IS(P8_API_load)){char text[96];snprintf(text,sizeof text,"load(): only this cartridge is on the device (%s)",A(0).tag==P8_STR?string(A(0)):"?");p8_fail(text);}
+ if(IS(P8_API_ls))return p8_table();
+ if(IS(P8_API_serial)){
+  /* No serial channel is wired up: reads and writes transfer nothing. */
+  int length=I(2,0);(void)length;return p8_int(0);
+ }
  /* ---- Coroutines ---- */
  if(IS(P8_API_cocreate)||IS(P8_API_coresume)||IS(P8_API_costatus)||IS(P8_API_yield))return coroutine_api(id,argc,argv);
  p8_fail("unimplemented API");return p8_nil();
@@ -1243,6 +1264,9 @@ static const char *const api_names[P8_API_COUNT]={
   [P8_API_coresume]="coresume",
   [P8_API_costatus]="costatus",
   [P8_API_yield]="yield",
+  [P8_API_load]="load",
+  [P8_API_ls]="ls",
+  [P8_API_serial]="serial",
   [P8_API_cls]="cls",
   [P8_API_pset]="pset",
   [P8_API_pget]="pget",
@@ -1322,14 +1346,14 @@ V p8_api(const char *name,int argc,const V *argv){
  p8_fail("unimplemented API");return p8_nil();
 }
 void p8_reset(void){
- memset(tables,0,sizeof tables);memset(entries,0,sizeof entries);memset(strings,0,sizeof strings);memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);
+ memset(tables,0,sizeof tables);memset(entries,0,sizeof entries);memset(strings,0,sizeof strings);string_top=0;string_hint=table_hint=entry_hint=0;memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);
  for(int i=0;i<NU;i++){captures[i].cell=NO_LINK;captures[i].next=0;}
  memcpy(gfx,p8_cart_gfx,sizeof gfx);memcpy(map_data,p8_cart_map,sizeof map_data);memcpy(flags,p8_cart_flags,sizeof flags);
  if(p8_cart_sound)memcpy(sound_ram,p8_cart_sound,sizeof sound_ram);else memset(sound_ram,0,sizeof sound_ram);
  memset(user_ram,0,sizeof user_ram);memset(persist_ram,0,sizeof persist_ram);memset(hw_ram,0,sizeof hw_ram);memset(game_frame,0,sizeof game_frame);
  for(int i=0;i<16;i++){palette[i]=i;transparent[i]=(i==0);p8_screen_palette[i]=i;secondary_palette[i]=i;}
  memset(held_frames,0,sizeof held_frames);camera_x=camera_y=clip_x0=clip_y0=cursor_x=cursor_y=0;clip_x1=clip_y1=128;draw_color=6;
- game_buttons=previous=pressed=0;p8_frames=p8_operations=p8_heap_entries=p8_heap_strings=0;depth=0;budget=200000;random_state=1;p8_error[0]=0;result_count=0;
+ game_buttons=previous=pressed=0;p8_frames=p8_operations=p8_heap_entries=p8_heap_strings=0;depth=0;budget=P8_FRAME_BUDGET;random_state=1;p8_error[0]=0;result_count=0;
  line_x=line_y=0;line_started=false;fill_pattern=0;fill_transparent=false;cart_data_open=false;p8_paused_by_cart=false;
  for(int i=0;i<5;i++){menu_items[i].label=p8_nil();menu_items[i].callback=p8_nil();}
  audio_reset();reset_coroutines();collecting=false;p8_program_clear();}
@@ -1339,8 +1363,8 @@ static void update_input(uint8_t held){
   /* 0x5f5c/0x5f5d configure repeat; a delay of 255 disables it. */
   if(delay!=255&&held_frames[i]>=delay+1&&((held_frames[i]-delay-1)%interval)==0)pressed|=1u<<i;}else held_frames[i]=0;}
  previous=held;}
-void p8_begin_frame(uint8_t held){budget=200000;depth=0;result_count=0;update_input(held);}
-void p8_flip_frame(uint8_t held){budget=200000;update_input(held);}
+void p8_begin_frame(uint8_t held){budget=P8_FRAME_BUDGET;depth=0;result_count=0;update_input(held);}
+void p8_flip_frame(uint8_t held){budget=P8_FRAME_BUDGET;update_input(held);}
 void p8_end_frame(void){audio_advance(AUDIO_RATE/(int)p8_target_hz);p8_collect();p8_frames++;}
 /* flip() inside generated code: collect without compaction, then let the backend present. */
 __attribute__((weak)) void p8_present(void){p8_fail("flip() requires a frame backend");}

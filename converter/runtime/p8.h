@@ -153,6 +153,9 @@ enum P8ApiId {
  P8_API_coresume,
  P8_API_costatus,
  P8_API_yield,
+ P8_API_load,
+ P8_API_ls,
+ P8_API_serial,
  P8_API_COUNT
 };
 #ifdef P8_API_PROFILE
@@ -194,6 +197,7 @@ int p8_menu_count(void);
 const char *p8_menu_label(int index);
 void p8_menu_select(int index,int buttons);
 void p8_text(const char *s,int x,int y,int color);
+void p8_overlay_text(const char *s,int x,int y,int c);
 const char *p8_describe(V v,char *out,size_t n);
 void p8_program_init(void);
 void p8_program_update(void);
