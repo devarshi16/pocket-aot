@@ -21,7 +21,7 @@
     "src/compiler/mod.rs": "d72cc1e96e50e817ff8ba240c5e335f89a46b8fb014e781015fde4bf57f027f6",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"
   },
-  "compiler_sha256": "6949e98df3c1e636917f43f7eb48bf760de242c97e25cf2a0d69add24f03fbfe",
+  "compiler_sha256": "7d7e09e2f9265a9c62e050b2bf3cc48a0dee0ca7973ce9b8fc8fbbd380573069",
   "api_hits": {
     "cls": 28104,
     "pset": 10010,
