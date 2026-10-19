@@ -5,7 +5,7 @@ The currently validated device is an **RP2040 Raspberry Pi Pico with 2 MB flash*
 - [Waveshare module documentation](https://www.waveshare.com/wiki/Pico-LCD-1.3)
 - [Raspberry Pi Pico documentation and model comparison](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html)
 
-Pico W is an RP2040 model. Pico 2 / Pico 2 W use RP2350 and need a separate port; the current UF2 family, linker layout and build target must not be assumed to support them. Wi-Fi is not used.
+Pico W is an RP2040 model. Pico 2 / Pico 2 W use RP2350: `converter/build.py --board pico2_w` builds for them (larger pools, upper memory mapped), and Pocket Arcade converts each cartridge for both chips. RP2350 firmware has not been confirmed on hardware yet. Wi-Fi is not used.
 
 ## Connections
 
@@ -44,7 +44,7 @@ Linux permissions may prevent serial access or BOOTSEL transfer. Inspect [`helpe
 sudo bash helpers/install-usb-access.sh
 ```
 
-Reconnect the Pico after installing the rules. The helper grants the relevant USB/serial access to the existing `plugdev` group. BOOTSEL must also be mounted as an `RPI-RP2` drive for copying. The desktop currently detects Linux mount locations and serial devices; other desktop platforms need adaptation.
+Reconnect the Pico after installing the rules. The helper grants the relevant USB/serial access to the existing `plugdev` group. BOOTSEL must also be mounted as an `RPI-RP2` (Pico) or `RP2350` (Pico 2 / Pico 2 W) drive for copying; the flasher sends the firmware built for that chip. The desktop currently detects Linux mount locations and serial devices; other desktop platforms need adaptation.
 
 ## Porting boundaries
 

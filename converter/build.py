@@ -54,6 +54,7 @@ def main():
     slug = re.sub('[^a-z0-9]+', '-', source.stem.lower()).strip('-')[:32] or 'cartridge'
     cart_id = 'aot-' + slug + '-' + digest[:8]
     chip, family = BOARDS[args.board]
+    shelf_id = cart_id  # Both chips' firmware share one shelf entry.
     if args.board != 'pico':
         cart_id += '-' + args.board.replace('_', '')
     dest = ROOT / 'converted' / cart_id
@@ -138,20 +139,26 @@ def main():
         im.frombytes(preview.read_bytes());im.save(ROOT/'assets'/f'{cart_id}.png')
         shutil.copyfile(firmware, ROOT/'firmware'/f'{cart_id}.uf2')
         path=ROOT/'catalog.json';catalog=json.loads(path.read_text())
-        entry=dict(id=cart_id,title=title.upper(),subtitle='Converted from a PICO-8 cartridge.',kind='PICO-8 / EXPERIMENTAL AOT',
+        entry=dict(id=shelf_id,title=title.upper(),subtitle='Converted from a PICO-8 cartridge.',kind='PICO-8 / EXPERIMENTAL AOT',
                    description='Native firmware generated from this cartridge by Pocket AOT. Conversion and a desktop smoke test passed; check gameplay on your Pico.',
                    controls=['STICK   PICO-8 directions','A / B   PICO-8 O / X buttons','X / CLICK   Pause / resume','Y       Change LCD speed'],
                    filename=f'firmware/{cart_id}.uf2',sha256=report['uf2_sha256'],accent=[124,222,245],
                    cover=f'assets/{cart_id}.png',credits='Cartridge: '+source.name+' / converted with Pocket AOT 0.2')
         entry.update(status='ready',source_file=str(source),thumbnail=f'assets/{cart_id}.png')
+        if chip=='RP2350':
+            # Pico 2 / Pico 2 W firmware goes beside the RP2040 image; the flasher picks by drive.
+            entry.update(filename='',sha256='',filename_rp2350=entry['filename'],sha256_rp2350=entry['sha256'])
         if source.suffix.lower()=='.png':
             shutil.copyfile(source,ROOT/'assets'/f'{cart_id}.p8.png')
             entry['cart_image']=f'assets/{cart_id}.p8.png'
-        index=next((i for i,c in enumerate(catalog['cartridges']) if c['id']==cart_id or (c.get('source_file') and (ROOT/c['source_file']).resolve()==source)),None)
+        index=next((i for i,c in enumerate(catalog['cartridges']) if c['id']==shelf_id or (c.get('source_file') and (ROOT/c['source_file']).resolve()==source)),None)
         if index is not None:
             old=catalog['cartridges'][index]
             for field in ['id','rank','source_url','thumbnail','cart_image','credits']:
                 if field in old:entry[field]=old[field]
+            # Keep the other chip's firmware.
+            for field in (['filename','sha256'] if chip=='RP2350' else ['filename_rp2350','sha256_rp2350']):
+                if old.get(field):entry[field]=old[field]
         if index is None: catalog['cartridges'].append(entry)
         else: catalog['cartridges'][index]=entry
         temp=path.with_suffix('.tmp');temp.write_text(json.dumps(catalog,indent=2)+'\n');temp.replace(path)
