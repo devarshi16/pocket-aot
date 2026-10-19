@@ -92,6 +92,7 @@ The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each cha
 - Assignments keep only as many values as they have targets, so `local a,b,...=unpack(t)` with more than 16 results and multiple assignment of over 64 values work.
 - `cstore` checks its range and discards the write: cartridge ROM is in flash, so `reload` keeps reading the original data.
 - `save(filename)` does nothing: there is no file system to write the cartridge file into.
+- The button glyph globals `⬅️ ➡️ ⬆️ ⬇️ 🅾️ ❎` start as 0 to 5, as in PICO-8, instead of nil.
 - RP2040: the screen buffer holds two pixels per byte and pool flags share a word with a small field, which frees about 11 KB for 2048 tables (from 1536) and 11200 table entries (from 9056).
 
 ## Smallest remaining candidates

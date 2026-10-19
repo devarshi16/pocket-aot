@@ -187,6 +187,13 @@ struct Binding {
     c: String,
     cell: bool,
 }
+/// PICO-8 predefines the button glyphs as globals holding their button numbers.
+fn button_glyph(n: &str) -> Option<u8> {
+    ["⬅", "➡", "⬆", "⬇", "🅾", "❎"]
+        .iter()
+        .position(|g| n.trim_end_matches('\u{fe0f}') == *g)
+        .map(|i| i as u8)
+}
 fn global(n: &str) -> String {
     format!(
         "g_{}",
@@ -686,7 +693,8 @@ impl Emitter {
                     return Ok(());
                 }
                 let (count, vals) = self.args_kept(rhs, Some(dest.len()))?;
-                for (i, (n, t, k)) in dest.into_iter().enumerate() {
+                // Like the reference Lua, assign right to left: in `a,a=1,2` a ends up 1.
+                for (i, (n, t, k)) in dest.into_iter().enumerate().rev() {
                     let v = format!("{count}>{i}?{vals}[{i}]:p8_nil()");
                     if let Some(n) = n {
                         if *local {
@@ -1384,7 +1392,10 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
     e.line("}");
     e.line("void p8_program_clear(void){");
     for n in &names {
-        e.line(format!("{}=p8_nil();", global(n)));
+        match button_glyph(n) {
+            Some(b) => e.line(format!("{}=p8_int({b});", global(n))),
+            None => e.line(format!("{}=p8_nil();", global(n))),
+        }
     }
     e.line("}");
     e.line("V p8_debug_global(const char *name){");

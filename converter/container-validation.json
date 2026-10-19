@@ -51,7 +51,7 @@
     "converter/runtime/p8.c": "76460798812ec83627d4ed717dcf71d1d76c6556fdfe8ad91b353b4bd230b5f4",
     "converter/runtime/p8.h": "cc180c3ac3f332191ecfa6a37ffec040aa595c0c5ac2a54b2d832149ff10e430",
     "converter/runtime/host.c": "114eb355a7aa2d176ffe8971e5371e9e6a01994df9dc36aa35e62e76aa465b01",
-    "src/compiler/emit.rs": "0ee08f87e99a3dab97a51341125c441d2d9bf0841698242b443f6186287e1376",
+    "src/compiler/emit.rs": "c13150598e6c6c06f0a1ad104daaa3b1bd91c698b22f13506850c8e3a2cd6c59",
     "src/compiler/mod.rs": "7e8fdbf01cf7da4ef1b866b2e296e382cb2f3e22e66632447698c489c8ae1315",
     "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"

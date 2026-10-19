@@ -63,8 +63,8 @@
   {
     "test": "extended-features",
     "frames": 600,
-    "result": "FEATURES_OK 42\nAOT_HOST_OK frames=600 entries=59 strings=51 operations=43238 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "13fd704e24175ea81f542bf2c9430f76f07f378479965631b6c67a7f219feceb",
+    "result": "FEATURES_OK 44\nAOT_HOST_OK frames=600 entries=61 strings=53 operations=43244 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "b37ecb2585d3581b9bcec81cb390e69c006a8cd740a587035d4993f483f299ef",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
