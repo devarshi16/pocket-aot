@@ -24,10 +24,10 @@
 #define NU 4096
 #endif
 #ifndef NT
-#define NT 1536
+#define NT 2048
 #endif
 #ifndef NE
-#define NE 9056
+#define NE 11200
 #endif
 #ifndef NS
 #define NS 768
@@ -49,7 +49,10 @@
 /* Compact pool records: a table entry is used when its key tag is not nil and a
  * capture is used when its cell index is not NO_LINK. */
 #define NO_LINK 0xffff
-static struct {uint16_t head,meta;uint8_t used,mark;} tables[NT];
+/* Flags share a word with a small field: 4 bytes per table, 5 per cell, 6 per closure. */
+static struct {uint16_t head;uint16_t meta:14,used:1,mark:1;} tables[NT];
+_Static_assert(NT<(1<<14),"table ids must fit the 14-bit metatable field");
+_Static_assert(NU<(1<<14),"capture counts must fit the 14-bit closure field");
 /* Table entries are split into parallel arrays (9 bytes each). Keys are
  * stored as a 16-bit payload: an object id, a bool, or an integer number in
  * -32768..32767. Other numeric keys live in a small boxed pool. */
@@ -63,8 +66,8 @@ static uint8_t boxed_used[NB];
 static struct {uint16_t offset,length;uint8_t used,mark;} strings[NS];
 static char string_data[STRING_BYTES];
 /* V's fields are inlined so a cell packs into 8 bytes instead of 12. */
-static struct {int32_t n;uint8_t tag,used,mark;} cells[NC];
-static struct {uint16_t fn,head,count;uint8_t used,mark;} closures[NF];
+static struct __attribute__((packed)) {int32_t n;uint8_t tag:4,used:1,mark:1;} cells[NC];
+static struct {uint16_t fn,head;uint16_t count:14,used:1,mark:1;} closures[NF];
 static struct {uint16_t cell,next;} captures[NU];
 #define ENTRY_KEY_TAG(i) (entry_tags[i]&15)
 #define ENTRY_KEY(i) decode_key(entry_key[i],ENTRY_KEY_TAG(i))
@@ -97,7 +100,7 @@ static uint8_t sound_ram[0x1200];   /* 0x3100 music, 0x3200 sfx */
 static uint8_t user_ram[0x1b00];    /* 0x4300 general use */
 static uint8_t persist_ram[0x100];  /* 0x5e00 cartdata */
 static uint8_t hw_ram[0x100];       /* 0x5f00 draw state and hardware registers */
-uint8_t game_frame[128*128],game_buttons;
+uint8_t game_frame[128*64],game_buttons;
 uint8_t p8_screen_palette[16];
 bool p8_paused_by_cart;
 const uint8_t pico_palette[16][3]={
@@ -536,7 +539,7 @@ V p8_binary(const char *op,V a,V b){
  }
  if(!strcmp(op,"^")){double r=pow((double)x/65536.0,(double)y/65536.0);if(!isfinite(r)||fabs(r)>32767)p8_fail("power outside supported numeric range");return p8_num((int32_t)(r*65536));}
  p8_fail("unknown binary operator");return p8_nil();}
-static void pixel(int x,int y,int c){x-=camera_x;y-=camera_y;if(x>=clip_x0&&x<clip_x1&&y>=clip_y0&&y<clip_y1)game_frame[y*128+x]=palette[c&15];}
+static void pixel(int x,int y,int c){x-=camera_x;y-=camera_y;if(x>=clip_x0&&x<clip_x1&&y>=clip_y0&&y<clip_y1)p8_frame_set(x,y,palette[c&15]);}
 /* Shape pixels honour fillp(): pattern bit 15 is the top-left pixel of each
  * 4x4 cell. Set bits use the high colour nibble, or are skipped when the
  * pattern is transparent. Coordinates are screen-space after the camera. */
@@ -544,7 +547,7 @@ static void shape_pixel(int x,int y,int c){
  x-=camera_x;y-=camera_y;
  if(x<clip_x0||x>=clip_x1||y<clip_y0||y>=clip_y1)return;
  if(fill_pattern&(0x8000>>(((y&3)<<2)|(x&3)))){if(fill_transparent)return;c=(c>>4)&15;}
- game_frame[y*128+x]=palette[c&15];
+ p8_frame_set(x,y,palette[c&15]);
 }
 static int sample(int x,int y){if((unsigned)x>=128||(unsigned)y>=128)return 0;uint8_t p=gfx[y*64+x/2];return(p>>((x&1)*4))&15;}
 static void set_sample(int x,int y,int c){if((unsigned)x>=128||(unsigned)y>=128)return;uint8_t *p=&gfx[y*64+x/2];int shift=(x&1)*4;*p=(*p&~(15<<shift))|((c&15)<<shift);}
@@ -554,7 +557,9 @@ static void rectfill(int x,int y,int xx,int yy,int c){if(x>xx){int t=x;x=xx;xx=t
  if(fill_pattern){for(int j=y;j<=yy;j++){int sy=j-camera_y;if(sy<clip_y0||sy>=clip_y1)continue;int a=x,b=xx;if(a-camera_x<clip_x0)a=clip_x0+camera_x;if(b-camera_x>=clip_x1)b=clip_x1-1+camera_x;for(int i=a;i<=b;i++)shape_pixel(i,j,c);}return;}
  x-=camera_x;xx-=camera_x;y-=camera_y;yy-=camera_y;
  if(x<clip_x0)x=clip_x0;if(y<clip_y0)y=clip_y0;if(xx>=clip_x1)xx=clip_x1-1;if(yy>=clip_y1)yy=clip_y1-1;
- for(int j=y;j<=yy;j++)if(x<=xx)memset(game_frame+j*128+x,palette[c&15],xx-x+1);}
+ if(x>xx)return;int v=palette[c&15];
+ /* Odd edge pixels share a byte with their neighbours; whole bytes in between are filled at once. */
+ for(int j=y;j<=yy;j++){int a=x,b=xx;if(a&1)p8_frame_set(a++,j,v);if(!(b&1)&&b>=a)p8_frame_set(b--,j,v);if(a<b)memset(game_frame+j*64+a/2,v|(v<<4),(size_t)(b-a+1)/2);}}
 static void line_draw(int x,int y,int xx,int yy,int c){if(abs(xx-x)>131072||abs(yy-y)>131072)p8_fail("line too long");int dx=abs(xx-x),sx=x<xx?1:-1,dy=-abs(yy-y),sy=y<yy?1:-1,err=dx+dy;
  for(;;){shape_pixel(x,y,c);if(x==xx&&y==yy)break;int e=2*err;if(e>=dy){err+=dy;x+=sx;}if(e<=dx){err+=dx;y+=sy;}}}
 static void circle(int x,int y,int r,int c,bool fill){if(r<0)return;if(r>2048)p8_fail("circle radius exceeds subset limit");int xx=r,yy=0,err=1-r;
@@ -608,7 +613,7 @@ static void rounded_rect(int x,int y,int w,int h,int r,int c,bool fill){
  }
 }
 /* System text (pause menu): raw screen pixels, unaffected by the cart's camera, clip and palette. */
-void p8_overlay_text(const char *s,int x,int y,int c){for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s&127;for(int row=0;row<6;row++)for(int col=0;col<4;col++){int px=x+col,py=y+row;if((p8_font[ch*6+row]&(1<<col))&&(unsigned)px<128&&(unsigned)py<128)game_frame[py*128+px]=(uint8_t)(c&15);}}}
+void p8_overlay_text(const char *s,int x,int y,int c){for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s&127;for(int row=0;row<6;row++)for(int col=0;col<4;col++){int px=x+col,py=y+row;if((p8_font[ch*6+row]&(1<<col))&&(unsigned)px<128&&(unsigned)py<128)p8_frame_set(px,py,c);}}}
 void p8_text(const char *s,int x,int y,int c){int origin=x;for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s;if(ch=='\n'){x=origin-4;y+=6;continue;}
  // Source strings use P8SCII bytes. Common button icons match the physical A/B labels.
  if(ch>=128){if(ch==142)ch='a';else if(ch==151)ch='b';else ch='?';}
@@ -719,7 +724,7 @@ static uint8_t mem_read(int address){
   if(r>=0x60&&r<0x70)return secondary_palette[r-0x60];
   return hw_ram[r];
  }
- if(address<0x8000){int at=(address-0x6000)*2;return (uint8_t)((game_frame[at]&15)|((game_frame[at+1]&15)<<4));}
+ if(address<0x8000)return game_frame[address-0x6000];
 #ifdef P8_UPPER_RAM
  return upper_ram[address-0x8000];
 #else
@@ -748,7 +753,7 @@ static void mem_write(int address,uint8_t v){
   if(r>=0x60&&r<0x70){secondary_palette[r-0x60]=v;return;}
   hw_ram[r]=v;return;
  }
- if(address<0x8000){int at=(address-0x6000)*2;game_frame[at]=v&15;game_frame[at+1]=v>>4;return;}
+ if(address<0x8000){game_frame[address-0x6000]=v;return;}
 #ifdef P8_UPPER_RAM
  upper_ram[address-0x8000]=v;
 #else
@@ -998,9 +1003,9 @@ V p8_api_id(int id,int argc,const V *argv){
  if((unsigned)id<P8_API_COUNT)api_profile_hits[id]++;
 #endif
  p8_tick();
- if(IS(P8_API_cls)){memset(game_frame,palette[I(0,0)&15],sizeof game_frame);cursor_x=cursor_y=clip_x0=clip_y0=0;clip_x1=clip_y1=128;return p8_nil();}
+ if(IS(P8_API_cls)){int v=palette[I(0,0)&15];memset(game_frame,v|(v<<4),sizeof game_frame);cursor_x=cursor_y=clip_x0=clip_y0=0;clip_x1=clip_y1=128;return p8_nil();}
  if(IS(P8_API_pset)){int c=C(2);if(HAS(2))draw_color=c&255;shape_pixel(I(0,0),I(1,0),c);return p8_nil();}
- if(IS(P8_API_pget)){int x=I(0,0)-camera_x,y=I(1,0)-camera_y;return p8_int((unsigned)x<128&&(unsigned)y<128?game_frame[y*128+x]:0);}
+ if(IS(P8_API_pget)){int x=I(0,0)-camera_x,y=I(1,0)-camera_y;return p8_int((unsigned)x<128&&(unsigned)y<128?p8_frame_get(x,y):0);}
  if(IS(P8_API_rectfill)||IS(P8_API_rect)){int x=I(0,0),y=I(1,0),xx=I(2,0),yy=I(3,0),c=C(4);draw_color=c&255;if(IS(P8_API_rectfill))rectfill(x,y,xx,yy,c);else{line_draw(x,y,xx,y,c);line_draw(xx,y,xx,yy,c);line_draw(xx,yy,x,yy,c);line_draw(x,yy,x,y,c);}return p8_nil();}
  if(IS(P8_API_line)){
   if(argc>5)argc=5;/* PICO-8 ignores surplus arguments. */
@@ -1017,7 +1022,7 @@ V p8_api_id(int id,int argc,const V *argv){
   for(const char *at=s;*at;at++)if(*at=='\n')lines++;
   if(implicit&&y+(lines-1)*6>122){int scroll=((y+(lines-1)*6-122+5)/6)*6;
    if(scroll>=128)memset(game_frame,0,sizeof game_frame);
-   else{memmove(game_frame,game_frame+scroll*128,(128-scroll)*128);memset(game_frame+(128-scroll)*128,0,scroll*128);}
+   else{memmove(game_frame,game_frame+scroll*64,(size_t)(128-scroll)*64);memset(game_frame+(128-scroll)*64,0,(size_t)scroll*64);}
    y-=scroll;
   }
   draw_color=c&15;p8_text(s,x,y,c);cursor_x=0;cursor_y=y+6*lines;return p8_int(x+4*(int)strlen(s));

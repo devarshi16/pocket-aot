@@ -38,6 +38,38 @@ def command(args, cwd=None, timeout=120):
     return result.stdout
 
 
+# Set once the cartridge and board are known, so a failed --library build can
+# record why this chip has no firmware for the cartridge.
+FAILURE = {}
+
+
+def short_blocker(text):
+    """The cartridge-level reason inside a failed build's output, in a few words."""
+    for line in text.splitlines():
+        if 'CARTRIDGE_ERROR:' in line:
+            return re.sub(r' frame=\d+$', '', line.split('CARTRIDGE_ERROR:', 1)[1].strip())
+    if re.search(r"region .RAM. overflowed|will not fit in region|static data exceeds", text):
+        return 'firmware does not fit in RAM'
+    if 'stack budget' in text:
+        return 'native stack budget exceeded'
+    match = re.search(r'conversion stopped: (.+)', text)
+    if match:
+        return match.group(1).strip()
+    return text.strip().splitlines()[-1][:200] if text.strip() else 'build failed'
+
+
+def record_failure(error):
+    """Note on the cartridge's shelf entry why this chip's build failed."""
+    if not FAILURE.get('library'):
+        return
+    path = ROOT / 'catalog.json'
+    catalog = json.loads(path.read_text())
+    for entry in catalog['cartridges']:
+        if entry.get('source_file') and (ROOT / entry['source_file']).resolve() == FAILURE['source']:
+            entry['blocker_' + FAILURE['chip'].lower()] = short_blocker(str(error))
+            temp = path.with_suffix('.tmp'); temp.write_text(json.dumps(catalog, indent=2) + '\n'); temp.replace(path)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('source', type=Path)
@@ -55,6 +87,7 @@ def main():
     cart_id = 'aot-' + slug + '-' + digest[:8]
     chip, family = BOARDS[args.board]
     shelf_id = cart_id  # Both chips' firmware share one shelf entry.
+    FAILURE.update(library=args.library, source=source, chip=chip)
     if args.board != 'pico':
         cart_id += '-' + args.board.replace('_', '')
     dest = ROOT / 'converted' / cart_id
@@ -157,7 +190,7 @@ def main():
             for field in ['id','rank','source_url','thumbnail','cart_image','credits']:
                 if field in old:entry[field]=old[field]
             # Keep the other chip's firmware.
-            for field in (['filename','sha256'] if chip=='RP2350' else ['filename_rp2350','sha256_rp2350']):
+            for field in (['filename','sha256','blocker_rp2040'] if chip=='RP2350' else ['filename_rp2350','sha256_rp2350','blocker_rp2350']):
                 if old.get(field):entry[field]=old[field]
         if index is None: catalog['cartridges'].append(entry)
         else: catalog['cartridges'][index]=entry
@@ -170,4 +203,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
+        record_failure(e)
         raise SystemExit(str(e))

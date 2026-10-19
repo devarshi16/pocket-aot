@@ -125,7 +125,7 @@ static void video_core(void) {
 
 static void publish(void) {
     critical_section_enter_blocking(&video_lock);
-    for (int i=0;i<128*64;i++) pending_frame[i]=(game_frame[2*i]&15)|((game_frame[2*i+1]&15)<<4);
+    memcpy(pending_frame,game_frame,sizeof pending_frame);
     memcpy(pending_palette,p8_screen_palette,sizeof pending_palette); pending=true;
     critical_section_exit(&video_lock);
 }
@@ -144,7 +144,7 @@ static uint16_t read_buttons(uint32_t now) {
 
 
 static void error_screen(void) {
-    memset(game_frame,1,sizeof game_frame);
+    memset(game_frame,0x11,sizeof game_frame);
     V zero=p8_int(0);p8_api("camera",0,NULL);p8_api("clip",0,NULL);
     p8_text("CONVERSION RUNTIME ERROR",10,10,8);
     for(unsigned i=0;i<strlen(p8_error);i+=27){char line[28];snprintf(line,sizeof line,"%.27s",p8_error+i);p8_text(line,8,27+(i/27)*8,7);}
@@ -156,10 +156,11 @@ static int menu_cursor;
 /* Pause overlay: cartridge menuitem() entries followed by CONTINUE. */
 static void draw_pause_menu(void) {
     /* Only the menu box is drawn over, so only it is saved: six rows at most. */
-    static uint8_t saved[(6*8+8)*80];
+    /* 80 pixels from x=24 are 40 whole bytes of the packed screen. */
+    static uint8_t saved[(6*8+8)*40];
     int items=p8_menu_count(),rows=items+1,h=rows*8+8,y0=64-h/2;
-    for (int y=0;y<h;y++) memcpy(saved+y*80,game_frame+(y0+y)*128+24,80);
-    for (int y=y0;y<y0+h;y++) memset(game_frame+y*128+24,0,80);
+    for (int y=0;y<h;y++) memcpy(saved+y*40,game_frame+(y0+y)*64+12,40);
+    for (int y=y0;y<y0+h;y++) memset(game_frame+y*64+12,0,40);
     int row=0;
     for (int i=1;i<=5;i++) {
         const char *label=p8_menu_label(i); if(!label) continue;
@@ -168,7 +169,7 @@ static void draw_pause_menu(void) {
     p8_overlay_text("continue",36,y0+5+row*8,menu_cursor==row?7:6);
     p8_overlay_text(">",28,y0+5+menu_cursor*8,7);
     publish();
-    for (int y=0;y<h;y++) memcpy(game_frame+(y0+y)*128+24,saved+y*80,80);
+    for (int y=0;y<h;y++) memcpy(game_frame+(y0+y)*64+12,saved+y*40,40);
 }
 static int menu_entry(int row) { int seen=0; for (int i=1;i<=5;i++) if (p8_menu_label(i)) { if (seen==row) return i; seen++; } return 0; }
 /* Returns true while the game should stay paused. */
@@ -192,7 +193,7 @@ static void service_usb(uint32_t now) {
     int ch=getchar_timeout_us(0);
     if(ch=='s')status();else if(ch=='b')reset_usb_boot(0,0);else if(ch=='p')paused=!paused;
     else if(ch=='i'){int value=getchar_timeout_us(10000);if(value>=0){injected=value&63;inject_until=now+250000;}}
-    else if(ch=='f'){printf("FRAME 16384\n");fwrite(game_frame,1,sizeof game_frame,stdout);fflush(stdout);}
+    else if(ch=='f'){printf("FRAME 16384\n");for(int i=0;i<128*128;i++)putchar(p8_frame_get(i&127,i>>7));fflush(stdout);}
 }
 static void poll_buttons(uint32_t now) {
     physical_buttons=read_buttons(now);latched_buttons|=physical_buttons&~last_buttons;last_buttons=physical_buttons;

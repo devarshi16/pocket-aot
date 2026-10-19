@@ -42,6 +42,11 @@ pub struct Cartridge {
     pub filename_rp2350: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub sha256_rp2350: String,
+    /// Why the last build for a chip failed, e.g. "table entries exhausted".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub blocker_rp2040: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub blocker_rp2350: String,
 }
 
 /// The microcontroller a BOOTSEL drive belongs to.
@@ -56,6 +61,19 @@ impl Chip {
         match self {
             Self::Rp2040 => "RP2040",
             Self::Rp2350 => "RP2350",
+        }
+    }
+    /// The boards people know this chip by.
+    pub fn board(self) -> &'static str {
+        match self {
+            Self::Rp2040 => "Pico (RP2040)",
+            Self::Rp2350 => "Pico 2 / Pico 2 W (RP2350)",
+        }
+    }
+    fn other(self) -> Self {
+        match self {
+            Self::Rp2040 => Self::Rp2350,
+            Self::Rp2350 => Self::Rp2040,
         }
     }
     /// UF2 family id of the application image.
@@ -308,15 +326,35 @@ pub fn copy_image(mount: &Path, data: &[u8], tx: &Sender<Update>) -> Result<(), 
     Ok(())
 }
 
+/// Why a cartridge has no firmware for the connected chip, and what still works.
+pub fn missing_image(cart: &Cartridge, chip: Chip) -> String {
+    let blocker = match chip {
+        Chip::Rp2040 => &cart.blocker_rp2040,
+        Chip::Rp2350 => &cart.blocker_rp2350,
+    };
+    let elsewhere = if cart.image(chip.other()).is_some() {
+        format!(" It runs on the {} instead.", chip.other().board())
+    } else {
+        String::new()
+    };
+    if blocker.is_empty() {
+        format!(
+            "{} has not been built for the {}. Convert it again to add it; nothing was flashed.{elsewhere}",
+            cart.title,
+            chip.board()
+        )
+    } else {
+        format!(
+            "{} does not run on the {}: {blocker}. Converting again will not change that; nothing was flashed.{elsewhere}",
+            cart.title,
+            chip.board()
+        )
+    }
+}
+
 /// Read and verify a cartridge's firmware for one chip.
 fn load_image(root: &Path, cart: &Cartridge, chip: Chip) -> Result<Vec<u8>, String> {
-    let (file, hash) = cart.image(chip).ok_or_else(|| {
-        format!(
-            "{} has no {} firmware. Convert it again for this board; nothing was flashed.",
-            cart.title,
-            chip.label()
-        )
-    })?;
+    let (file, hash) = cart.image(chip).ok_or_else(|| missing_image(cart, chip))?;
     let bytes = fs::read(root.join(file)).map_err(|e| format!("Cannot load cartridge: {e}"))?;
     verify_image(&bytes, hash, chip)?;
     Ok(bytes)
@@ -479,6 +517,22 @@ mod tests {
         let hash = format!("{:x}", Sha256::digest(&image));
         verify_image(&image, &hash, Chip::Rp2350).unwrap();
         assert!(verify_image(&image, &hash, Chip::Rp2040).is_err());
+    }
+    #[test]
+    fn missing_images_explain_why() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let mut cart = load_catalog(&root).unwrap().cartridges[0].clone();
+        cart.title = "DANK TOMB".into();
+        cart.filename.clear();
+        cart.sha256.clear();
+        cart.filename_rp2350 = "firmware/x-pico2w.uf2".into();
+        cart.sha256_rp2350 = "0".into();
+        let fresh = missing_image(&cart, Chip::Rp2040);
+        assert!(fresh.contains("Convert it again") && fresh.contains("Pico 2 / Pico 2 W"));
+        cart.blocker_rp2040 = "table entries exhausted".into();
+        let blocked = missing_image(&cart, Chip::Rp2040);
+        assert!(blocked.contains("does not run on the Pico (RP2040): table entries exhausted"));
+        assert!(blocked.contains("will not change") && blocked.contains("runs on the Pico 2"));
     }
     #[test]
     fn bootsel_drives_report_their_chip() {

@@ -340,7 +340,9 @@ impl Arcade {
             // flasher picks the image matching the BOOTSEL drive. One success is enough.
             let mut built = Vec::new();
             let mut errors = Vec::new();
-            for (board, name) in [("pico", "Pico"), ("pico2_w", "Pico 2")] {
+            // The Pico 2 build goes first, so a Pico build that does not fit can
+            // record why on the cartridge's shelf entry.
+            for (board, name) in [("pico2_w", "Pico 2"), ("pico", "Pico")] {
                 let _ = tx.send(Update::Stage(
                     if built.is_empty() && errors.is_empty() {
                         0.2

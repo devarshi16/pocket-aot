@@ -7,7 +7,7 @@
   {
     "test": "semantics",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=224 strings=23 operations=1760551 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=5000 entries=220 strings=20 operations=1760551 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -15,7 +15,7 @@
   {
     "test": "functions",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=33 strings=17 operations=210172 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=5000 entries=31 strings=17 operations=210172 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -31,7 +31,7 @@
   {
     "test": "numeric-strings",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=8 strings=13 operations=35727 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=2500 entries=8 strings=12 operations=35727 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "fdeffe2d516e5258d439463103bca7699821a9395fd2fedcaeb50de8216af3e9",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -63,7 +63,7 @@
   {
     "test": "extended-features",
     "frames": 600,
-    "result": "FEATURES_OK 41\nAOT_HOST_OK frames=600 entries=59 strings=50 operations=43233 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "FEATURES_OK 41\nAOT_HOST_OK frames=600 entries=58 strings=50 operations=43233 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "6d0fb5e8b6ca15c01ff6fe2180a8afaf0000010552bd85f6c370a196ab7fa8dc",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -296,7 +296,7 @@
     "test": "heap-bound",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: table entries exhausted frame=0",
-    "source_sha256": "33c5e86c3e15beeb03df7286d80ebf7b91cc3f69ba7dd7e9535c506315d36b14",
+    "source_sha256": "5de5d31d7947884fd1e083973fa7369b6ae32d740d43df6787b23808dc7eccac",
     "source_modified": false,
     "origin": "original-public-fixture"
   },

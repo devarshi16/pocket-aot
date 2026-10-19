@@ -130,7 +130,7 @@ def main():
             ("bit-not-nil", "function _init() local a=~nil end", "number expected"),
             ("bit-operator-string", 'function _init() local a="4"|2 end', "number expected"),
             ("load-other-cart", 'function _init() load("other.p8") end', "load(): only this cartridge is on the device (other.p8)"),
-            ("heap-bound", "function _init() local a={} for i=1,10000 do a[i]=i end end", "table entries exhausted"),
+            ("heap-bound", "function _init() local a={} for i=1,30000 do a[i]=i end end", "table entries exhausted"),
         ]:
             source = base / (name + ".p8")
             source.write_text("pico-8 cartridge\n__lua__\n" + body + "\nfunction _draw() cls() end\n")
