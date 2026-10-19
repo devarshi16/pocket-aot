@@ -63,8 +63,8 @@
   {
     "test": "extended-features",
     "frames": 600,
-    "result": "FEATURES_OK 41\nAOT_HOST_OK frames=600 entries=58 strings=50 operations=43233 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "6d0fb5e8b6ca15c01ff6fe2180a8afaf0000010552bd85f6c370a196ab7fa8dc",
+    "result": "FEATURES_OK 42\nAOT_HOST_OK frames=600 entries=59 strings=51 operations=43238 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "13fd704e24175ea81f542bf2c9430f76f07f378479965631b6c67a7f219feceb",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -299,12 +299,6 @@
     "source_sha256": "5de5d31d7947884fd1e083973fa7369b6ae32d740d43df6787b23808dc7eccac",
     "source_modified": false,
     "origin": "original-public-fixture"
-  },
-  {
-    "test": "unsupported-save",
-    "result": "rejected explicitly",
-    "detail": "Conversion failed: conversion stopped: unsupported function/API 'save'",
-    "flashed": false
   },
   {
     "test": "goto-without-label",

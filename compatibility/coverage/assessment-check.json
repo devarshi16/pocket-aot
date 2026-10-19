@@ -2,23 +2,23 @@
   "rubric_version": "pocket-aot-capabilities-v1",
   "assessed_date": "2026-10-16",
   "label": "Secondary weighted planning index; implementation and regression counts are primary",
-  "core_capability_score_percent": 73.02383843500864,
+  "core_capability_score_percent": 73.1719865831568,
   "supported_only_points": 52.73117855351898,
-  "partial_credit_points": 20.29265988148967,
-  "sensitivity_partial_credit_25_percent": 62.877508494263814,
-  "sensitivity_partial_credit_75_percent": 83.17016837575348,
+  "partial_credit_points": 20.440808029637818,
+  "sensitivity_partial_credit_25_percent": 62.95158256833789,
+  "sensitivity_partial_credit_75_percent": 83.3923905979757,
   "core_gate_count": 173,
   "status_counts": {
     "supported": 84,
-    "partial": 79,
-    "missing": 10
+    "partial": 80,
+    "missing": 9
   },
   "supporting_tooling_score_percent": 75.0,
-  "functional_api_names": 106,
+  "functional_api_names": 107,
   "canonical_api_count": 108,
   "api_status_counts": {
-    "missing": 2,
-    "partial": 64,
+    "missing": 1,
+    "partial": 65,
     "supported": 42
   },
   "api_subsystems": [
@@ -26,11 +26,11 @@
       "name": "system",
       "total": 12,
       "status_counts": {
-        "missing": 2,
-        "partial": 6,
+        "missing": 1,
+        "partial": 7,
         "supported": 4
       },
-      "exercised": 5
+      "exercised": 6
     },
     {
       "name": "graphics",
@@ -134,7 +134,7 @@
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 90,
+  "regression_exercised_api_names": 91,
   "regression_scenario_count": 38,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 49,
@@ -142,7 +142,7 @@
   "historical_evidence_date": "2026-10-16",
   "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
   "recorded_rust_tests": null,
-  "functional_api_name_presence_percent": 98.14814814814815,
+  "functional_api_name_presence_percent": 99.07407407407408,
   "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
   "sample_size": 20,
   "sample_built": 1,

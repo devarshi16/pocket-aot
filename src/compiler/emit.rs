@@ -116,6 +116,7 @@ pub const APIS: &[&str] = &[
     "ls",
     "serial",
     "cstore",
+    "save",
 ];
 /// Builtins that publish their own result list (possibly empty or several values).
 const MULTI_RESULT_APIS: &[&str] = &[
@@ -175,7 +176,7 @@ const SINGLE_RESULT_APIS: &[&str] = &[
 /// Canonical PICO-8 APIs this target does not provide. Calling one stops the
 /// conversion, because deferring would hide a real capability gap behind a
 /// runtime error; an undefined cart-local name is not in this set.
-const UNIMPLEMENTED_APIS: &[&str] = &["save"];
+const UNIMPLEMENTED_APIS: &[&str] = &[];
 /// Values per expression list. A final multi-value expression may add up to
 /// EXPANSION values beyond the fixed entries; this bounds each call site's
 /// stack array for the Pico's 16 KB stack.
@@ -974,6 +975,7 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "ls" => (0, 1),
         "serial" => (3, 3),
         "cstore" => (0, 4),
+        "save" => (0, 1),
         _ => (1, 1),
     };
     if n < min || n > max {

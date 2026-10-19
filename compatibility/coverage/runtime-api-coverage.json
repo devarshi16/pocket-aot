@@ -9,19 +9,19 @@
     "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
     "converter/tests/palette_state.p8": "28eda4054fd9be5be2b04f0632390a2990a4606d10162ce9e5658456a483cf3a",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
-    "converter/tests/extended_features.p8": "6d0fb5e8b6ca15c01ff6fe2180a8afaf0000010552bd85f6c370a196ab7fa8dc",
-    "converter/runtime/p8.c": "2424754d3dd20eb5b2e1242b7736a29077d4056d90b7e0bee60cfb9229b3a914",
-    "converter/runtime/p8.h": "871de9906aa04f2c634e899dd0d1adf2ea6423437635bec148b710d8da6e40f0",
+    "converter/tests/extended_features.p8": "13fd704e24175ea81f542bf2c9430f76f07f378479965631b6c67a7f219feceb",
+    "converter/runtime/p8.c": "76460798812ec83627d4ed717dcf71d1d76c6556fdfe8ad91b353b4bd230b5f4",
+    "converter/runtime/p8.h": "cc180c3ac3f332191ecfa6a37ffec040aa595c0c5ac2a54b2d832149ff10e430",
     "converter/runtime/host.c": "114eb355a7aa2d176ffe8971e5371e9e6a01994df9dc36aa35e62e76aa465b01",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
     "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
-    "converter/test_pipeline.py": "c584c81b401580e51449bc9928b0bcfefc1888260c97f906272f66e2e214725b",
+    "converter/test_pipeline.py": "108b933068293884ed2c7d723715334f416b1530627107ff81882ad0dd7a25ff",
     "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
-    "src/compiler/emit.rs": "6c032176da8ee6d0e388d4e6dbbb7d720f0ec25e87ba8f43411920047235ee2b",
-    "src/compiler/mod.rs": "245deb0ba54c0ea26fd1ab699ebbf5921e54248067af4d6a47f732d0496d2006",
+    "src/compiler/emit.rs": "0ee08f87e99a3dab97a51341125c441d2d9bf0841698242b443f6186287e1376",
+    "src/compiler/mod.rs": "7e8fdbf01cf7da4ef1b866b2e296e382cb2f3e22e66632447698c489c8ae1315",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"
   },
-  "compiler_sha256": "b97878381cfaa90cd108a93515aef8f467fbbd739d10266fbe7ffc4a56e90d6e",
+  "compiler_sha256": "3f3c15d986ca39ca0769a4dd945e34e48f8fe5f7ed39c593f6e04a5affb3f318",
   "api_hits": {
     "cls": 28105,
     "pset": 10010,
@@ -49,7 +49,7 @@
     "map": 1,
     "btn": 1,
     "btnp": 0,
-    "add": 500043,
+    "add": 500044,
     "del": 6,
     "deli": 1,
     "count": 0,
@@ -133,7 +133,8 @@
     "yield": 3,
     "load": 1,
     "ls": 2,
-    "serial": 1
+    "serial": 1,
+    "save": 1
   },
   "scenarios": [
     {
@@ -250,7 +251,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -374,7 +376,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -498,7 +501,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -622,7 +626,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -746,7 +751,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -870,7 +876,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -994,7 +1001,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -1118,7 +1126,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": null,
       "passed": true,
@@ -1158,7 +1167,7 @@
         "map": 0,
         "btn": 1,
         "btnp": 0,
-        "add": 42,
+        "add": 43,
         "del": 0,
         "deli": 0,
         "count": 0,
@@ -1242,7 +1251,8 @@
         "yield": 2,
         "load": 0,
         "ls": 2,
-        "serial": 1
+        "serial": 1,
+        "save": 1
       },
       "expected_error": null,
       "passed": true,
@@ -1366,7 +1376,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "frame instruction budget exceeded",
       "passed": true,
@@ -1490,7 +1501,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "select index out of range",
       "passed": true,
@@ -1614,7 +1626,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "select index out of range",
       "passed": true,
@@ -1738,7 +1751,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "number expected",
       "passed": true,
@@ -1862,7 +1876,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "number expected",
       "passed": true,
@@ -1986,7 +2001,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "table expected",
       "passed": true,
@@ -2110,7 +2126,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "number expected",
       "passed": true,
@@ -2234,7 +2251,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "ord count must be 1 to 32",
       "passed": true,
@@ -2358,7 +2376,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "ord count must be 1 to 32",
       "passed": true,
@@ -2482,7 +2501,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "table expected",
       "passed": true,
@@ -2606,7 +2626,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "nil table key",
       "passed": true,
@@ -2730,7 +2751,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "table expected",
       "passed": true,
@@ -2854,7 +2876,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "rawget requires two arguments",
       "passed": true,
@@ -2978,7 +3001,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "pal palette selector must be 0, 1 or 2",
       "passed": true,
@@ -3102,7 +3126,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "upper memory 0x8000-0xffff is not available",
       "passed": true,
@@ -3226,7 +3251,8 @@
         "yield": 1,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "yield called outside a coroutine",
       "passed": true,
@@ -3350,7 +3376,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "cartdata() may only be called once",
       "passed": true,
@@ -3474,7 +3501,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "memory range outside 64 KB address space",
       "passed": true,
@@ -3598,7 +3626,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "__index chain too long",
       "passed": true,
@@ -3722,7 +3751,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "unpack exceeds the result limit",
       "passed": true,
@@ -3846,7 +3876,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "table pal accepts at most two arguments",
       "passed": true,
@@ -3970,7 +4001,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "pal table values must be numbers",
       "passed": true,
@@ -4094,7 +4126,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "pal table cannot contain both color zero indices",
       "passed": true,
@@ -4218,7 +4251,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "pal accepts at most three arguments",
       "passed": true,
@@ -4342,7 +4376,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "number expected",
       "passed": true,
@@ -4466,7 +4501,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "number expected",
       "passed": true,
@@ -4590,7 +4626,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "number expected",
       "passed": true,
@@ -4714,7 +4751,8 @@
         "yield": 0,
         "load": 1,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "load(): only this cartridge is on the device (other.p8)",
       "passed": true,
@@ -4838,7 +4876,8 @@
         "yield": 0,
         "load": 0,
         "ls": 0,
-        "serial": 0
+        "serial": 0,
+        "save": 0
       },
       "expected_error": "table entries exhausted",
       "passed": true,

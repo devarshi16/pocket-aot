@@ -1344,6 +1344,8 @@ V p8_api_id(int id,int argc,const V *argv){
  /* ---- Cartridge files and serial: one bundled cartridge, no host file system ---- */
  if(IS(P8_API_load)){char text[96];snprintf(text,sizeof text,"load(): only this cartridge is on the device (%s)",A(0).tag==P8_STR?string(A(0)):"?");p8_fail(text);}
  if(IS(P8_API_ls))return p8_table();
+ /* There is no file system to save the cartridge file into. */
+ if(IS(P8_API_save))return p8_nil();
  if(IS(P8_API_cstore)){
   /* Cartridge ROM is in flash: the range is checked and the write is discarded, so reload keeps reading the original data. */
   int dst=HAS(0)?address_of(A(0)):0,src=HAS(1)?address_of(A(1)):0,len=I(2,0x4300);if(len>0){check_range(dst,len);check_range(src,len);}return p8_nil();
@@ -1419,6 +1421,7 @@ static const char *const api_names[P8_API_COUNT]={
   [P8_API_load]="load",
   [P8_API_ls]="ls",
   [P8_API_serial]="serial",
+  [P8_API_save]="save",
   [P8_API_cls]="cls",
   [P8_API_pset]="pset",
   [P8_API_pget]="pget",

@@ -36,7 +36,7 @@ The [small-gap assessment](docs/SMALL-GAPS.md) records the latest implemented he
 
 The [detailed status](docs/STATUS.md) also records the smaller, reproducible public-fixture regression. A called API is not proof that its outputs match PICO-8. `sfx`/`music` are silent but keep observable sequencer state; no waveform synthesis yet. A successful build does not guarantee complete gameplay or sufficient performance.
 
-The largest gaps are audio synthesis and effects, persistent saves across power-off, upper memory (0x8000+), `#include`, `save`/`cstore`, loading a second cartridge (`load` stops the cart when called), and independent reference tests. Coroutines are limited to a pool of 4 on the Pico. Unsupported syntax and APIs stop conversion. Resource exhaustion and unsupported runtime argument cases produce explicit errors.
+The largest gaps are audio synthesis and effects, persistent saves across power-off, upper memory (0x8000+) on the RP2040, `#include`, writing cartridge files (`save` and `cstore` discard their writes), loading a second cartridge (`load` stops the cart when called), and independent reference tests. Coroutines are limited to a pool of 4 on the Pico. Unsupported syntax and APIs stop conversion. Resource exhaustion and unsupported runtime argument cases produce explicit errors.
 
 [Full checklist and methodology](converter/PROGRESS.md) · [Machine-readable audits](compatibility/coverage/) · [Historical 20-game results](compatibility/top200/results.json)
 

@@ -880,17 +880,17 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
-    "src/compiler/emit.rs": "6c032176da8ee6d0e388d4e6dbbb7d720f0ec25e87ba8f43411920047235ee2b",
-    "src/compiler/mod.rs": "245deb0ba54c0ea26fd1ab699ebbf5921e54248067af4d6a47f732d0496d2006",
+    "src/compiler/emit.rs": "0ee08f87e99a3dab97a51341125c441d2d9bf0841698242b443f6186287e1376",
+    "src/compiler/mod.rs": "7e8fdbf01cf7da4ef1b866b2e296e382cb2f3e22e66632447698c489c8ae1315",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "2424754d3dd20eb5b2e1242b7736a29077d4056d90b7e0bee60cfb9229b3a914",
-    "converter/runtime/p8.h": "871de9906aa04f2c634e899dd0d1adf2ea6423437635bec148b710d8da6e40f0",
+    "converter/runtime/p8.c": "76460798812ec83627d4ed717dcf71d1d76c6556fdfe8ad91b353b4bd230b5f4",
+    "converter/runtime/p8.h": "cc180c3ac3f332191ecfa6a37ffec040aa595c0c5ac2a54b2d832149ff10e430",
     "converter/runtime/pico.c": "caeb625b13fbbb62776b73c05e993dfa4a85354ca55571e1e70b403d9473ccb0",
     "converter/runtime/host.c": "114eb355a7aa2d176ffe8971e5371e9e6a01994df9dc36aa35e62e76aa465b01",
     "converter/build.py": "f3443fb36b2da62ac043a3de3ca8fcfeeddc9c3fd2991d2b143ce4a69a5ce737",
     "converter/CMakeLists.txt": "8aeae24d44825ca2e32e8cea80861dbebb7f7d6ce2e6af792b9bc41e9bb8993e",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "c584c81b401580e51449bc9928b0bcfefc1888260c97f906272f66e2e214725b",
+    "converter/test_pipeline.py": "108b933068293884ed2c7d723715334f416b1530627107ff81882ad0dd7a25ff",
     "converter/test_png.py": "76bee5ccb5038430e45393c8420fe6de905fdbcb447f13a9831031938f916635",
     "converter/tests/semantics.p8": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
@@ -903,7 +903,7 @@
     "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
     "converter/tests/palette_state.p8": "28eda4054fd9be5be2b04f0632390a2990a4606d10162ce9e5658456a483cf3a",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
-    "converter/tests/extended_features.p8": "6d0fb5e8b6ca15c01ff6fe2180a8afaf0000010552bd85f6c370a196ab7fa8dc"
+    "converter/tests/extended_features.p8": "13fd704e24175ea81f542bf2c9430f76f07f378479965631b6c67a7f219feceb"
   },
   "tooling_source_hashes": {
     "src/main.rs": "d0380be605ed40bb28392f646ae4be81c6fd54eca3cae50161da55fd19a6d9af",

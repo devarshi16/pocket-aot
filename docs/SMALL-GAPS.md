@@ -91,6 +91,8 @@ The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each cha
 - Pico 2 / Pico 2 W (RP2350): one `P8_LARGE_POOLS` switch sets the larger pools for both the firmware and its host check, maps the upper 32 KB of PICO-8 memory, doubles the string arena to 64 KB, and gives core 0 a 40 KB stack with a call depth of 64. `benchmark_top100.py test --board pico2_w` measures this target.
 - Assignments keep only as many values as they have targets, so `local a,b,...=unpack(t)` with more than 16 results and multiple assignment of over 64 values work.
 - `cstore` checks its range and discards the write: cartridge ROM is in flash, so `reload` keeps reading the original data.
+- `save(filename)` does nothing: there is no file system to write the cartridge file into.
+- RP2040: the screen buffer holds two pixels per byte and pool flags share a word with a small field, which frees about 11 KB for 2048 tables (from 1536) and 11200 table entries (from 9056).
 
 ## Smallest remaining candidates
 

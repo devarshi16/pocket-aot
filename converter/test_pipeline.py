@@ -136,7 +136,6 @@ def main():
             source.write_text("pico-8 cartridge\n__lua__\n" + body + "\nfunction _draw() cls() end\n")
             check(name, source, 1, expected)
         for name, body, expected in [
-            ("unsupported-save", "save(\"x\")", "unsupported function/API 'save'"),
             ("goto-without-label", "goto nowhere", "no visible label 'nowhere' for goto"),
             ("vararg-outside", "local a=...", "'...' used outside a vararg function"),
         ]:

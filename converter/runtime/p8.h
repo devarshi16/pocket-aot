@@ -160,6 +160,7 @@ enum P8ApiId {
  P8_API_load,
  P8_API_ls,
  P8_API_serial,
+ P8_API_save,
  P8_API_COUNT
 };
 #ifdef P8_API_PROFILE
