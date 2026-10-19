@@ -451,10 +451,8 @@ impl Emitter {
             Expr::Str(s) => {
                 let length = cbytes(s);
                 if length > 8191 {
-                    return Err(Error::new(
-                        0,
-                        "strings longer than 8191 bytes are not supported yet",
-                    ));
+                    // Kept in program memory instead of the string arena.
+                    return Ok(self.val(format!("p8_strlong({},{length})", cstr(s))));
                 }
                 if super::charset::bytes(s).contains(&0) {
                     self.val(format!("p8_strn({},{length})", cstr(s)))
@@ -504,6 +502,13 @@ impl Emitter {
                     let b = self.expr(b)?;
                     self.val(format!("p8_binary({},{a},{b})", cstr(op)))
                 }
+            }
+            Expr::Index(a, k)
+                if matches!(&**a, Expr::Var(n) if n == "_ENV")
+                    && !self.scopes.iter().any(|s| s.contains_key("_ENV")) =>
+            {
+                let k = self.expr(k)?;
+                self.val(format!("p8_env_index({k})"))
             }
             Expr::Index(a, k) => {
                 let a = self.expr(a)?;
@@ -1004,6 +1009,11 @@ fn vars_expr(e: &Expr, n: &mut BTreeSet<String>) {
             n.extend(args.iter().cloned());
             vars(b, n);
         }
+        // String literals are kept with a NUL prefix so `_ENV[name]` lookups
+        // can find the builtins they name; emit() removes them again.
+        Expr::Str(s) => {
+            n.insert(format!("\0{s}"));
+        }
         _ => {}
     }
 }
@@ -1237,6 +1247,24 @@ fn assigned(b: &[Stmt], n: &mut BTreeSet<String>) {
 pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> {
     let mut names = BTreeSet::new();
     vars(body, &mut names);
+    let strings: Vec<String> = names
+        .iter()
+        .filter(|n| n.starts_with('\0'))
+        .cloned()
+        .collect();
+    for s in &strings {
+        names.remove(s);
+    }
+    if names.contains("_ENV") {
+        // `_ENV[name]` reads globals by name; builtins named in literals must exist as globals.
+        for s in &strings {
+            for word in s[1..].split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {
+                if APIS.contains(&word) {
+                    names.insert(word.into());
+                }
+            }
+        }
+    }
     for n in ["_init", "_draw", "_update", "_update60"] {
         names.insert(n.into());
     }
@@ -1260,6 +1288,9 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
         if names.contains(*n) {
             e.line(format!("{}=p8_closure({},0,NULL);", global(n), 10000 + i));
         }
+    }
+    if names.contains("inext") && !e.assigned.contains("inext") {
+        e.line(format!("{}=p8_inext();", global("inext")));
     }
     e.body(body)?;
     e.line(format!(

@@ -16,7 +16,7 @@
 <rect x="303" y="151" width="249" height="137" rx="12" fill="#122436" stroke="#2b4054"/>
 <text x="319" y="178" fill="#9bb0c6" font-size="11" font-weight="700">PUBLIC HOST EXERCISED</text>
 <text x="319" y="226" fill="#78b8ff" font-size="36" font-weight="700">89/108</text>
-<text x="319" y="260" fill="#a7bacb" font-size="10">42 original-fixture scenarios</text>
+<text x="319" y="260" fill="#a7bacb" font-size="10">38 original-fixture scenarios</text>
 <rect x="566" y="151" width="249" height="137" rx="12" fill="#122436" stroke="#2b4054"/>
 <text x="582" y="178" fill="#9bb0c6" font-size="11" font-weight="700">HISTORICAL DEVICE SAMPLE</text>
 <text x="582" y="226" fill="#c59bff" font-size="36" font-weight="700">1/20</text>

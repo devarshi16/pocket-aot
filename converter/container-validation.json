@@ -48,12 +48,12 @@
     "converter/cartridge_input.py": "21e634578ca8ef2fa34ee4e380c78fee19b1bd641c96bd9acb1e6859af22c8f8",
     "converter/test_containers.py": "c78934234733d7ec43379ca0460e0cdb4cd54f0d040ea2a1b01c2fc35932d9d6",
     "converter/tests/semantics.p8": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
-    "converter/runtime/p8.c": "dd254c2dbd56b28da685e3378f1d01848acad00aca5c5eba93b15abe845e0085",
-    "converter/runtime/p8.h": "5dcae0c9ff15c655843a519419614127d5c6de439005f54e8128d953c881d62c",
+    "converter/runtime/p8.c": "c958bab133e47e33d3ef41e4dc0aefc0760cfe0d39220ccc34e073ee986becfa",
+    "converter/runtime/p8.h": "d099c4da120b91e08d859f6e2c0a2e3b0cf5de085464a63086de97f5b99eedfa",
     "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
-    "src/compiler/emit.rs": "ab0e76d6dd97212b509eb7b6cbc95e578907d09630a45c6aa0db28b64226516c",
+    "src/compiler/emit.rs": "a584f79c72ba476db873c0cc39817ecdc274b725d0cccfed43fc07a6a2daa57b",
     "src/compiler/mod.rs": "a0851883f8f1c62d65b20c1aa8094687582d87c7082956b1d090a1bff89624fd",
-    "src/compiler/parse.rs": "9ec0e0b3477d73436fb1ee2cbc77922f27ca7fc5715ffcbc32971cd38bfa7756",
+    "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"
   },
   "meaning": "Source/data/generated-C identity and host assertions; no device flashing or independent PICO-8 reference comparison."

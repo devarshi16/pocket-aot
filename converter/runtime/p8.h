@@ -206,3 +206,6 @@ void p8_program_draw(void);
 void p8_program_roots(void);
 void p8_program_clear(void);
 V p8_debug_global(const char *name);
+V p8_env_index(V key);
+V p8_inext(void);
+V p8_strlong(const char *s,size_t length);

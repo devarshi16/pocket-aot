@@ -136,7 +136,7 @@
   "regression_profile_present": true,
   "regression_profile_fresh": true,
   "regression_exercised_api_names": 89,
-  "regression_scenario_count": 42,
+  "regression_scenario_count": 38,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 49,
   "historical_regression_scenario_count": 8,

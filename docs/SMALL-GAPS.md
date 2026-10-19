@@ -74,6 +74,17 @@ The top-100 effect is unmeasured until the benchmark is re-run on a machine that
 
 Follow-up: lexical cells (12 to 8 bytes) and closure records (12 to 8 bytes) are packed tighter. The 9 KB this frees goes to table entries, 4352 to 5120, so RAM use is unchanged.
 
+## Sixth batch (top-100 blockers)
+
+Aimed at the failures in the 53/100 top-100 run:
+
+- Strings: literals over 8191 bytes stay in program memory (flash on the Pico) instead of the string arena. `sub` and `split` convert numbers as `tostr` does, and `split` of another non-string gives an empty table. `tonum` and `split` wrap out-of-range decimals as PICO-8 does (`tonum("32768")==-32768`). `ord` returns nil for positions past the end.
+- Globals: `_ENV[name]` reads globals and builtins by name when `_ENV` is not a local, and `inext` is the iterator `ipairs` returns. `local _ENV` is still unsupported.
+- Calls: `rnd` with a negative limit reads it as unsigned, `line` and `pal` tables ignore surplus arguments and keys, `f"text"[i]` indexes the call result, and `next` continues after its key was cleared.
+- Host check: coroutine stacks are bounded with a controlled error instead of overflowing into other memory.
+
+The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each change.
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |
