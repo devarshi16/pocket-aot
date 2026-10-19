@@ -476,9 +476,13 @@ impl Emitter {
             Expr::Table(items) => {
                 let t = self.val("p8_table()".into());
                 for (k, v) in items {
+                    // A block per field ends its temporaries' lifetimes, so GCC can
+                    // reuse their stack slots across a long constructor.
+                    self.line("{");
                     let k = self.expr(k)?;
                     let v = self.expr(v)?;
                     self.line(format!("p8_set({t},{k},{v});"));
+                    self.line("}");
                 }
                 t
             }

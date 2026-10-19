@@ -6,29 +6,56 @@
 #include <limits.h>
 #include "font.h"
 
-#define NT 1280
-#define NE 5120
+#ifndef NT
+#define NT 1536
+#endif
+#ifndef NE
+#define NE 8160
+#endif
+#ifndef NS
 #define NS 768
+#endif
 #define SL (P8_MAX_STRING+1)
 #define STRING_BYTES 32768
-#define NC 1536
+#ifndef NC
+#define NC 1024
+#endif
+#ifndef NF
 #define NF 768
-#define NU 4096
+#endif
+#ifndef NU
+#define NU 1536
+#endif
 #define MAX_CAPTURE 64
 /* Compact pool records: a table entry is used when its key tag is not nil and a
  * capture is used when its cell index is not NO_LINK. */
 #define NO_LINK 0xffff
 static struct {uint16_t head,meta;uint8_t used,mark;} tables[NT];
-static struct {int32_t key,value;uint16_t next;uint8_t key_tag,value_tag;} entries[NE];
+/* Table entries are split into parallel arrays (9 bytes each). Keys are
+ * stored as a 16-bit payload: an object id, a bool, or an integer number in
+ * -32768..32767. Other numeric keys live in a small boxed pool. */
+#define KEY_BOXED 8
+#define NB 128
+static int32_t entry_value[NE];
+static uint16_t entry_key[NE],entry_next[NE];
+static uint8_t entry_tags[NE];
+static int32_t boxed_keys[NB];
+static uint8_t boxed_used[NB];
 static struct {uint16_t offset,length;uint8_t used,mark;} strings[NS];
 static char string_data[STRING_BYTES],string_scratch[SL];
 /* V's fields are inlined so a cell packs into 8 bytes instead of 12. */
 static struct {int32_t n;uint8_t tag,used,mark;} cells[NC];
 static struct {uint16_t fn,head,count;uint8_t used,mark;} closures[NF];
 static struct {uint16_t cell,next;} captures[NU];
-#define ENTRY_KEY(i) ((V){entries[i].key,entries[i].key_tag})
-#define ENTRY_VALUE(i) ((V){entries[i].value,entries[i].value_tag})
-#define ENTRY_USED(i) (entries[i].key_tag!=P8_NIL)
+#define ENTRY_KEY_TAG(i) (entry_tags[i]&15)
+#define ENTRY_KEY(i) decode_key(entry_key[i],ENTRY_KEY_TAG(i))
+#define ENTRY_VALUE(i) ((V){entry_value[i],entry_tags[i]>>4})
+#define ENTRY_USED(i) (ENTRY_KEY_TAG(i)!=P8_NIL)
+#define ENTRY_CLEAR(i) (entry_tags[i]&=0xf0)
+static V decode_key(uint16_t key,int tag){
+ if(tag==KEY_BOXED)return(V){boxed_keys[key],P8_NUM};
+ if(tag==P8_NUM)return(V){(int32_t)((uint32_t)(int32_t)(int16_t)key<<16),P8_NUM};
+ return(V){key,tag};}
 static V result_values[P8_MAX_RESULTS];
 static int result_count;
 void *p8_stack_top;
@@ -143,15 +170,31 @@ V p8_strn(const char *s,size_t length){return string_bytes(s,length);}
 static int table_id(V t){if(t.tag!=P8_TABLE||(unsigned)t.n>=NT||!tables[t.n].used)p8_fail("table expected");return t.n;}
 static int table_slot(void){NEXT_FREE(NT,table_hint,!tables[i].used);}
 V p8_table(void){int i=table_slot();if(i<0&&can_collect()){collect_now(false);i=table_slot();}if(i<0)p8_fail("table pool exhausted");tables[i].used=1;tables[i].head=0;tables[i].meta=0;tables[i].mark=0;return(V){i,P8_TABLE};}
-static V raw_get(V t,V key){int id=table_id(t);for(int at=tables[id].head;at;at=entries[at-1].next){if(entries[at-1].key==key.n&&entries[at-1].key_tag==key.tag)return ENTRY_VALUE(at-1);}return p8_nil();}
+/* Encode a key for lookup. With create, a boxed slot is allocated if needed;
+ * without it, a numeric key that was never boxed is reported as absent. */
+static bool encode_key(V key,bool create,uint16_t *payload,uint8_t *tag){
+ if(key.tag==P8_NUM&&!(key.n&65535)&&key.n>=-32768*65536&&key.n<=32767*65536){*payload=(uint16_t)(key.n>>16);*tag=P8_NUM;return true;}
+ if(key.tag!=P8_NUM){*payload=(uint16_t)key.n;*tag=key.tag;return true;}
+ *tag=KEY_BOXED;int free_slot=-1;
+ for(int i=0;i<NB;i++){if(boxed_used[i]&&boxed_keys[i]==key.n){*payload=(uint16_t)i;return true;}if(!boxed_used[i]&&free_slot<0)free_slot=i;}
+ if(!create)return false;
+ if(free_slot<0&&can_collect()){collect_now(false);for(int i=0;i<NB;i++)if(!boxed_used[i]){free_slot=i;break;}}
+ if(free_slot<0)p8_fail("numeric key pool exhausted");
+ boxed_used[free_slot]=1;boxed_keys[free_slot]=key.n;*payload=(uint16_t)free_slot;return true;}
+#define ENTRY_IS(i,payload,tag) (entry_key[i]==(payload)&&ENTRY_KEY_TAG(i)==(tag))
+static V raw_get(V t,V key){int id=table_id(t);uint16_t k;uint8_t kt;if(!encode_key(key,false,&k,&kt))return p8_nil();
+ for(int at=tables[id].head;at;at=entry_next[at-1]){if(ENTRY_IS(at-1,k,kt))return ENTRY_VALUE(at-1);}return p8_nil();}
 static int entry_slot(void){NEXT_FREE(NE,entry_hint,!ENTRY_USED(i));}
-static void raw_set(V t,V key,V value){int id=table_id(t);if(key.tag==P8_NIL)p8_fail("nil table key");uint16_t *link=&tables[id].head;
- while(*link){int i=*link-1;if(entries[i].key==key.n&&entries[i].key_tag==key.tag){if(value.tag==P8_NIL){*link=entries[i].next;entries[i].key_tag=P8_NIL;}else{entries[i].value=value.n;entries[i].value_tag=value.tag;}return;}link=&entries[i].next;}
+static void raw_set(V t,V key,V value){int id=table_id(t);if(key.tag==P8_NIL)p8_fail("nil table key");uint16_t k;uint8_t kt;
+ if(!encode_key(key,value.tag!=P8_NIL,&k,&kt))return;
+ uint16_t *link=&tables[id].head;
+ while(*link){int i=*link-1;if(ENTRY_IS(i,k,kt)){if(value.tag==P8_NIL){*link=entry_next[i];ENTRY_CLEAR(i);}else{entry_value[i]=value.n;entry_tags[i]=(uint8_t)(kt|value.tag<<4);}return;}link=&entry_next[i];}
  if(value.tag==P8_NIL)return;
  int i=entry_slot();
- if(i<0&&can_collect()){collect_now(false);i=entry_slot();}
+ /* A collection may free the boxed key just allocated; it is re-encoded below. */
+ if(i<0&&can_collect()){collect_now(false);i=entry_slot();if(kt==KEY_BOXED)encode_key(key,true,&k,&kt);}
  if(i<0)p8_fail("table entries exhausted");
- entries[i].key=key.n;entries[i].key_tag=key.tag;entries[i].value=value.n;entries[i].value_tag=value.tag;entries[i].next=tables[id].head;tables[id].head=i+1;}
+ entry_key[i]=k;entry_value[i]=value.n;entry_tags[i]=(uint8_t)(kt|value.tag<<4);entry_next[i]=tables[id].head;tables[id].head=i+1;}
 /* Metatables: the metatable is itself a pool table referenced by index+1. */
 static V metatable(V t){if(t.tag!=P8_TABLE)return p8_nil();int id=table_id(t);return tables[id].meta?(V){tables[id].meta-1,P8_TABLE}:p8_nil();}
 static V metamethod(V t,const char *event){V m=metatable(t);return m.tag==P8_TABLE?raw_get(m,p8_str(event)):p8_nil();}
@@ -225,7 +268,7 @@ V p8_result(int index){return index<0||index>=result_count?p8_nil():result_value
 /* Raw pairs order: insertion order is not tracked, so walk the table's chain. */
 static bool table_next(V t,V key,V *next_key,V *next_value){
  int id=table_id(t),at=tables[id].head;
- if(key.tag!=P8_NIL){while(at&&!(entries[at-1].key==key.n&&entries[at-1].key_tag==key.tag))at=entries[at-1].next;if(!at)p8_fail("invalid key to next");at=entries[at-1].next;}
+ if(key.tag!=P8_NIL){uint16_t k;uint8_t kt;if(!encode_key(key,false,&k,&kt))p8_fail("invalid key to next");while(at&&!ENTRY_IS(at-1,k,kt))at=entry_next[at-1];if(!at)p8_fail("invalid key to next");at=entry_next[at-1];}
  if(!at)return false;*next_key=ENTRY_KEY(at-1);*next_value=ENTRY_VALUE(at-1);return true;
 }
 bool p8_iter_next(const char *kind,V t,int *cursor,V *last,V *key,V *value){
@@ -243,8 +286,8 @@ bool p8_iter_next(const char *kind,V t,int *cursor,V *last,V *key,V *value){
  if(!strcmp(kind,"pairs")){
   /* The cursor is the last entry slot. Removed entries keep their link, so
    * clearing fields during traversal is safe, as in Lua. */
-  int at=*cursor?entries[*cursor-1].next:tables[id].head;
-  while(at&&!ENTRY_USED(at-1))at=entries[at-1].next;
+  int at=*cursor?entry_next[*cursor-1]:tables[id].head;
+  while(at&&!ENTRY_USED(at-1))at=entry_next[at-1];
   if(!at)return false;
   *cursor=at;*key=ENTRY_KEY(at-1);*value=ENTRY_VALUE(at-1);*last=*key;return true;
  }
@@ -286,7 +329,7 @@ static void scan(V v){
  if(v.tag==P8_TABLE){
   if(tables[v.n].meta)shade((V){tables[v.n].meta-1,P8_TABLE});
   bool weak_keys=false,weak_values=false;if(tables[v.n].meta)weak_mode(v,&weak_keys,&weak_values);
-  for(int at=tables[v.n].head;at;at=entries[at-1].next){
+  for(int at=tables[v.n].head;at;at=entry_next[at-1]){
    V key=ENTRY_KEY(at-1),value=ENTRY_VALUE(at-1);
    if(!weak_keys||key.tag==P8_STR)shade(key);
    if(!weak_values||value.tag==P8_STR)shade(value);
@@ -310,9 +353,14 @@ void p8_mark(V v){shade(v);drain();}
 /* Conservative native-stack roots: any 8-byte window that looks like a live
  * reference keeps that object. False positives only delay reclamation. */
 __attribute__((no_sanitize_address,noinline)) static void scan_range(const uint8_t *low,const uint8_t *high){
- for(const volatile uint8_t *p=(const uint8_t*)(((uintptr_t)low+3)&~(uintptr_t)3);p+8<=high;p+=4){
+ for(const volatile uint8_t *p=(const uint8_t*)(((uintptr_t)low+3)&~(uintptr_t)3);p+4<=high;p+=4){
   int32_t n=(int32_t)((uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24));
-  V v={n,p[4]};if(v.tag>=P8_STR&&v.tag<=P8_THREAD&&object_live(v))shade(v);
+  /* Optimized code may keep a value's id and tag in separate registers or
+   * slots, so any word that could be a live object id keeps every object
+   * with that id alive. This retains some garbage but never frees a live value. */
+  for(int tag=P8_STR;tag<=P8_CELL;tag++){V w={n,(uint8_t)tag};if(object_live(w))shade(w);}
+  /* Coroutine ids are tiny and the pool is small, so they still need their tag beside them. */
+  if(p+8<=high&&p[4]==P8_THREAD&&object_live((V){n,P8_THREAD}))shade((V){n,P8_THREAD});
  }
 }
 __attribute__((noinline)) static void scan_stack(void){
@@ -340,13 +388,13 @@ static void clear_weak_entries(void){
   while(*link){int i=*link-1;V k=ENTRY_KEY(i),v=ENTRY_VALUE(i);
    bool dead=(keys&&k.tag>=P8_TABLE&&k.tag<=P8_CELL&&object_live(k)&&!((k.tag==P8_TABLE&&tables[k.n].mark)||(k.tag==P8_FUNCTION&&closures[k.n].mark)))||
              (values&&v.tag>=P8_TABLE&&v.tag<=P8_CELL&&object_live(v)&&!((v.tag==P8_TABLE&&tables[v.n].mark)||(v.tag==P8_FUNCTION&&closures[v.n].mark)));
-   if(dead){*link=entries[i].next;entries[i].key_tag=P8_NIL;}else link=&entries[i].next;}
+   if(dead){*link=entry_next[i];ENTRY_CLEAR(i);}else link=&entry_next[i];}
  }
 }
 static int by_string_offset(const void *a,const void *b){return (int)strings[*(const uint16_t*)a].offset-(int)strings[*(const uint16_t*)b].offset;}
 static void sweep(bool compact){
  clear_weak_entries();
- for(int i=0;i<NT;i++)if(tables[i].used&&!tables[i].mark){int at=tables[i].head;while(at){int next=entries[at-1].next;entries[at-1].key_tag=P8_NIL;at=next;}tables[i].used=0;}
+ for(int i=0;i<NT;i++)if(tables[i].used&&!tables[i].mark){int at=tables[i].head;while(at){int next=entry_next[at-1];ENTRY_CLEAR(at-1);at=next;}tables[i].used=0;}
  for(int i=0;i<NC;i++)if(cells[i].used&&!cells[i].mark)cells[i].used=0;
  for(int i=0;i<NF;i++)if(closures[i].used&&!closures[i].mark){int at=closures[i].head;while(at){int next=captures[at-1].next;captures[at-1].cell=NO_LINK;at=next;}closures[i].used=0;}
  p8_heap_strings=p8_heap_entries=0;uint16_t *order=gc_work.order;int count=0;
@@ -355,7 +403,8 @@ static void sweep(bool compact){
   * temporary holds a string pointer. Moving in offset order never overwrites
   * a string that has not moved yet. */
  if(compact){qsort(order,(size_t)count,sizeof *order,by_string_offset);size_t offset=0;for(int n=0;n<count;n++){int id=order[n];size_t len=strings[id].length+1;memmove(string_data+offset,string_data+strings[id].offset,len);strings[id].offset=(uint16_t)offset;offset+=len;}string_top=offset;}
- for(int i=0;i<NE;i++)p8_heap_entries+=ENTRY_USED(i);
+ memset(boxed_used,0,sizeof boxed_used);
+ for(int i=0;i<NE;i++){p8_heap_entries+=ENTRY_USED(i);if(ENTRY_KEY_TAG(i)==KEY_BOXED)boxed_used[entry_key[i]]=1;}
  sweep_coroutines();
 }
 static void clear_marks(void){for(int i=0;i<NT;i++)tables[i].mark=0;for(int i=0;i<NS;i++)strings[i].mark=0;for(int i=0;i<NC;i++)cells[i].mark=0;for(int i=0;i<NF;i++)closures[i].mark=0;}
@@ -528,7 +577,8 @@ static void textured_line(int x0,int y0,int x1,int y1,int32_t mx,int32_t my,int3
   if(steps){ex+=dx;ey+=dy;if(dx>=dy){x+=sx;if(2*ey>=steps){y+=sy;ey-=steps;}}else{y+=sy;if(2*ex>=steps){x+=sx;ex-=steps;}}}
  }
 }
-static double real(V v){return (double)p8_number(v)/65536.0;}
+static int32_t api_number(V v);
+static double real(V v){return (double)api_number(v)/65536.0;}
 static V numeric(double n){if(!isfinite(n)||n< -32768.0||n>=32768.0)p8_fail("math result outside fixed point range");return p8_num((int32_t)floor(n*65536.));}
 /* Numeric text shared by TONUM, SELECT coercion and SPLIT. Hex/binary
  * construction uses unsigned bits, including the signed 16.16 wrap boundary.
@@ -575,9 +625,12 @@ static bool parse_raw_integer(V value,int32_t *result){
 static uint32_t random_next(void){uint32_t x=random_state;x^=x<<13;x^=x>>17;x^=x<<5;return random_state=x?x:1;}
 #define HAS(i) ((i)<argc)
 #define A(i) (HAS(i)?argv[i]:p8_nil())
-#define I(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?integer(argv[i]):(def))
+/* Built-in functions never raise on argument types: PICO-8 reads a value that
+ * is neither a number nor a numeric string as 0. Operators stay strict. */
+static int32_t api_number(V v){int32_t n;if(v.tag==P8_NUM)return v.n;if(v.tag==P8_STR&&parse_fixed(v,&n))return n;return 0;}
+#define I(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?api_number(argv[i])>>16:(def))
 /* Fixed-point argument with a default, for APIs that keep the fraction. */
-#define F(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?p8_number(argv[i]):(def))
+#define F(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?api_number(argv[i]):(def))
 #define C(i) I(i,draw_color)
 #define IS(api) (id==(api))
 /* ---- PICO-8 base RAM (0x0000..0x7fff) mapped onto the runtime state ---- */
@@ -918,7 +971,7 @@ V p8_api_id(int id,int argc,const V *argv){
    if(argc>2)p8_fail("table pal accepts at most two arguments");
    int tid=table_id(A(0));
    /* Keep this overload bounded to the documented palette/list indices. */
-   for(int at=tables[tid].head;at;at=entries[at-1].next){
+   for(int at=tables[tid].head;at;at=entry_next[at-1]){
     V key=ENTRY_KEY(at-1),value=ENTRY_VALUE(at-1);
     if(key.tag!=P8_NUM||(key.n&65535)||key.n<0||key.n>16*65536)
      p8_fail("pal table keys must be integers from 0 to 16");
@@ -1002,18 +1055,18 @@ V p8_api_id(int id,int argc,const V *argv){
   if(n>=32)return p8_num(!left&&IS(P8_API_shr)&&((int32_t)bits<0)?-1:0);
   return p8_num((int32_t)(left?bits<<n:IS(P8_API_shr)?(uint32_t)((int32_t)bits>>n):bits>>n));
  }
- if(IS(P8_API_flr))return p8_num((int32_t)((uint32_t)p8_number(A(0))&0xffff0000u));
- if(IS(P8_API_ceil)){int32_t x=p8_number(A(0));return p8_num((int32_t)(((uint32_t)x&0xffff0000u)+((x&65535)?65536u:0)));}
- if(IS(P8_API_abs)){int32_t x=p8_number(A(0));return p8_num(x<0?(int32_t)(0u-(uint32_t)x):x);}
+ if(IS(P8_API_flr))return p8_num((int32_t)((uint32_t)api_number(A(0))&0xffff0000u));
+ if(IS(P8_API_ceil)){int32_t x=api_number(A(0));return p8_num((int32_t)(((uint32_t)x&0xffff0000u)+((x&65535)?65536u:0)));}
+ if(IS(P8_API_abs)){int32_t x=api_number(A(0));return p8_num(x<0?(int32_t)(0u-(uint32_t)x):x);}
  if(IS(P8_API_min)||IS(P8_API_max)){int32_t a=F(0,0),b=F(1,0);return p8_num(IS(P8_API_min)?(a<b?a:b):(a>b?a:b));}
  if(IS(P8_API_mid)){int32_t a=F(0,0),b=F(1,0),c=F(2,0);if(a>b){int32_t t=a;a=b;b=t;}if(b>c){int32_t t=b;b=c;c=t;}return p8_num(a>b?a:b);}
- if(IS(P8_API_sgn))return p8_int(p8_number(A(0))<0?-1:1);
+ if(IS(P8_API_sgn))return p8_int(api_number(A(0))<0?-1:1);
  if(IS(P8_API_sqrt)){double x=real(A(0));return numeric(sqrt(x<0?0:x));}
  if(IS(P8_API_sin))return numeric(-sin(real(A(0))*6.283185307179586));
  if(IS(P8_API_cos))return numeric(cos(real(A(0))*6.283185307179586));
  if(IS(P8_API_atan2)){double a=atan2(-real(A(1)),real(A(0)))/6.283185307179586;if(a<0)a+=1;return numeric(a);}
- if(IS(P8_API_srand)){random_state=(uint32_t)p8_number(A(0));if(!random_state)random_state=1;return p8_nil();}
- if(IS(P8_API_rnd)){uint32_t r=random_next();if(argc&&A(0).tag==P8_TABLE){int n=raw_length(A(0));return n?raw_get(A(0),p8_int((int)(r%(unsigned)n)+1)):p8_nil();}int32_t limit=HAS(0)?p8_number(A(0)):65536;if(limit<0)p8_fail("negative rnd range unsupported");return p8_num((int32_t)(((uint64_t)r*(uint32_t)limit)>>32));}
+ if(IS(P8_API_srand)){random_state=(uint32_t)api_number(A(0));if(!random_state)random_state=1;return p8_nil();}
+ if(IS(P8_API_rnd)){uint32_t r=random_next();if(argc&&A(0).tag==P8_TABLE){int n=raw_length(A(0));return n?raw_get(A(0),p8_int((int)(r%(unsigned)n)+1)):p8_nil();}int32_t limit=F(0,65536);if(limit<0)p8_fail("negative rnd range unsupported");return p8_num((int32_t)(((uint64_t)r*(uint32_t)limit)>>32));}
  if(IS(P8_API_time)||IS(P8_API_t))return p8_num((int32_t)(((uint64_t)p8_frames*65536)/p8_target_hz));
  if(IS(P8_API_tostr)){
   if(!argc)return p8_str("");
@@ -1167,8 +1220,8 @@ V p8_api_id(int id,int argc,const V *argv){
  }
  if(IS(P8_API_tline)){
   if(argc<6)p8_fail("unsupported tline() overload");
-  int32_t mdx=HAS(6)?p8_number(A(6)):0x2000,mdy=HAS(7)?p8_number(A(7)):0;
-  textured_line(I(0,0),I(1,0),I(2,0),I(3,0),p8_number(A(4)),p8_number(A(5)),mdx,mdy,I(8,0));return p8_nil();
+  int32_t mdx=HAS(6)?api_number(A(6)):0x2000,mdy=HAS(7)?api_number(A(7)):0;
+  textured_line(I(0,0),I(1,0),I(2,0),I(3,0),api_number(A(4)),api_number(A(5)),mdx,mdy,I(8,0));return p8_nil();
  }
  /* ---- Metatables ---- */
  if(IS(P8_API_setmetatable)){
@@ -1352,7 +1405,7 @@ V p8_api(const char *name,int argc,const V *argv){
  p8_fail("unimplemented API");return p8_nil();
 }
 void p8_reset(void){
- memset(tables,0,sizeof tables);memset(entries,0,sizeof entries);memset(strings,0,sizeof strings);string_top=0;string_hint=table_hint=entry_hint=0;memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);
+ memset(tables,0,sizeof tables);memset(entry_tags,0,sizeof entry_tags);memset(entry_next,0,sizeof entry_next);memset(boxed_used,0,sizeof boxed_used);memset(strings,0,sizeof strings);string_top=0;string_hint=table_hint=entry_hint=0;memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);
  for(int i=0;i<NU;i++){captures[i].cell=NO_LINK;captures[i].next=0;}
  memcpy(gfx,p8_cart_gfx,sizeof gfx);memcpy(map_data,p8_cart_map,sizeof map_data);memcpy(flags,p8_cart_flags,sizeof flags);
  if(p8_cart_sound)memcpy(sound_ram,p8_cart_sound,sizeof sound_ram);else memset(sound_ram,0,sizeof sound_ram);
