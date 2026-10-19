@@ -94,6 +94,8 @@ The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each cha
 - `save(filename)` does nothing: there is no file system to write the cartridge file into.
 - The button glyph globals `⬅️ ➡️ ⬆️ ⬇️ 🅾️ ❎` start as 0 to 5, as in PICO-8, instead of nil.
 - Multiple assignment writes its targets right to left, as the reference Lua does, so `a,a=1,2` leaves `a` at 1.
+- `_ENV[name]` finds builtins by a computed name, such as `_ENV["map"]`, even when the cart never names them directly.
+- RP2040: core 0 copies each finished frame straight into the display buffer while core 1 is not drawing it, instead of through a second 8 KB buffer; a frame offered while core 1 is busy is offered again while waiting for the next frame.
 - Pico 2 / Pico 2 W: 5120 tables, 3072 lexical cells, 6144 closure captures and 8 coroutines. The host check now uses the device's coroutine count (4 on the RP2040), so a cart that needs more stops there instead of on the device.
 - RP2040: the screen buffer holds two pixels per byte and pool flags share a word with a small field, which frees about 11 KB for 2048 tables (from 1536) and 11200 table entries (from 9056).
 

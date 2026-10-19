@@ -472,12 +472,12 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
-    "src/compiler/emit.rs": "c13150598e6c6c06f0a1ad104daaa3b1bd91c698b22f13506850c8e3a2cd6c59",
+    "src/compiler/emit.rs": "17dc59c9b2243f4e4c7f2433101f06687c7547edf22fb7415b58fb2a488b8f96",
     "src/compiler/mod.rs": "7e8fdbf01cf7da4ef1b866b2e296e382cb2f3e22e66632447698c489c8ae1315",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
     "converter/runtime/p8.c": "3ef2dcfd5723c879995d0a8e90a9929c130c908f473a9973bf17713c4412398a",
     "converter/runtime/p8.h": "cc180c3ac3f332191ecfa6a37ffec040aa595c0c5ac2a54b2d832149ff10e430",
-    "converter/runtime/pico.c": "caeb625b13fbbb62776b73c05e993dfa4a85354ca55571e1e70b403d9473ccb0",
+    "converter/runtime/pico.c": "999db9417dfa913e8a23a3cac27d6ddcabafd7ccb04efbd19416558346e537d8",
     "converter/runtime/host.c": "114eb355a7aa2d176ffe8971e5371e9e6a01994df9dc36aa35e62e76aa465b01",
     "converter/build.py": "f3443fb36b2da62ac043a3de3ca8fcfeeddc9c3fd2991d2b143ce4a69a5ce737",
     "converter/CMakeLists.txt": "8aeae24d44825ca2e32e8cea80861dbebb7f7d6ce2e6af792b9bc41e9bb8993e",
@@ -495,6 +495,6 @@
     "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
     "converter/tests/palette_state.p8": "28eda4054fd9be5be2b04f0632390a2990a4606d10162ce9e5658456a483cf3a",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
-    "converter/tests/extended_features.p8": "b37ecb2585d3581b9bcec81cb390e69c006a8cd740a587035d4993f483f299ef"
+    "converter/tests/extended_features.p8": "ebbdcf4d929b7c49fefc3a8297d519e3e634d348ecd79b39eeda4e0690d0fefe"
   }
 }

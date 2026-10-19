@@ -1359,22 +1359,22 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
     for (id, _) in e.functions.clone() {
         e.line(format!("case {id}:return fn_{id}(self,argc,argv);"));
     }
+    // Every builtin gets a case: `_ENV[name]` can look one up by a computed name.
     for (i, n) in APIS.iter().enumerate() {
-        if names.contains(*n) {
-            // These builtins publish their own result list, including zero results.
-            // Keep other APIs scalar: e.g. foreach may leave callback results behind.
-            if MULTI_RESULT_APIS.contains(n) {
-                e.line(format!(
-                    "case {}:return p8_api_id(P8_API_{},argc,argv);",
-                    10000 + i,
-                    n
-                ));
-            } else {
-                e.line(format!(
-                    "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
-                    10000 + i, n
-                ));
-            }
+        // These builtins publish their own result list, including zero results.
+        // Keep other APIs scalar: e.g. foreach may leave callback results behind.
+        if MULTI_RESULT_APIS.contains(n) {
+            e.line(format!(
+                "case {}:return p8_api_id(P8_API_{},argc,argv);",
+                10000 + i,
+                n
+            ));
+        } else {
+            e.line(format!(
+                "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
+                10000 + i,
+                n
+            ));
         }
     }
     e.line("default:p8_fail(\"invalid native function\");return p8_nil();}}");
@@ -1405,6 +1405,15 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
             cstr(n),
             global(n)
         ));
+    }
+    for (i, n) in APIS.iter().enumerate() {
+        if !names.contains(*n) {
+            e.line(format!(
+                "if(!strcmp(name,{}))return p8_closure({},0,NULL);",
+                cstr(n),
+                10000 + i
+            ));
+        }
     }
     e.line("return p8_nil();}");
     Ok((e.out, e.apis.into_iter().collect()))
