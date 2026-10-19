@@ -6,7 +6,7 @@ Open Pocket Arcade and choose **PROGRESS** for the interactive subsystem tables,
 
 **Functional API names: 105/108 (97.2%).** The inventory contains 42 supported, 63 partial and 3 missing entries. A functional name may implement only a subset of the official behavior. Silent audio stubs remain missing.
 
-**Observed in current public host regression: 88/108 API names** across 42 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
+**Observed in current public host regression: 89/108 API names** across 42 completed sanitizer scenarios. This records executed entry points and iterator steps, including controlled expected-error cases; it does not prove correctness of every overload.
 
 **Historical frozen game sample: 1/20 native builds; 1/20 display/control confirmations.** The original cartridges and their firmware are not bundled. Independent PICO-8 reference conformance remains unmeasured.
 
@@ -17,7 +17,7 @@ Open Pocket Arcade and choose **PROGRESS** for the interactive subsystem tables,
 | tables | 7 | 0 | 0 | 7 | 6 |
 | input | 2 | 0 | 0 | 2 | 1 |
 | audio | 0 | 2 | 0 | 2 | 2 |
-| map | 0 | 4 | 0 | 4 | 3 |
+| map | 0 | 4 | 0 | 4 | 4 |
 | memory | 0 | 9 | 1 | 10 | 8 |
 | math | 16 | 6 | 0 | 22 | 17 |
 | menu | 0 | 1 | 0 | 1 | 1 |

@@ -350,6 +350,37 @@ impl Emitter {
         };
         Ok(self.val(format!("p8_closure({id},{},{caps})", visible.len())))
     }
+    fn builtin(&self, e: &Expr, names: &[&str]) -> Option<String> {
+        match e {
+            Expr::Var(n)
+                if names.contains(&n.as_str())
+                    && !self.assigned.contains(n)
+                    && !self.scopes.iter().any(|s| s.contains_key(n)) =>
+            {
+                Some(n.clone())
+            }
+            _ => None,
+        }
+    }
+    /// `poke(a,unpack(t))` loads data tables far longer than the call result
+    /// limit, so it writes straight from the table instead of expanding it.
+    fn poke_unpack(&mut self, f: &Expr, args: &[Expr]) -> Result<Option<String>, Error> {
+        let Some(poke) = self.builtin(f, &["poke", "poke2", "poke4"]) else {
+            return Ok(None);
+        };
+        let [address, Expr::Call(u, inner)] = args else {
+            return Ok(None);
+        };
+        if inner.len() != 1 || self.builtin(u, &["unpack"]).is_none() {
+            return Ok(None);
+        }
+        self.apis.insert(poke.clone());
+        self.apis.insert("unpack".into());
+        let size = match poke.as_str() { "poke" => 1, "poke2" => 2, _ => 4 };
+        let address = self.expr(address)?;
+        let table = self.expr(&inner[0])?;
+        Ok(Some(self.val(format!("p8_poke_unpack({size},{address},{table})"))))
+    }
     fn multi(&self, e: &Expr) -> bool {
         if let Expr::Call(f, _) = e {
             if let Expr::Var(n) = f.as_ref() {
@@ -530,6 +561,9 @@ impl Emitter {
                         // raises only if the call is reached, so defer to runtime
                         // instead of rejecting a cartridge for an unused branch.
                     }
+                }
+                if let Some(v) = self.poke_unpack(f, args)? {
+                    return Ok(v);
                 }
                 let f = self.expr(f)?;
                 let (n, a) = self.args(args)?;

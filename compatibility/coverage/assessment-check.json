@@ -71,7 +71,7 @@
       "status_counts": {
         "partial": 4
       },
-      "exercised": 3
+      "exercised": 4
     },
     {
       "name": "memory",
@@ -135,7 +135,7 @@
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 88,
+  "regression_exercised_api_names": 89,
   "regression_scenario_count": 42,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 49,

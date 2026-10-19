@@ -21,6 +21,8 @@ add_executable(pocket_aot runtime/pico.c runtime/p8.c "${CART_DIR}/game.c" "${CA
 target_include_directories(pocket_aot PRIVATE runtime)
 if(PICO_RP2350)
  pico_set_linker_script(pocket_aot "${CMAKE_CURRENT_LIST_DIR}/memmap_pocket_rp2350.ld")
+ # RP2350 has twice the RAM: give the Lua heap pools most of it.
+ target_compile_definitions(pocket_aot PRIVATE NE=30000 NT=4096 NS=1536 NC=2048 NF=1536 NU=4096)
 else()
  pico_set_linker_script(pocket_aot "${CMAKE_CURRENT_LIST_DIR}/memmap_pocket.ld")
 endif()

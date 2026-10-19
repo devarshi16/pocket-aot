@@ -163,6 +163,7 @@ void p8_profile_write(const char *path);
 #endif
 V p8_api_id(int id,int argc,const V *argv);
 V p8_api(const char *name,int argc,const V *argv);
+V p8_poke_unpack(int size,V address,V table);
 void p8_fail(const char *msg);
 void p8_tick(void);
 void p8_stack_check(void);

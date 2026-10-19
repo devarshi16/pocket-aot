@@ -915,6 +915,12 @@ static void sweep_coroutines(void){for(int i=0;i<P8_COROUTINES;i++){if(coroutine
 /* -1: not a live coroutine; otherwise the mark bit (optionally setting it). */
 static int coroutine_mark(int i,bool set){if((unsigned)i>=P8_COROUTINES||coroutines[i].state==CO_FREE)return -1;if(set)coroutines[i].mark=1;return coroutines[i].mark;}
 static void reset_coroutines(void){memset(coroutines,0,sizeof coroutines);current_coroutine=-1;main_sp=NULL;}
+/* poke(address,unpack(t)) without expanding t into call arguments. */
+V p8_poke_unpack(int size,V address,V table){
+ int at=address_of(address),n=raw_length(table);p8_tick();
+ if(n<1){V args[1]={address};return p8_api_id(size==1?P8_API_poke:size==2?P8_API_poke2:P8_API_poke4,1,args);}
+ for(int i=1;i<=n;i++,at+=size){V v=raw_get(table,p8_int(i));uint32_t bits=v.tag==P8_NUM?(uint32_t)v.n:0;if(size<4)bits>>=16;for(int b=0;b<size;b++)mem_write(at+b,(uint8_t)(bits>>(8*b)));}
+ return p8_nil();}
 V p8_api_id(int id,int argc,const V *argv){
 #ifdef P8_API_PROFILE
  if((unsigned)id<P8_API_COUNT)api_profile_hits[id]++;
@@ -1001,14 +1007,18 @@ V p8_api_id(int id,int argc,const V *argv){
   return p8_int((int)old);
  }
  if(IS(P8_API_spr)){sprite(I(0,0),I(1,0),I(2,0),I(3,1),I(4,1),p8_truth(A(5)),p8_truth(A(6)));return p8_nil();}
- if(IS(P8_API_sspr)){int sx=I(0,0),sy=I(1,0),sw=I(2,1),sh=I(3,1),dx=I(4,0),dy=I(5,0),dw=I(6,sw),dh=I(7,sh);bool fx=p8_truth(A(8)),fy=p8_truth(A(9));if(sw<1||sh<1||dw<1||dh<1||dw>1024||dh>1024)p8_fail("unsupported sspr dimensions");for(int y=0;y<dh;y++)for(int x=0;x<dw;x++){int c=sample(sx+(fx?dw-1-x:x)*sw/dw,sy+(fy?dh-1-y:y)*sh/dh);if(!transparent[c])pixel(dx+x,dy+y,c);}return p8_nil();}
+ if(IS(P8_API_sspr)){int sx=I(0,0),sy=I(1,0),sw=I(2,1),sh=I(3,1),dx=I(4,0),dy=I(5,0),dw=I(6,sw),dh=I(7,sh);bool fx=p8_truth(A(8)),fy=p8_truth(A(9));if(sw<1||sh<1||!dw||!dh)return p8_nil();
+  /* A negative destination size mirrors the image back from dx/dy. Only rows and columns inside the clip are walked. */
+  if(dw<0){dw=-dw;dx-=dw;fx=!fx;}if(dh<0){dh=-dh;dy-=dh;fy=!fy;}
+  int x0=clip_x0+camera_x-dx,x1=clip_x1+camera_x-dx,y0=clip_y0+camera_y-dy,y1=clip_y1+camera_y-dy;if(x0<0)x0=0;if(y0<0)y0=0;if(x1>dw)x1=dw;if(y1>dh)y1=dh;
+  for(int y=y0;y<y1;y++)for(int x=x0;x<x1;x++){int c=sample(sx+(int)((int64_t)(fx?dw-1-x:x)*sw/dw),sy+(int)((int64_t)(fy?dh-1-y:y)*sh/dh));if(!transparent[c])pixel(dx+x,dy+y,c);}return p8_nil();}
  if(IS(P8_API_sget))return p8_int(sample(I(0,0),I(1,0)));
  if(IS(P8_API_sset)){set_sample(I(0,0),I(1,0),C(2));return p8_nil();}
  if(IS(P8_API_mget))return p8_int(mapget(I(0,0),I(1,0)));
  if(IS(P8_API_mset)){mapset(I(0,0),I(1,0),I(2,0));return p8_nil();}
  if(IS(P8_API_fget)){int tile=I(0,0),bit=I(1,0),f=(unsigned)tile<256?flags[tile]:0;return argc>1?p8_bool((unsigned)bit<8&&((f>>bit)&1)):p8_int(f);}
  if(IS(P8_API_fset)){int i=I(0,0)&255;if(argc==2)flags[i]=I(1,0);else if(p8_truth(A(2)))flags[i]|=1<<(I(1,0)&7);else flags[i]&=~(1<<(I(1,0)&7));return p8_nil();}
- if(IS(P8_API_map)){int mx=I(0,0),my=I(1,0),dx=I(2,0),dy=I(3,0),w=I(4,128),h=I(5,32),mask=I(6,0);if(w>128||h>64)p8_fail("map dimensions outside supported range");for(int y=0;y<h;y++)for(int x=0;x<w;x++){int tile=mapget(mx+x,my+y);if(tile&&(!mask||(flags[tile]&mask)))sprite(tile,dx+x*8,dy+y*8,1,1,false,false);}return p8_nil();}
+ if(IS(P8_API_map)){int mx=I(0,0),my=I(1,0),dx=I(2,0),dy=I(3,0),w=I(4,128),h=I(5,32),mask=I(6,0);/* Cells outside the 128x64 map read as 0 and draw nothing. */if(w>128)w=128;if(h>64)h=64;for(int y=0;y<h;y++)for(int x=0;x<w;x++){int tile=mapget(mx+x,my+y);if(tile&&(!mask||(flags[tile]&mask)))sprite(tile,dx+x*8,dy+y*8,1,1,false,false);}return p8_nil();}
  if(IS(P8_API_btn)||IS(P8_API_btnp)){int player=I(1,0);if(player<0||player>7)p8_fail("player index must be 0 to 7");unsigned bits=IS(P8_API_btn)?game_buttons:pressed;
   /* Only player one has physical buttons; other documented players read as idle. */
   if(!argc)return p8_int((int)bits);if(player)return p8_bool(false);int b=I(0,0);return p8_bool((unsigned)b<6&&(bits&(1u<<b)));}

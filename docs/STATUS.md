@@ -10,7 +10,7 @@ Inspired by the subsystem reporting style of [AnyPS5](https://boykopovar.github.
 | --- | ---: | --- |
 | Functional API names | 105/108 (97.2%) | Some implemented behavior, including partial support |
 | API inventory | 42 supported · 63 partial · 3 missing | Fixed set of canonical names; aliases counted once |
-| Current public host execution | 88/108 | Entry points reached in 42 completed original-fixture sanitizer scenarios |
+| Current public host execution | 89/108 | Entry points reached in 42 completed original-fixture sanitizer scenarios |
 | Historical private host execution | 49/108 | Earlier 8-scenario run, including external cartridges that are not bundled |
 | Historical random game sample | 1/20 built; 1/20 owner-confirmed | Earlier RP2040/Waveshare display and controls check; not a new public-suite result |
 | Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |
@@ -40,7 +40,7 @@ Supported means implemented within the stated audit gate, with no specific omiss
 | tables | 7 | 0 | 0 | 7 | 6 |
 | input | 2 | 0 | 0 | 2 | 1 |
 | audio | 0 | 2 | 0 | 2 | 2 |
-| map | 0 | 4 | 0 | 4 | 3 |
+| map | 0 | 4 | 0 | 4 | 4 |
 | memory | 0 | 9 | 1 | 10 | 8 |
 | math | 16 | 6 | 0 | 22 | 17 |
 | menu | 0 | 1 | 0 | 1 | 1 |

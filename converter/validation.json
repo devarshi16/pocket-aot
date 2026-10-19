@@ -23,8 +23,8 @@
   {
     "test": "api-overloads",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=6 strings=10 operations=45352 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864",
+    "result": "AOT_HOST_OK frames=2500 entries=6 strings=10 operations=45488 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "bcb05f124e2c7db58315486e79141542063e82c4e1c84c69fc71ee29bd052db0",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
