@@ -7,7 +7,7 @@
 #include "font.h"
 
 #define NT 1280
-#define NE 4352
+#define NE 5120
 #define NS 768
 #define SL (P8_MAX_STRING+1)
 #define STRING_BYTES 32768
@@ -22,8 +22,9 @@ static struct {uint16_t head,meta;uint8_t used,mark;} tables[NT];
 static struct {int32_t key,value;uint16_t next;uint8_t key_tag,value_tag;} entries[NE];
 static struct {uint16_t offset,length;uint8_t used,mark;} strings[NS];
 static char string_data[STRING_BYTES],string_scratch[SL];
-static struct {V value;uint8_t used,mark;} cells[NC];
-static struct {int fn;uint16_t head,count;uint8_t used,mark;} closures[NF];
+/* V's fields are inlined so a cell packs into 8 bytes instead of 12. */
+static struct {int32_t n;uint8_t tag,used,mark;} cells[NC];
+static struct {uint16_t fn,head,count;uint8_t used,mark;} closures[NF];
 static struct {uint16_t cell,next;} captures[NU];
 #define ENTRY_KEY(i) ((V){entries[i].key,entries[i].key_tag})
 #define ENTRY_VALUE(i) ((V){entries[i].value,entries[i].value_tag})
@@ -180,13 +181,14 @@ static int length(V t){if(t.tag==P8_STR)return string_length(t);int n=0;while(n<
 static int cell_id(V v){if(v.tag!=P8_CELL||(unsigned)v.n>=NC||!cells[v.n].used)p8_fail("invalid lexical cell");return v.n;}
 static int closure_id(V v){if(v.tag!=P8_FUNCTION||(unsigned)v.n>=NF||!closures[v.n].used)p8_fail("function expected");return v.n;}
 static int cell_slot(void){for(int i=0;i<NC;i++)if(!cells[i].used)return i;return -1;}
-V p8_cell(V initial){int i=cell_slot();if(i<0&&can_collect()){collect_now(false);i=cell_slot();}if(i<0)p8_fail("lexical cell pool exhausted in one frame");cells[i].used=1;cells[i].mark=0;cells[i].value=initial;return(V){i,P8_CELL};}
-V p8_cell_get(V v){return cells[cell_id(v)].value;}
-void p8_cell_set(V v,V value){cells[cell_id(v)].value=value;}
+V p8_cell(V initial){int i=cell_slot();if(i<0&&can_collect()){collect_now(false);i=cell_slot();}if(i<0)p8_fail("lexical cell pool exhausted in one frame");cells[i].used=1;cells[i].mark=0;cells[i].n=initial.n;cells[i].tag=initial.tag;return(V){i,P8_CELL};}
+V p8_cell_get(V v){int i=cell_id(v);return(V){cells[i].n,cells[i].tag};}
+void p8_cell_set(V v,V value){int i=cell_id(v);cells[i].n=value.n;cells[i].tag=value.tag;}
 static int closure_slot(void){for(int i=0;i<NF;i++)if(!closures[i].used)return i;return -1;}
 static int free_captures(void){int n=0;for(int i=0;i<NU;i++)n+=captures[i].cell==NO_LINK;return n;}
 V p8_closure(int fn,int count,const V *refs){
  if(count<0||count>MAX_CAPTURE)p8_fail("closure exceeds 64 captures");
+ if(fn<0||fn>0xffff)p8_fail("closure function id out of range");
  int id=closure_slot();
  if((id<0||free_captures()<count)&&can_collect()){collect_now(false);id=closure_slot();}
  if(id<0)p8_fail("native closure pool exhausted in one frame");
@@ -290,7 +292,7 @@ static void scan(V v){
    if(!weak_values||value.tag==P8_STR)shade(value);
   }
  }
- else if(v.tag==P8_CELL)shade(cells[v.n].value);
+ else if(v.tag==P8_CELL)shade((V){cells[v.n].n,cells[v.n].tag});
  else if(v.tag==P8_FUNCTION)for(int at=closures[v.n].head;at;at=captures[at-1].next)shade((V){captures[at-1].cell,P8_CELL});
  else if(v.tag==P8_THREAD)scan_coroutine(v.n);
 }

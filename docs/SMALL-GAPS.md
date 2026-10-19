@@ -72,6 +72,8 @@ Aimed at the blockers measured on the frozen top-100 run (22/100 firmware builds
 
 The top-100 effect is unmeasured until the benchmark is re-run on a machine that can download the cartridges.
 
+Follow-up: lexical cells (12 to 8 bytes) and closure records (12 to 8 bytes) are packed tighter. The 9 KB this frees goes to table entries, 4352 to 5120, so RAM use is unchanged.
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |

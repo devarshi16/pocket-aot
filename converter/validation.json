@@ -328,7 +328,7 @@
     "test": "heap-bound",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: table entries exhausted frame=0",
-    "source_sha256": "1675e564824edb5506f5ac638c2d74fa6850ef4eec89b07c4a7cac883745c46f",
+    "source_sha256": "37f845fb894ee0e51de48c5c385e2fac1d826741639af476dc511e58e3457bcf",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
