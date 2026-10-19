@@ -342,7 +342,6 @@ mod tests {
     #[test]
     fn unknown_apis_and_unsupported_overloads_stop_conversion() {
         for (call, reason) in [
-            ("cstore(0,0,0)", "unsupported function/API"),
             ("save(\"x\")", "unsupported function/API"),
             ("line(1,2,3,4,5,6)", "overload"),
             ("rawset({},1)", "overload"),

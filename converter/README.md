@@ -75,7 +75,7 @@ Missing capabilities include varargs, `goto`/labels, active includes, metatables
 
 The runtime has fixed pools: **512 tables, 3,072 table entries, 1,024 lexical cells, 256 closures and 2,048 captured-cell links**. A closure captures at most 64 locals. Strings use a 32 KB arena with 256 slots and an 8,191-byte individual limit. Allocation within one frame can exhaust a pool before frame-boundary collection.
 
-Instruction/call-depth budgets, stack-headroom guards and compiler stack-usage checks limit runaway code. Core 0 reserves 16 KB of main RAM for stack; core 1 reserves 4 KB in scratch RAM. Builds reject oversized or non-static generated stack transitions. These checks do not guarantee that every accepted cartridge fits its intended frame deadline. Keep the board's physical BOOTSEL recovery accessible.
+Instruction/call-depth budgets, stack-headroom guards and compiler stack-usage checks limit runaway code. Core 0 reserves 16 KB of main RAM for stack (40 KB on RP2350); core 1 reserves 4 KB in scratch RAM. Builds reject oversized or non-static generated stack transitions. These checks do not guarantee that every accepted cartridge fits its intended frame deadline. Keep the board's physical BOOTSEL recovery accessible.
 
 ## Public tests
 

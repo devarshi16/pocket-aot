@@ -68,7 +68,9 @@ def main():
     runtime = ROOT / 'converter/runtime'
     sources = [runtime / 'p8.c', runtime / 'host.c', dest / 'game.c', dest / 'assets.c']
     print('Checking the generated game on this computer...', flush=True)
-    output += command(['gcc', '-O1', '-g', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
+    # The host check uses the same pool sizes as the board's firmware.
+    pools = ['-DP8_LARGE_POOLS'] if chip == 'RP2350' else []
+    output += command(['gcc', '-O1', '-g', '-fsanitize=address,undefined', '-fno-omit-frame-pointer', *pools,
                        '-I' + str(runtime), *sources, '-lm', '-o', dest / 'host-check'])
     output += command([dest / 'host-check', str(args.frames)], cwd=dest, timeout=45)
     sdk_env = os.environ.get('PICO_SDK_PATH')
@@ -102,7 +104,7 @@ def main():
     initial=max((r['bytes'] for r in stack_rows if r['function']=='p8_program_init'),default=0)
     if largest+dispatcher>3072 or initial>3072 or any(r['kind']!='static' for r in stack_rows):
         raise RuntimeError('Generated native stack frames exceed the bounded Pico stack budget')
-    (dest/'stack-usage.json').write_text(json.dumps(dict(frames=stack_rows,max_call_transition=largest+dispatcher,initial_frame=initial,core0_stack=16384,headroom_guard=4096),indent=2)+'\n')
+    (dest/'stack-usage.json').write_text(json.dumps(dict(frames=stack_rows,max_call_transition=largest+dispatcher,initial_frame=initial,core0_stack=40960 if chip=='RP2350' else 16384,headroom_guard=4096),indent=2)+'\n')
     # Emit the same contiguous family-tagged UF2 layout accepted by the flasher.
     data = (dest / 'build/pocket_aot.bin').read_bytes()
     if len(data) > 2 * 1024 * 1024:

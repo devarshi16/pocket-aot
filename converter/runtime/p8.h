@@ -7,7 +7,7 @@
 
 typedef struct { int32_t n; uint8_t tag; } V;
 enum { P8_NIL, P8_NUM, P8_BOOL, P8_STR, P8_TABLE, P8_FUNCTION, P8_CELL, P8_THREAD };
-#define P8_MAX_STRING 8191
+#define P8_MAX_STRING 32767
 #define P8_MAX_RESULTS 32
 extern uint8_t game_frame[128*128], game_buttons;
 extern const uint8_t pico_palette[16][3];

@@ -85,6 +85,13 @@ Aimed at the failures in the 53/100 top-100 run:
 
 The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each change.
 
+## Seventh batch (pool limits and the Pico 2 W)
+
+- RP2040: strings are copied straight into the arena instead of through an 8 KB scratch buffer, and the strings being copied are pinned during a collection. The 8 KB goes to table entries (8160 to 9056). Strings may now be up to 32767 bytes long.
+- Pico 2 / Pico 2 W (RP2350): one `P8_LARGE_POOLS` switch sets the larger pools for both the firmware and its host check, maps the upper 32 KB of PICO-8 memory, doubles the string arena to 64 KB, and gives core 0 a 40 KB stack with a call depth of 64. `benchmark_top100.py test --board pico2_w` measures this target.
+- Assignments keep only as many values as they have targets, so `local a,b,...=unpack(t)` with more than 16 results and multiple assignment of over 64 values work.
+- `cstore` checks its range and discards the write: cartridge ROM is in flash, so `reload` keeps reading the original data.
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |

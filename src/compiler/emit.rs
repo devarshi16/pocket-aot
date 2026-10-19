@@ -115,6 +115,7 @@ pub const APIS: &[&str] = &[
     "load",
     "ls",
     "serial",
+    "cstore",
 ];
 /// Builtins that publish their own result list (possibly empty or several values).
 const MULTI_RESULT_APIS: &[&str] = &[
@@ -174,7 +175,7 @@ const SINGLE_RESULT_APIS: &[&str] = &[
 /// Canonical PICO-8 APIs this target does not provide. Calling one stops the
 /// conversion, because deferring would hide a real capability gap behind a
 /// runtime error; an undefined cart-local name is not in this set.
-const UNIMPLEMENTED_APIS: &[&str] = &["save", "cstore"];
+const UNIMPLEMENTED_APIS: &[&str] = &["save"];
 /// Values per expression list. A final multi-value expression may add up to
 /// EXPANSION values beyond the fixed entries; this bounds each call site's
 /// stack array for the Pico's 16 KB stack.
@@ -405,18 +406,44 @@ impl Emitter {
             .ok_or_else(|| Error::new(0, "'...' used outside a vararg function"))
     }
     /// Append a final multi-value expression (call results or `...`) to `a`.
-    fn expand(&mut self, e: &Expr, a: &str, n: &str, capacity: usize) -> Result<(), Error> {
+    /// With `truncate`, values past the capacity are dropped instead of failing.
+    fn expand(
+        &mut self,
+        e: &Expr,
+        a: &str,
+        n: &str,
+        capacity: usize,
+        truncate: bool,
+    ) -> Result<(), Error> {
+        let full = if truncate {
+            "break;"
+        } else {
+            "p8_fail(\"too many values in expression list\");"
+        };
         if is_vararg(e) {
             let base = self.vararg_base()?;
-            self.line(format!("for(int j={base};j<argc;j++){{if({n}>={capacity})p8_fail(\"too many values in expression list\");{a}[{n}++]=argv[j];}}"));
+            self.line(format!(
+                "for(int j={base};j<argc;j++){{if({n}>={capacity}){full}{a}[{n}++]=argv[j];}}"
+            ));
         } else {
             self.expr(e)?;
-            self.line(format!("if({n}+p8_result_count()>{capacity})p8_fail(\"too many values in expression list\");for(int j=0;j<p8_result_count();j++){a}[{n}++]=p8_result(j);"));
+            self.line(format!("for(int j=0;j<p8_result_count();j++){{if({n}>={capacity}){full}{a}[{n}++]=p8_result(j);}}"));
         }
         Ok(())
     }
     fn args(&mut self, args: &[Expr]) -> Result<(String, String), Error> {
-        if args.len() > MAX_LIST {
+        self.args_kept(args, None)
+    }
+    /// Values for an assignment to `keep` targets: extra values are dropped, as in Lua.
+    fn args_kept(&mut self, args: &[Expr], keep: Option<usize>) -> Result<(String, String), Error> {
+        // Assignments only bind values; calls also bound argc for the runtime.
+        if args.len()
+            > if keep.is_some() {
+                4 * MAX_LIST
+            } else {
+                MAX_LIST
+            }
+        {
             return Err(Error::new(
                 0,
                 "at most 64 values per expression list are supported",
@@ -424,7 +451,9 @@ impl Emitter {
         }
         let a = self.fresh();
         let n = self.fresh();
-        let capacity = if args.last().is_some_and(|e| self.multi(e)) {
+        let capacity = if let Some(keep) = keep {
+            keep.max(args.len())
+        } else if args.last().is_some_and(|e| self.multi(e)) {
             args.len() - 1 + EXPANSION
         } else {
             args.len() + 1
@@ -432,7 +461,7 @@ impl Emitter {
         self.line(format!("V {a}[{capacity}];int {n}=0;"));
         for (i, e) in args.iter().enumerate() {
             if i + 1 == args.len() && self.multi(e) {
-                self.expand(e, &a, &n, capacity)?;
+                self.expand(e, &a, &n, capacity, keep.is_some())?;
             } else {
                 let v = self.expr(e)?;
                 self.line(format!("{a}[{n}++]={v};"));
@@ -640,7 +669,7 @@ impl Emitter {
                         self.line(format!("V {t}=p8_nil();"));
                     }
                     self.line("{");
-                    let (count, vals) = self.args(rhs)?;
+                    let (count, vals) = self.args_kept(rhs, Some(temps.len()))?;
                     for (i, t) in temps.iter().enumerate() {
                         self.line(format!("if({count}>{i}){t}={vals}[{i}];"));
                     }
@@ -655,7 +684,7 @@ impl Emitter {
                     }
                     return Ok(());
                 }
-                let (count, vals) = self.args(rhs)?;
+                let (count, vals) = self.args_kept(rhs, Some(dest.len()))?;
                 for (i, (n, t, k)) in dest.into_iter().enumerate() {
                     let v = format!("{count}>{i}?{vals}[{i}]:p8_nil()");
                     if let Some(n) = n {
@@ -944,6 +973,7 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "load" => (1, 3),
         "ls" => (0, 1),
         "serial" => (3, 3),
+        "cstore" => (0, 4),
         _ => (1, 1),
     };
     if n < min || n > max {

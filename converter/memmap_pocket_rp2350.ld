@@ -1,4 +1,4 @@
-/* Pocket AOT: reserve upper 16 KB main RAM for core0 on RP2350. Derived from Pico SDK BSD-3-Clause linker script. */
+/* Pocket AOT: reserve upper 40 KB main RAM for core0 on RP2350. Derived from Pico SDK BSD-3-Clause linker script. */
 /* Based on GCC ARM embedded samples.
    Defines the following symbols for use by code:
     __exidx_start
@@ -25,8 +25,8 @@
 MEMORY
 {
     INCLUDE "pico_flash_region.ld"
-    RAM(rwx) : ORIGIN =  0x20000000, LENGTH = 496k
-    CORE0_STACK(rwx) : ORIGIN = 0x2007c000, LENGTH = 16k
+    RAM(rwx) : ORIGIN =  0x20000000, LENGTH = 472k
+    CORE0_STACK(rwx) : ORIGIN = 0x20076000, LENGTH = 40k
     SCRATCH_X(rwx) : ORIGIN = 0x20080000, LENGTH = 4k
     SCRATCH_Y(rwx) : ORIGIN = 0x20081000, LENGTH = 4k
 }
@@ -296,7 +296,7 @@ SECTIONS
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed")
     ASSERT(__bss_end__ <= __HeapLimit, "static data exceeds reserved stack boundary")
-    ASSERT(__StackBottom >= __HeapLimit, "core0 stack exceeds its dedicated 16 KB region")
+    ASSERT(__StackBottom >= __HeapLimit, "core0 stack exceeds its dedicated 40 KB region")
     ASSERT(SIZEOF(.stack_dummy) <= LENGTH(CORE0_STACK), "core0 stack region too small")
     ASSERT(__scratch_x_end__ <= __StackOneBottom, "core1 stack overlaps scratch data")
 

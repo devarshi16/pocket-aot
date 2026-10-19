@@ -880,17 +880,17 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
-    "src/compiler/emit.rs": "a584f79c72ba476db873c0cc39817ecdc274b725d0cccfed43fc07a6a2daa57b",
-    "src/compiler/mod.rs": "a0851883f8f1c62d65b20c1aa8094687582d87c7082956b1d090a1bff89624fd",
+    "src/compiler/emit.rs": "6c032176da8ee6d0e388d4e6dbbb7d720f0ec25e87ba8f43411920047235ee2b",
+    "src/compiler/mod.rs": "245deb0ba54c0ea26fd1ab699ebbf5921e54248067af4d6a47f732d0496d2006",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "c958bab133e47e33d3ef41e4dc0aefc0760cfe0d39220ccc34e073ee986becfa",
-    "converter/runtime/p8.h": "d099c4da120b91e08d859f6e2c0a2e3b0cf5de085464a63086de97f5b99eedfa",
+    "converter/runtime/p8.c": "eca4fe3b3245faee6582d7db1bea5926455ff3530c77c11b3bd5c3cc40de4658",
+    "converter/runtime/p8.h": "0d094b365b91681418ecc6f4109982b45f41328169f2cc50cf830a116cf28afd",
     "converter/runtime/pico.c": "27b44ccd73da8633f1ab8bc870a232a565641efbd160c32fea039853c87dbe2d",
     "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
-    "converter/build.py": "b1c1596b138c5c838aa652dcbef8df1ba99dd2f3ec2784ff71db4ce73c186447",
-    "converter/CMakeLists.txt": "0df798aed4bf22160f7939edb6bc02850febcb13f16814a05328be62c8bc7450",
+    "converter/build.py": "b5752ff17836639732cfea8a5d8345781f255a02a79956edc3f2c3d648eed129",
+    "converter/CMakeLists.txt": "8aeae24d44825ca2e32e8cea80861dbebb7f7d6ce2e6af792b9bc41e9bb8993e",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "e791694a0ee466b91e92384e8de1ea4000128c0a5cd50c9513a405ad430aa52f",
+    "converter/test_pipeline.py": "19c39639b6ef05b04c6064290df201a7b599faff2ff38bc5157b2fa1b0818899",
     "converter/test_png.py": "76bee5ccb5038430e45393c8420fe6de905fdbcb447f13a9831031938f916635",
     "converter/tests/semantics.p8": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
@@ -903,7 +903,7 @@
     "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
     "converter/tests/palette_state.p8": "28eda4054fd9be5be2b04f0632390a2990a4606d10162ce9e5658456a483cf3a",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
-    "converter/tests/extended_features.p8": "6163793049f44f81bfe6b45c2c037b8e38ebf5f52e4e7948e97dfd0342c90b52"
+    "converter/tests/extended_features.p8": "6d0fb5e8b6ca15c01ff6fe2180a8afaf0000010552bd85f6c370a196ab7fa8dc"
   },
   "tooling_source_hashes": {
     "src/main.rs": "d0380be605ed40bb28392f646ae4be81c6fd54eca3cae50161da55fd19a6d9af",

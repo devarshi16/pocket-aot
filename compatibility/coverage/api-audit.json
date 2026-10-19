@@ -162,8 +162,8 @@
     }
   },
   "source_evidence": {
-    "src/compiler/emit.rs": "a584f79c72ba476db873c0cc39817ecdc274b725d0cccfed43fc07a6a2daa57b",
-    "converter/runtime/p8.c": "c958bab133e47e33d3ef41e4dc0aefc0760cfe0d39220ccc34e073ee986becfa",
+    "src/compiler/emit.rs": "6c032176da8ee6d0e388d4e6dbbb7d720f0ec25e87ba8f43411920047235ee2b",
+    "converter/runtime/p8.c": "eca4fe3b3245faee6582d7db1bea5926455ff3530c77c11b3bd5c3cc40de4658",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
   },
   "apis": [
@@ -1511,19 +1511,22 @@
       "name": "cstore",
       "aliases": [],
       "category": "memory",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Checks the address range and discards the write: cartridge ROM is in flash, so reload keeps reading the original data and nothing persists.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:118",
+        "converter/runtime/p8.c:1342"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {

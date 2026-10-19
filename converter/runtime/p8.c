@@ -9,17 +9,33 @@
 #include <sanitizer/asan_interface.h>
 #endif
 
+#ifdef P8_LARGE_POOLS
+/* RP2350 builds (and their host checks) have 520 KB of RAM: most goes to the
+ * Lua heap pools, and the upper 32 KB of PICO-8 memory is mapped. */
+#define P8_UPPER_RAM 1
+/* Core 0 has a 40 KB stack on RP2350, so deeper Lua recursion fits. */
+#define P8_MAX_DEPTH 64
+#define NT 4096
+#define NE 22000
+#define STRING_BYTES 65535
+#define NS 1536
+#define NC 2048
+#define NF 1536
+#define NU 4096
+#endif
 #ifndef NT
 #define NT 1536
 #endif
 #ifndef NE
-#define NE 8160
+#define NE 9056
 #endif
 #ifndef NS
 #define NS 768
 #endif
 #define SL (P8_MAX_STRING+1)
+#ifndef STRING_BYTES
 #define STRING_BYTES 32768
+#endif
 #ifndef NC
 #define NC 1024
 #endif
@@ -45,7 +61,7 @@ static uint8_t entry_tags[NE];
 static int32_t boxed_keys[NB];
 static uint8_t boxed_used[NB];
 static struct {uint16_t offset,length;uint8_t used,mark;} strings[NS];
-static char string_data[STRING_BYTES],string_scratch[SL];
+static char string_data[STRING_BYTES];
 /* V's fields are inlined so a cell packs into 8 bytes instead of 12. */
 static struct {int32_t n;uint8_t tag,used,mark;} cells[NC];
 static struct {uint16_t fn,head,count;uint8_t used,mark;} closures[NF];
@@ -118,7 +134,10 @@ __attribute__((weak)) void p8_stack_check(void){
  const uint8_t *low=p8_current_stack_low();
  if(low&&(const uint8_t*)__builtin_frame_address(0)<low+16384)p8_fail("coroutine stack budget exceeded");
 }
-void p8_enter(void){p8_stack_check();p8_tick();if(++depth>32)p8_fail("call depth exceeds 32");}
+#ifndef P8_MAX_DEPTH
+#define P8_MAX_DEPTH 32
+#endif
+void p8_enter(void){p8_stack_check();p8_tick();if(++depth>P8_MAX_DEPTH)p8_fail("call depth exceeds the limit");}
 void p8_leave(void){if(depth)depth--;}
 bool p8_truth(V v){return v.tag!=P8_NIL&&(v.tag!=P8_BOOL||v.n);}
 static bool parse_fixed(V value,int32_t *result);
@@ -168,19 +187,24 @@ static bool string_place(size_t len,size_t *at){
  for(;;){bool moved=false;for(int i=0;i<NS;i++)if(strings[i].used){size_t begin=strings[i].offset,end=begin+strings[i].length+1;if(offset<end&&offset+len+1>begin){offset=end;moved=true;break;}}if(!moved)break;}
  *at=offset;return offset+len+1<=STRING_BYTES;
 }
-static V string_bytes(const char *s,size_t len){
- if(len>=SL)p8_fail("string exceeds 8191 bytes");
- for(int i=0;i<NS;i++)if(strings[i].used&&strings[i].length==len&&!memcmp(string_data+strings[i].offset,s,len))return(V){i,P8_STR};
- /* The source bytes may live in the arena; copy them before a collection can free them. */
- bool inside=s>=string_data&&s<string_data+STRING_BYTES;
- if(inside){memmove(string_scratch,s,len);s=string_scratch;}
+/* Arena strings whose bytes are being copied; the collector keeps them alive.
+ * Mid-frame collections never move strings, so their pointers stay valid. */
+static int pinned_strings[2]={-1,-1};
+static int arena_owner(const char *s){
+ if(s<string_data||s>=string_data+STRING_BYTES)return -1;size_t at=(size_t)(s-string_data);
+ for(int i=0;i<NS;i++)if(strings[i].used&&at>=strings[i].offset&&at<=(size_t)strings[i].offset+strings[i].length)return i;return -1;}
+/* A new string made of two byte ranges, either of which may lie in the arena. */
+static V string_join(const char *a,size_t alen,const char *b,size_t blen){
+ size_t len=alen+blen;if(len>=SL)p8_fail("string exceeds 32767 bytes");
+ for(int i=0;i<NS;i++)if(strings[i].used&&strings[i].length==len){const char *d=string_data+strings[i].offset;if(!memcmp(d,a,alen)&&!memcmp(d+alen,b,blen))return(V){i,P8_STR};}
  int id=string_slot();size_t offset;bool fits=string_place(len,&offset);
- if((id<0||!fits)&&can_collect()){collect_now(false);id=string_slot();fits=string_place(len,&offset);}
+ if((id<0||!fits)&&can_collect()){pinned_strings[0]=arena_owner(a);pinned_strings[1]=arena_owner(b);collect_now(false);pinned_strings[0]=pinned_strings[1]=-1;id=string_slot();fits=string_place(len,&offset);}
  if(id<0)p8_fail("string slots exhausted in one frame");
- if(!fits)p8_fail("32KB string arena exhausted in one frame");
- memmove(string_data+offset,s,len);string_data[offset+len]=0;
+ if(!fits)p8_fail("string arena exhausted in one frame");
+ memmove(string_data+offset,a,alen);memmove(string_data+offset+alen,b,blen);string_data[offset+len]=0;
  strings[id].offset=(uint16_t)offset;strings[id].length=(uint16_t)len;strings[id].used=1;strings[id].mark=0;if(offset+len+1>string_top)string_top=offset+len+1;return(V){id,P8_STR};
 }
+static V string_bytes(const char *s,size_t len){return string_join(s,len,"",0);}
 /* _ENV[name] outside any local _ENV: look the global up by name. */
 V p8_env_index(V key){return key.tag==P8_STR?p8_debug_global(string(key)):p8_nil();}
 V p8_str(const char *s){return string_bytes(s,strlen(s));}
@@ -407,6 +431,7 @@ __attribute__((noinline)) static void scan_stack(void){
 static void mark_roots(bool native_stack){
  grey_count=0;grey_overflow=false;
  p8_program_roots();
+ for(int i=0;i<2;i++)if(pinned_strings[i]>=0&&object_live((V){pinned_strings[i],P8_STR}))shade((V){pinned_strings[i],P8_STR});
  for(int i=0;i<result_count;i++)shade(result_values[i]);
  for(int i=0;i<5;i++){shade(menu_items[i].label);shade(menu_items[i].callback);}
  coroutine_roots();
@@ -489,7 +514,7 @@ V p8_binary(const char *op,V a,V b){
  if(!strcmp(op,"..")){if((a.tag!=P8_STR&&a.tag!=P8_NUM)||(b.tag!=P8_STR&&b.tag!=P8_NUM))p8_fail("concatenation requires strings or numbers");
   char sa[64],sb[64];const char *as=a.tag==P8_STR?string(a):p8_describe(a,sa,sizeof sa),*bs=b.tag==P8_STR?string(b):p8_describe(b,sb,sizeof sb);
   size_t alen=a.tag==P8_STR?(size_t)string_length(a):strlen(as),blen=b.tag==P8_STR?(size_t)string_length(b):strlen(bs);
-  if(alen+blen>=SL)p8_fail("concatenated string too long");memmove(string_scratch,as,alen);memmove(string_scratch+alen,bs,blen);return string_bytes(string_scratch,alen+blen);}
+  if(alen+blen>=SL)p8_fail("concatenated string too long");return string_join(as,alen,bs,blen);}
  if(a.tag==P8_STR&&b.tag==P8_STR){int c=compare_strings(a,b);if(!strcmp(op,"<"))return p8_bool(c<0);if(!strcmp(op,">"))return p8_bool(c>0);if(!strcmp(op,"<="))return p8_bool(c<=0);if(!strcmp(op,">="))return p8_bool(c>=0);}
  bool coerce=!strcmp(op,"+")||!strcmp(op,"-")||!strcmp(op,"*")||!strcmp(op,"/")||!strcmp(op,"//")||!strcmp(op,"%");
  int32_t x=coerce?p8_number(a):strict_number(a),y=coerce?p8_number(b):strict_number(b);
@@ -670,6 +695,9 @@ static int32_t api_number(V v){int32_t n;if(v.tag==P8_NUM)return v.n;if(v.tag==P
 /* ---- PICO-8 base RAM (0x0000..0x7fff) mapped onto the runtime state ---- */
 static int repeat_delay(void){int d=hw_ram[0x5c];return d?d:15;}
 static int repeat_interval(void){int i=hw_ram[0x5d];return i?i:4;}
+#ifdef P8_UPPER_RAM
+static uint8_t upper_ram[0x8000];
+#endif
 static uint8_t mem_read(int address){
  address&=0xffff;
  if(address<0x2000)return gfx[address];
@@ -692,7 +720,11 @@ static uint8_t mem_read(int address){
   return hw_ram[r];
  }
  if(address<0x8000){int at=(address-0x6000)*2;return (uint8_t)((game_frame[at]&15)|((game_frame[at+1]&15)<<4));}
+#ifdef P8_UPPER_RAM
+ return upper_ram[address-0x8000];
+#else
  return 0;/* Upper 32 KB is not mapped on this target; reads return zero. */
+#endif
 }
 static void mem_write(int address,uint8_t v){
  address&=0xffff;
@@ -717,7 +749,11 @@ static void mem_write(int address,uint8_t v){
   hw_ram[r]=v;return;
  }
  if(address<0x8000){int at=(address-0x6000)*2;game_frame[at]=v&15;game_frame[at+1]=v>>4;return;}
+#ifdef P8_UPPER_RAM
+ upper_ram[address-0x8000]=v;
+#else
  p8_fail("upper memory 0x8000-0xffff is not available on this target");
+#endif
 }
 static int address_of(V v){return (int)(((uint32_t)p8_number(v)>>16)&0xffff);}
 /* Original cartridge ROM, used by reload(). Sound data is optional for older generated assets. */
@@ -1154,7 +1190,7 @@ V p8_api_id(int id,int argc,const V *argv){
   for(int n=0;n<count;n++){int at=index+n;results[n]=at>=1&&at<=size?p8_int((uint8_t)text[at-1]):p8_nil();}
   return p8_return(count,results);
  }
- if(IS(P8_API_chr)){if(argc>=SL)p8_fail("chr result exceeds string limit");for(int i=0;i<argc;i++)string_scratch[i]=(char)(I(i,0)&255);return string_bytes(string_scratch,(size_t)argc);}
+ if(IS(P8_API_chr)){char text[64];if(argc>(int)sizeof text)p8_fail("chr result exceeds string limit");for(int i=0;i<argc;i++)text[i]=(char)(I(i,0)&255);return string_bytes(text,(size_t)argc);}
  if(IS(P8_API_sub)){V text=A(0);/* Numbers are converted as tostr does. */if(text.tag==P8_NUM){char b[32];text=p8_str(p8_describe(text,b,sizeof b));}const char *s=string(text);int len=string_length(text),i=I(1,1),j=HAS(2)&&A(2).tag!=P8_NUM?i:I(2,len);if(i<0)i+=len+1;if(j<0)j+=len+1;if(i<1)i=1;if(j>len)j=len;int n=j>=i?j-i+1:0;if(i>len)n=0;return string_bytes(n?s+i-1:s,(size_t)n);}
  if(IS(P8_API_sfx)){
   /* Silent but stateful: channel/note state advances and is visible to stat(). */
@@ -1303,6 +1339,10 @@ V p8_api_id(int id,int argc,const V *argv){
  /* ---- Cartridge files and serial: one bundled cartridge, no host file system ---- */
  if(IS(P8_API_load)){char text[96];snprintf(text,sizeof text,"load(): only this cartridge is on the device (%s)",A(0).tag==P8_STR?string(A(0)):"?");p8_fail(text);}
  if(IS(P8_API_ls))return p8_table();
+ if(IS(P8_API_cstore)){
+  /* Cartridge ROM is in flash: the range is checked and the write is discarded, so reload keeps reading the original data. */
+  int dst=HAS(0)?address_of(A(0)):0,src=HAS(1)?address_of(A(1)):0,len=I(2,0x4300);if(len>0){check_range(dst,len);check_range(src,len);}return p8_nil();
+ }
  if(IS(P8_API_serial)){
   /* No serial channel is wired up: reads and writes transfer nothing. */
   int length=I(2,0);(void)length;return p8_int(0);
@@ -1457,6 +1497,9 @@ void p8_reset(void){
  for(int i=0;i<NU;i++){captures[i].cell=NO_LINK;captures[i].next=0;}
  memcpy(gfx,p8_cart_gfx,sizeof gfx);memcpy(map_data,p8_cart_map,sizeof map_data);memcpy(flags,p8_cart_flags,sizeof flags);
  if(p8_cart_sound)memcpy(sound_ram,p8_cart_sound,sizeof sound_ram);else memset(sound_ram,0,sizeof sound_ram);
+#ifdef P8_UPPER_RAM
+ memset(upper_ram,0,sizeof upper_ram);
+#endif
  memset(user_ram,0,sizeof user_ram);memset(persist_ram,0,sizeof persist_ram);memset(hw_ram,0,sizeof hw_ram);memset(game_frame,0,sizeof game_frame);
  for(int i=0;i<16;i++){palette[i]=i;transparent[i]=(i==0);p8_screen_palette[i]=i;secondary_palette[i]=i;}
  memset(held_frames,0,sizeof held_frames);camera_x=camera_y=clip_x0=clip_y0=cursor_x=cursor_y=0;clip_x1=clip_y1=128;draw_color=6;
