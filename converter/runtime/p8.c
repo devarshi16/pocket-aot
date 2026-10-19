@@ -15,13 +15,13 @@
 #define P8_UPPER_RAM 1
 /* Core 0 has a 40 KB stack on RP2350, so deeper Lua recursion fits. */
 #define P8_MAX_DEPTH 64
-#define NT 4096
+#define NT 5120
 #define NE 22000
 #define STRING_BYTES 65535
 #define NS 1536
-#define NC 2048
+#define NC 3072
 #define NF 1536
-#define NU 4096
+#define NU 6144
 #endif
 #ifndef NT
 #define NT 2048
@@ -848,12 +848,18 @@ V p8_inext(void){return native_value(NATIVE_INEXT,0,NULL);}
 #include <sanitizer/asan_interface.h>
 #define P8_ASAN 1
 #endif
+/* The host check uses the device's coroutine count, so a cart that needs more fails there too. */
 #ifndef P8_COROUTINES
-#if defined(__arm__)
+#ifdef P8_LARGE_POOLS
+#define P8_COROUTINES 8
+#else
 #define P8_COROUTINES 4
+#endif
+#endif
+#ifndef P8_COROUTINE_STACK
+#if defined(__arm__)
 #define P8_COROUTINE_STACK 3072
 #else
-#define P8_COROUTINES 8
 #define P8_COROUTINE_STACK 262144
 #endif
 #endif

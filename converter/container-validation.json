@@ -48,7 +48,7 @@
     "converter/cartridge_input.py": "21e634578ca8ef2fa34ee4e380c78fee19b1bd641c96bd9acb1e6859af22c8f8",
     "converter/test_containers.py": "c78934234733d7ec43379ca0460e0cdb4cd54f0d040ea2a1b01c2fc35932d9d6",
     "converter/tests/semantics.p8": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
-    "converter/runtime/p8.c": "76460798812ec83627d4ed717dcf71d1d76c6556fdfe8ad91b353b4bd230b5f4",
+    "converter/runtime/p8.c": "3ef2dcfd5723c879995d0a8e90a9929c130c908f473a9973bf17713c4412398a",
     "converter/runtime/p8.h": "cc180c3ac3f332191ecfa6a37ffec040aa595c0c5ac2a54b2d832149ff10e430",
     "converter/runtime/host.c": "114eb355a7aa2d176ffe8971e5371e9e6a01994df9dc36aa35e62e76aa465b01",
     "src/compiler/emit.rs": "c13150598e6c6c06f0a1ad104daaa3b1bd91c698b22f13506850c8e3a2cd6c59",

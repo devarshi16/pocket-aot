@@ -93,6 +93,8 @@ The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each cha
 - `cstore` checks its range and discards the write: cartridge ROM is in flash, so `reload` keeps reading the original data.
 - `save(filename)` does nothing: there is no file system to write the cartridge file into.
 - The button glyph globals `⬅️ ➡️ ⬆️ ⬇️ 🅾️ ❎` start as 0 to 5, as in PICO-8, instead of nil.
+- Multiple assignment writes its targets right to left, as the reference Lua does, so `a,a=1,2` leaves `a` at 1.
+- Pico 2 / Pico 2 W: 5120 tables, 3072 lexical cells, 6144 closure captures and 8 coroutines. The host check now uses the device's coroutine count (4 on the RP2040), so a cart that needs more stops there instead of on the device.
 - RP2040: the screen buffer holds two pixels per byte and pool flags share a word with a small field, which frees about 11 KB for 2048 tables (from 1536) and 11200 table entries (from 9056).
 
 ## Smallest remaining candidates

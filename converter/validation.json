@@ -15,7 +15,7 @@
   {
     "test": "functions",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=31 strings=17 operations=210172 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=5000 entries=35 strings=17 operations=210172 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -23,7 +23,7 @@
   {
     "test": "api-overloads",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=6 strings=10 operations=45488 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=2500 entries=8 strings=10 operations=45488 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "bcb05f124e2c7db58315486e79141542063e82c4e1c84c69fc71ee29bd052db0",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -31,7 +31,7 @@
   {
     "test": "numeric-strings",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=8 strings=12 operations=35727 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=2500 entries=10 strings=13 operations=35727 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "fdeffe2d516e5258d439463103bca7699821a9395fd2fedcaeb50de8216af3e9",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -63,7 +63,7 @@
   {
     "test": "extended-features",
     "frames": 600,
-    "result": "FEATURES_OK 44\nAOT_HOST_OK frames=600 entries=61 strings=53 operations=43244 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "FEATURES_OK 44\nAOT_HOST_OK frames=600 entries=61 strings=52 operations=43244 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "b37ecb2585d3581b9bcec81cb390e69c006a8cd740a587035d4993f483f299ef",
     "source_modified": false,
     "origin": "original-public-fixture"
