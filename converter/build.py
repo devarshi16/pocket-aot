@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Compile a self-contained .p8 cartridge to native RP2040 UF2, optionally add it to the shelf."""
+"""Compile a self-contained .p8 cartridge to native RP2040 or RP2350 UF2, optionally add it to the shelf."""
 from pathlib import Path
 import argparse, hashlib, json, os, re, shutil, struct, subprocess, sys
 
 from cartridge_input import prepare_source
 
 ROOT = Path(__file__).resolve().parent.parent
+# PICO_BOARD -> (chip, UF2 family id). RP2350 builds run in Arm secure mode.
+BOARDS = {'pico': ('RP2040', 0xe48bff56), 'pico_w': ('RP2040', 0xe48bff56),
+          'pico2': ('RP2350', 0xe48bff59), 'pico2_w': ('RP2350', 0xe48bff59)}
 
 
 def compiler_binary():
@@ -41,6 +44,8 @@ def main():
     parser.add_argument('--title')
     parser.add_argument('--library', action='store_true')
     parser.add_argument('--frames', type=int, default=1200)
+    parser.add_argument('--board', choices=sorted(BOARDS), default=os.environ.get('PICO_BOARD', 'pico'),
+                        help='Pico SDK board; pico2_w builds for the Raspberry Pi Pico 2 W (RP2350)')
     args = parser.parse_args()
     source = args.source.expanduser().resolve()
     if source.suffix.lower() not in ('.p8','.png','.rom'):
@@ -48,6 +53,9 @@ def main():
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     slug = re.sub('[^a-z0-9]+', '-', source.stem.lower()).strip('-')[:32] or 'cartridge'
     cart_id = 'aot-' + slug + '-' + digest[:8]
+    chip, family = BOARDS[args.board]
+    if args.board != 'pico':
+        cart_id += '-' + args.board.replace('_', '')
     dest = ROOT / 'converted' / cart_id
     title = args.title or source.stem.replace('_', ' ').replace('-', ' ').title()
     if source.suffix.lower() != '.p8':
@@ -75,10 +83,10 @@ def main():
         cmake_toolchain = ['-DPICO_TOOLCHAIN_PATH=' + str(Path(toolchain_env).expanduser().resolve())]
     elif not shutil.which('arm-none-eabi-gcc'):
         raise RuntimeError('Put arm-none-eabi-gcc on PATH or set PICO_TOOLCHAIN_PATH to the Arm toolchain directory.')
-    print('Compiling the RP2040 firmware...', flush=True)
+    print('Compiling the ' + chip + ' firmware...', flush=True)
     output += command(['cmake', '-S', ROOT / 'converter', '-B', dest / 'build', '-G', 'Ninja',
                        '-DCMAKE_BUILD_TYPE=Release', '-DCART_DIR=' + str(dest),
-                       '-DPICO_SDK_PATH=' + str(sdk), *cmake_toolchain])
+                       '-DPICO_SDK_PATH=' + str(sdk), '-DPICO_BOARD=' + args.board, *cmake_toolchain])
     output += command(['cmake', '--build', dest / 'build', '-j4'])
     # All generated calls pass through p8_dispatch. Bound one native transition
     # against the Pico runtime's 4 KB stack headroom check.
@@ -102,14 +110,19 @@ def main():
     count = (len(data) + 255) // 256
     firmware = dest / 'cartridge.uf2'
     with firmware.open('wb') as f:
+        if chip == 'RP2350':
+            # RP2350-E10: picotool's ignorable absolute-family block, so A2 boot ROMs
+            # write the image at its absolute flash address.
+            f.write(struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0xa000, 0x10ffff00, 256, 0, 2, 0xe48bff57))
+            f.write(b'\xef' * 256 + struct.pack('<I', 0x9957e304) + bytes(216) + struct.pack('<I', 0x0ab16f30))
         for i in range(count):
-            f.write(struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0x2000, 0x10000000 + 256 * i, 256, i, count, 0xe48bff56))
+            f.write(struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0x2000, 0x10000000 + 256 * i, 256, i, count, family))
             f.write(data[256 * i:256 * (i + 1)].ljust(256, b'\xff') + bytes(220) + struct.pack('<I', 0x0ab16f30))
     (dest / 'build.log').write_text(output)
     report = json.loads((dest / 'conversion.json').read_text())
     report.update(original_source=str(source), original_sha256=digest, input_format={'.png':'p8.png','.rom':'p8.rom','.p8':'p8'}[source.suffix.lower()], uf2_sha256=hashlib.sha256(firmware.read_bytes()).hexdigest(), host_frames=args.frames,
                   host_result=next((s for s in output.splitlines() if s.startswith('AOT_HOST_OK')), ''),
-                  firmware_bytes=len(data), stack_max_call_transition=largest+dispatcher, stack_initial_frame=initial, hardware_tested=False)
+                  board=args.board, chip=chip, firmware_bytes=len(data), stack_max_call_transition=largest+dispatcher, stack_initial_frame=initial, hardware_tested=False)
     (dest / 'conversion.json').write_text(json.dumps(report, indent=2) + '\n')
     if args.library:
         # Only update the shelf after translation, sanitizer run and firmware build succeed.

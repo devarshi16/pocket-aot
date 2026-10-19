@@ -40,7 +40,7 @@ In Pocket Arcade, use **+ ADD CARTRIDGE**, choose a local `.p8`, `.p8.png` or `.
 
 ## Hardware scope
 
-The cartridge parser, native C generator and core runtime are largely independent of the display. The shipped firmware backend is currently specific to **RP2040 Raspberry Pi Pico/Pico W with Waveshare Pico LCD 1.3**, a 240×240 ST7789 IPS LCD over SPI. It is an LCD, not an OLED. It is not a Pico 2/RP2350 target.
+The cartridge parser, native C generator and core runtime are largely independent of the display. The shipped firmware backend is currently specific to **RP2040 Raspberry Pi Pico/Pico W with Waveshare Pico LCD 1.3**, a 240×240 ST7789 IPS LCD over SPI. It is an LCD, not an OLED. An experimental Pico 2 / Pico 2 W (RP2350) build uses the same LCD backend: pass `--board pico2_w` (or `pico2`) to `build.py`. It is not yet hardware-tested.
 
 `converter/runtime/pico.c` supplies display transfer, palette expansion/scaling, GPIO input, frame scheduling, USB diagnostics and recovery. Supporting another display or button board requires a backend adaptation and hardware testing. There is no hardware-profile selector yet. The current firmware also assumes 2 MB flash and the fixed stack/memory layout.
 
