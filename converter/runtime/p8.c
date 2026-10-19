@@ -5,6 +5,9 @@
 #include <math.h>
 #include <limits.h>
 #include "font.h"
+#if defined(__SANITIZE_ADDRESS__)
+#include <sanitizer/asan_interface.h>
+#endif
 
 #ifndef NT
 #define NT 1536
@@ -110,7 +113,11 @@ static int screen_bound(int n){return n<0?0:n>128?128:n;}
 
 void p8_fail(const char *s){snprintf(p8_error,sizeof p8_error,"%s",s);longjmp(p8_guard,1);}
 void p8_tick(void){if(!budget--)p8_fail("frame instruction budget exceeded");p8_operations++;}
-__attribute__((weak)) void p8_stack_check(void){}
+/* Host default: keep coroutine frames inside their runtime-owned stacks. */
+__attribute__((weak)) void p8_stack_check(void){
+ const uint8_t *low=p8_current_stack_low();
+ if(low&&(const uint8_t*)__builtin_frame_address(0)<low+16384)p8_fail("coroutine stack budget exceeded");
+}
 void p8_enter(void){p8_stack_check();p8_tick();if(++depth>32)p8_fail("call depth exceeds 32");}
 void p8_leave(void){if(depth)depth--;}
 bool p8_truth(V v){return v.tag!=P8_NIL&&(v.tag!=P8_BOOL||v.n);}
@@ -354,6 +361,10 @@ void p8_mark(V v){shade(v);drain();}
  * reference keeps that object. False positives only delay reclamation. */
 __attribute__((no_sanitize_address,noinline)) static void scan_range(const uint8_t *low,const uint8_t *high){
  for(const volatile uint8_t *p=(const uint8_t*)(((uintptr_t)low+3)&~(uintptr_t)3);p+4<=high;p+=4){
+#if defined(__SANITIZE_ADDRESS__)
+  /* Sanitizer redzones hold stale words from old frames, never live values. */
+  if(__asan_address_is_poisoned((const void*)p))continue;
+#endif
   int32_t n=(int32_t)((uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24));
   /* Optimized code may keep a value's id and tag in separate registers or
    * slots, so any word that could be a live object id keeps every object
@@ -777,7 +788,7 @@ static V native_value(int fn,int count,const V *cells){return p8_closure(fn,coun
 #define P8_COROUTINE_STACK 3072
 #else
 #define P8_COROUTINES 8
-#define P8_COROUTINE_STACK 65536
+#define P8_COROUTINE_STACK 262144
 #endif
 #endif
 enum {CO_FREE,CO_SUSPENDED,CO_RUNNING,CO_NORMAL,CO_DEAD};

@@ -10,7 +10,7 @@
     "converter/tests/palette_state.p8": "318e55e47b8b00565d5fc843058d9bf5c3903990c933c9209bdf640fbc0fe681",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
     "converter/tests/extended_features.p8": "6163793049f44f81bfe6b45c2c037b8e38ebf5f52e4e7948e97dfd0342c90b52",
-    "converter/runtime/p8.c": "36f5a04489775a20c31faaa75cd1a7b7ca9685ec81126be946c8af4d1bef909e",
+    "converter/runtime/p8.c": "dd254c2dbd56b28da685e3378f1d01848acad00aca5c5eba93b15abe845e0085",
     "converter/runtime/p8.h": "5dcae0c9ff15c655843a519419614127d5c6de439005f54e8128d953c881d62c",
     "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
