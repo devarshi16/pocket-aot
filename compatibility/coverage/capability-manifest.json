@@ -880,7 +880,7 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
-    "src/compiler/emit.rs": "2d4988cb1176e699bf63e6829ab0baff42c96a3cdd38d02de306b9d51cc62d68",
+    "src/compiler/emit.rs": "90c0f51ee18d48ac01760ee5efd38f9a3e10459c2adf2bc080c74a05f556cabe",
     "src/compiler/mod.rs": "3b18674d537c9cb34da0717c8f5f90378dedd359b4377f8e4da2de9ea5e10e57",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
     "converter/runtime/p8.c": "36f5a04489775a20c31faaa75cd1a7b7ca9685ec81126be946c8af4d1bef909e",

@@ -376,10 +376,16 @@ impl Emitter {
         }
         self.apis.insert(poke.clone());
         self.apis.insert("unpack".into());
-        let size = match poke.as_str() { "poke" => 1, "poke2" => 2, _ => 4 };
+        let size = match poke.as_str() {
+            "poke" => 1,
+            "poke2" => 2,
+            _ => 4,
+        };
         let address = self.expr(address)?;
         let table = self.expr(&inner[0])?;
-        Ok(Some(self.val(format!("p8_poke_unpack({size},{address},{table})"))))
+        Ok(Some(
+            self.val(format!("p8_poke_unpack({size},{address},{table})")),
+        ))
     }
     fn multi(&self, e: &Expr) -> bool {
         if let Expr::Call(f, _) = e {
