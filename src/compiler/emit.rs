@@ -883,7 +883,10 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "ord" => (1, 3),
         "chr" => (0, 16),
         "pset" => (2, 3),
-        "pget" | "sget" | "mget" => (2, 2),
+        // A surplus third argument is ignored, as PICO-8 does.
+        "pget" | "sget" | "mget" => (2, 3),
+        // srand() seeds with 0.
+        "srand" => (0, 1),
         "rectfill" | "rect" => (4, 5),
         "line" => (0, 5),
         "rawget" | "rawequal" => (2, 2),

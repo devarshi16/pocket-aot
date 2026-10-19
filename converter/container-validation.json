@@ -51,9 +51,9 @@
     "converter/runtime/p8.c": "36f5a04489775a20c31faaa75cd1a7b7ca9685ec81126be946c8af4d1bef909e",
     "converter/runtime/p8.h": "5dcae0c9ff15c655843a519419614127d5c6de439005f54e8128d953c881d62c",
     "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
-    "src/compiler/emit.rs": "90c0f51ee18d48ac01760ee5efd38f9a3e10459c2adf2bc080c74a05f556cabe",
-    "src/compiler/mod.rs": "3b18674d537c9cb34da0717c8f5f90378dedd359b4377f8e4da2de9ea5e10e57",
-    "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
+    "src/compiler/emit.rs": "ab0e76d6dd97212b509eb7b6cbc95e578907d09630a45c6aa0db28b64226516c",
+    "src/compiler/mod.rs": "a0851883f8f1c62d65b20c1aa8094687582d87c7082956b1d090a1bff89624fd",
+    "src/compiler/parse.rs": "9ec0e0b3477d73436fb1ee2cbc77922f27ca7fc5715ffcbc32971cd38bfa7756",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"
   },
   "meaning": "Source/data/generated-C identity and host assertions; no device flashing or independent PICO-8 reference comparison."

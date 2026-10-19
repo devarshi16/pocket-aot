@@ -16,12 +16,12 @@
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
     "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
     "converter/test_pipeline.py": "a0da648146e67fb0cf73f2041edb65e319760203022171e639669f4f46691357",
-    "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
-    "src/compiler/emit.rs": "90c0f51ee18d48ac01760ee5efd38f9a3e10459c2adf2bc080c74a05f556cabe",
-    "src/compiler/mod.rs": "3b18674d537c9cb34da0717c8f5f90378dedd359b4377f8e4da2de9ea5e10e57",
+    "src/compiler/parse.rs": "9ec0e0b3477d73436fb1ee2cbc77922f27ca7fc5715ffcbc32971cd38bfa7756",
+    "src/compiler/emit.rs": "ab0e76d6dd97212b509eb7b6cbc95e578907d09630a45c6aa0db28b64226516c",
+    "src/compiler/mod.rs": "a0851883f8f1c62d65b20c1aa8094687582d87c7082956b1d090a1bff89624fd",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b"
   },
-  "compiler_sha256": "6d402b21abc1ef1d9c6676d78cd56c3a69e880878f9c6e781c709cb0d9b48a81",
+  "compiler_sha256": "faddc9d93179783ab66e8f3550e20b7c42b788d91edb9c68e59cc2c72f6f793b",
   "api_hits": {
     "cls": 28105,
     "pset": 10010,

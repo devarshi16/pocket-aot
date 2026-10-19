@@ -288,20 +288,8 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                         i += 1;
                     }
                 }
-                if matches!(c.get(i), Some('e' | 'E')) {
-                    let digit = i + if matches!(c.get(i + 1), Some('+' | '-')) {
-                        2
-                    } else {
-                        1
-                    };
-                    // A compact `.5end` is a number followed by `end`, not an exponent.
-                    if c.get(digit).is_some_and(|ch| ch.is_ascii_digit()) {
-                        i = digit;
-                        while i < c.len() && c[i].is_ascii_digit() {
-                            i += 1;
-                        }
-                    }
-                }
+                // PICO-8 source has no exponent notation: minified carts rely on
+                // `0e0` being the number 0 followed by the name `e0`.
             }
             out.push(Token {
                 s: c[start..i].iter().collect(),

@@ -88,7 +88,9 @@ fn number(s: &str) -> Result<i32, Error> {
     let value = s
         .parse::<f64>()
         .map_err(|_| Error::new(0, "invalid decimal number"))?;
-    if !value.is_finite() || !(-32768.0..=32768.0).contains(&value) {
+    // PICO-8 wraps large literals into 16.16 range: 63191 reads as -2345,
+    // which still peeks address 63191.
+    if !value.is_finite() || value.abs() >= 2f64.powi(47) {
         return Err(Error::new(0, "number outside PICO-8 16.16 range"));
     }
     Ok(((value * 65536.0).round() as i64) as i32)
@@ -297,6 +299,19 @@ mod tests {
         .unwrap();
         assert!(output.c.contains("p8_num((int32_t)UINT32_C(32768))"));
         assert!(output.c.contains("p8_num((int32_t)UINT32_C(1))"));
+    }
+
+    #[test]
+    fn large_decimal_literals_wrap_and_exponents_are_names() {
+        assert_eq!(number("63191").unwrap(), (63191i64 << 16) as i32);
+        assert_eq!(number("32768").unwrap(), i32::MIN);
+        // `0e0` is the number 0 followed by the name `e0`.
+        let output = compile(
+            "pico-8 cartridge\n__lua__\nlocal a,b=0,0e0,c=1\nx=.5e1=2\nsrand()\nfunction _draw() mget(0,0,0) end",
+            "test",
+        )
+        .unwrap();
+        assert!(output.c.contains("UINT32_C(32768)"));
     }
 
     #[test]
