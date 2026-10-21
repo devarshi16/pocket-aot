@@ -880,17 +880,17 @@
   ],
   "source_hashes": {
     "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
-    "src/compiler/emit.rs": "53ebdc2008e95cae3956ec0345d7c690d1f906ee0914d1f1e463bdc71cc17964",
-    "src/compiler/mod.rs": "d72cc1e96e50e817ff8ba240c5e335f89a46b8fb014e781015fde4bf57f027f6",
+    "src/compiler/emit.rs": "ec189b8eceb04775f01dd44060ea00eabe15ed23b458e4d8117fdbc690c728af",
+    "src/compiler/mod.rs": "3b18674d537c9cb34da0717c8f5f90378dedd359b4377f8e4da2de9ea5e10e57",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "3314267681487ee846432edd8f92f533600faaf1b99083eb146af02f551ed7b4",
-    "converter/runtime/p8.h": "05a01ed8452e87050a25b77de223be628f228e3cc02c6d5cd17fb2d42779da39",
-    "converter/runtime/pico.c": "31bff3e0512362fed7a46f43e621f715bbf106c7ad8b4d86e642d8f08e08ec62",
+    "converter/runtime/p8.c": "0511c11c2043ceb710f8d054a0344d3c7ec9afe6277ff2556f61a4a8a7c1138c",
+    "converter/runtime/p8.h": "21732a6b7a97553e93afe2de1c1b65c9f58bbf0ddebcea0dedeeff4d44e565c1",
+    "converter/runtime/pico.c": "27b44ccd73da8633f1ab8bc870a232a565641efbd160c32fea039853c87dbe2d",
     "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
     "converter/build.py": "6c51d3ed3945be1944eb75e13a20a1df63cd37617b060e4736f8bb882dadf56a",
     "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "f05d2db1de61c242c261f1444be33e3b0cafc0ad1f45ba201bd9f1a495c62b4a",
+    "converter/test_pipeline.py": "46a8bfcf1a946f607d462c8674e2f2abbf0aaec34f3ba1a3da95c6d8bffedaf6",
     "converter/test_png.py": "76bee5ccb5038430e45393c8420fe6de905fdbcb447f13a9831031938f916635",
     "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
@@ -903,7 +903,7 @@
     "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
     "converter/tests/palette_state.p8": "318e55e47b8b00565d5fc843058d9bf5c3903990c933c9209bdf640fbc0fe681",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
-    "converter/tests/extended_features.p8": "c86209abfd937285b14d2cf1d7ce69f0684bc19cd7376bec9e594ab8a4577c2d"
+    "converter/tests/extended_features.p8": "6163793049f44f81bfe6b45c2c037b8e38ebf5f52e4e7948e97dfd0342c90b52"
   },
   "tooling_source_hashes": {
     "src/main.rs": "d0380be605ed40bb28392f646ae4be81c6fd54eca3cae50161da55fd19a6d9af",
@@ -921,7 +921,8 @@
     "Test isolation fix: GUI tests read CARGO_MANIFEST_DIR instead of launcher/executable discovery. Navigation checks current committed inventory rather than a frozen functional count; production behavior and core credit are unchanged.",
     "Second small-gap pass: full-size raw ROM acceptance gate is supported after four original source/data/generated-C identity scenarios, 600 sanitized frames each, and eight malformed input rejections. Numeric/string APIs improved but retain partial limits; scope and weights unchanged. Numeric fixture built end-to-end from raw ROM to RP2040 UF2 without flashing.",
     "Third small-gap batch: pal numeric previous state, table/reset subset, leading-dot radix source literals and bitwise function defaults improve existing gates. No complete gate changes status, so index remains52.2% with the same173 gates. Added three original fixtures plus palette/operator negative cases. No hardware flashing or reference-oracle claim.",
-    "Coverage pass 2026-10-16: services, input, audio-state, frontend and semantics gates re-audited after the memory/persistence/menu/flip, silent-audio, metatable, iterator, coroutine, vararg and goto work. Synthesis, effects, includes, upper memory and persistent saves remain open. Scope and weights are unchanged."
+    "Coverage pass 2026-10-16: services, input, audio-state, frontend and semantics gates re-audited after the memory/persistence/menu/flip, silent-audio, metatable, iterator, coroutine, vararg and goto work. Synthesis, effects, includes, upper memory and persistent saves remain open. Scope and weights are unchanged.",
+    "Coverage pass 2026-10-18: smaller generated stack frames, larger string/table/entry pools, ls/serial bindings and runtime-only load re-audited. Scope and weights unchanged."
   ],
   "evidence_policy": "Historical external cartridge/build/hardware paths in test pointers are provenance from the private experiment and are not bundled. Fresh public execution is recorded separately in runtime-api-coverage.json; the historical profile is retained unchanged."
 }

@@ -133,6 +133,7 @@ def main():
             ("bit-operator-nil", "function _init() local a=nil&1 end", "number expected"),
             ("bit-not-nil", "function _init() local a=~nil end", "number expected"),
             ("bit-operator-string", 'function _init() local a="4"|2 end', "number expected"),
+            ("load-other-cart", 'function _init() load("other.p8") end', "load(): only this cartridge is on the device (other.p8)"),
             ("heap-bound", "function _init() local a={} for i=1,5000 do a[i]=i end end", "table entries exhausted"),
         ]:
             source = base / (name + ".p8")
@@ -140,7 +141,7 @@ def main():
             check(name, source, 1, expected)
         for name, body, expected in [
             ("unsupported-cstore", "cstore(0,0,1)", "unsupported function/API 'cstore'"),
-            ("unsupported-serial", "serial(0x804,0,1)", "unsupported function/API 'serial'"),
+            ("unsupported-save", "save(\"x\")", "unsupported function/API 'save'"),
             ("goto-without-label", "goto nowhere", "no visible label 'nowhere' for goto"),
             ("vararg-outside", "local a=...", "'...' used outside a vararg function"),
         ]:

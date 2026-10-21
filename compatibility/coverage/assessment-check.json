@@ -2,23 +2,23 @@
   "rubric_version": "pocket-aot-capabilities-v1",
   "assessed_date": "2026-10-16",
   "label": "Secondary weighted planning index; implementation and regression counts are primary",
-  "core_capability_score_percent": 72.5793939905642,
+  "core_capability_score_percent": 72.8756902868605,
   "supported_only_points": 52.73117855351898,
-  "partial_credit_points": 19.848215437045223,
-  "sensitivity_partial_credit_25_percent": 62.65528627204159,
-  "sensitivity_partial_credit_75_percent": 82.50350170908682,
+  "partial_credit_points": 20.14451173334152,
+  "sensitivity_partial_credit_25_percent": 62.80343442018974,
+  "sensitivity_partial_credit_75_percent": 82.94794615353126,
   "core_gate_count": 173,
   "status_counts": {
     "supported": 84,
-    "partial": 76,
-    "missing": 13
+    "partial": 78,
+    "missing": 11
   },
   "supporting_tooling_score_percent": 75.0,
-  "functional_api_names": 103,
+  "functional_api_names": 105,
   "canonical_api_count": 108,
   "api_status_counts": {
-    "missing": 5,
-    "partial": 61,
+    "missing": 3,
+    "partial": 63,
     "supported": 42
   },
   "api_subsystems": [
@@ -26,11 +26,11 @@
       "name": "system",
       "total": 12,
       "status_counts": {
-        "missing": 3,
-        "partial": 5,
+        "missing": 2,
+        "partial": 6,
         "supported": 4
       },
-      "exercised": 4
+      "exercised": 5
     },
     {
       "name": "graphics",
@@ -89,7 +89,7 @@
         "supported": 16,
         "partial": 6
       },
-      "exercised": 13
+      "exercised": 16
     },
     {
       "name": "menu",
@@ -119,9 +119,9 @@
       "name": "gpio",
       "total": 1,
       "status_counts": {
-        "missing": 1
+        "partial": 1
       },
-      "exercised": 0
+      "exercised": 1
     },
     {
       "name": "advanced_lua",
@@ -135,15 +135,15 @@
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 82,
-  "regression_scenario_count": 41,
+  "regression_exercised_api_names": 87,
+  "regression_scenario_count": 42,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 49,
   "historical_regression_scenario_count": 8,
   "historical_evidence_date": "2026-10-16",
   "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
   "recorded_rust_tests": null,
-  "functional_api_name_presence_percent": 95.37037037037037,
+  "functional_api_name_presence_percent": 97.22222222222221,
   "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
   "sample_size": 20,
   "sample_built": 1,

@@ -63,8 +63,8 @@
   {
     "test": "extended-features",
     "frames": 600,
-    "result": "FEATURES_OK 34\nAOT_HOST_OK frames=600 entries=35 strings=36 operations=43186 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "c86209abfd937285b14d2cf1d7ce69f0684bc19cd7376bec9e594ab8a4577c2d",
+    "result": "FEATURES_OK 40\nAOT_HOST_OK frames=600 entries=41 strings=42 operations=43226 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "6163793049f44f81bfe6b45c2c037b8e38ebf5f52e4e7948e97dfd0342c90b52",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -317,6 +317,14 @@
     "origin": "original-public-fixture"
   },
   {
+    "test": "load-other-cart",
+    "frames": 1,
+    "result": "CARTRIDGE_ERROR: load(): only this cartridge is on the device (other.p8) frame=0",
+    "source_sha256": "88db9002ab523d6fe4eaa043fca860879edd660232c1edf6c8fb91ef8d04b1b0",
+    "source_modified": false,
+    "origin": "original-public-fixture"
+  },
+  {
     "test": "heap-bound",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: table entries exhausted frame=0",
@@ -331,9 +339,9 @@
     "flashed": false
   },
   {
-    "test": "unsupported-serial",
+    "test": "unsupported-save",
     "result": "rejected explicitly",
-    "detail": "Conversion failed: conversion stopped: unsupported function/API 'serial'",
+    "detail": "Conversion failed: conversion stopped: unsupported function/API 'save'",
     "flashed": false
   },
   {

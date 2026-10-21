@@ -11,25 +11,25 @@
 <path d="M40 126h1040" stroke="#273749"/>
 <rect x="40" y="151" width="249" height="137" rx="12" fill="#122436" stroke="#2b4054"/>
 <text x="56" y="178" fill="#9bb0c6" font-size="11" font-weight="700">FUNCTIONAL API NAMES</text>
-<text x="56" y="226" fill="#55e5c1" font-size="36" font-weight="700">103/108</text>
+<text x="56" y="226" fill="#55e5c1" font-size="36" font-weight="700">105/108</text>
 <text x="56" y="260" fill="#a7bacb" font-size="10">Includes known partial behavior</text>
 <rect x="303" y="151" width="249" height="137" rx="12" fill="#122436" stroke="#2b4054"/>
 <text x="319" y="178" fill="#9bb0c6" font-size="11" font-weight="700">PUBLIC HOST EXERCISED</text>
-<text x="319" y="226" fill="#78b8ff" font-size="36" font-weight="700">82/108</text>
-<text x="319" y="260" fill="#a7bacb" font-size="10">41 original-fixture scenarios</text>
+<text x="319" y="226" fill="#78b8ff" font-size="36" font-weight="700">87/108</text>
+<text x="319" y="260" fill="#a7bacb" font-size="10">42 original-fixture scenarios</text>
 <rect x="566" y="151" width="249" height="137" rx="12" fill="#122436" stroke="#2b4054"/>
 <text x="582" y="178" fill="#9bb0c6" font-size="11" font-weight="700">HISTORICAL DEVICE SAMPLE</text>
 <text x="582" y="226" fill="#c59bff" font-size="36" font-weight="700">1/20</text>
 <text x="582" y="260" fill="#a7bacb" font-size="10">Display + controls confirmed</text>
 <rect x="829" y="151" width="249" height="137" rx="12" fill="#122436" stroke="#2b4054"/>
 <text x="845" y="178" fill="#9bb0c6" font-size="11" font-weight="700">SECONDARY PLANNING INDEX</text>
-<text x="845" y="226" fill="#f8c875" font-size="36" font-weight="700">72.6%</text>
+<text x="845" y="226" fill="#f8c875" font-size="36" font-weight="700">72.9%</text>
 <text x="845" y="260" fill="#a7bacb" font-size="10">Weighted estimate · not compatibility</text>
 <text x="40" y="333" fill="#e3edf7" font-size="19" font-weight="700">API INVENTORY</text>
-<text x="1080" y="332" text-anchor="end" fill="#a5b7c8" font-size="14">42 supported · 61 partial · 5 missing</text>
+<text x="1080" y="332" text-anchor="end" fill="#a5b7c8" font-size="14">42 supported · 63 partial · 3 missing</text>
 <rect x="40.00" y="350" width="404.44" height="22" fill="#50d7b1"/>
-<rect x="444.44" y="350" width="587.41" height="22" fill="#f3bd68"/>
-<rect x="1031.85" y="350" width="48.15" height="22" fill="#38485e"/>
+<rect x="444.44" y="350" width="606.67" height="22" fill="#f3bd68"/>
+<rect x="1051.11" y="350" width="28.89" height="22" fill="#38485e"/>
 <text x="40" y="420" fill="#e3edf7" font-size="19" font-weight="700">ENTIRE TRANSLATION PIPELINE</text>
 <text x="40" y="445" fill="#91a6bc" font-size="13">173 fixed gates · counts describe implementation, not equal-sized tasks</text>
 <text x="865" y="477" text-anchor="end" fill="#91a6bc" font-size="12">SUPPORTED / PARTIAL / MISSING</text>
@@ -72,9 +72,9 @@
 <text x="1080" y="726" text-anchor="end" fill="#d1dfeb" font-size="13">8</text>
 <text x="40" y="769" fill="#c1d1e0" font-size="13">Memory, saves and system services</text>
 <rect x="493.00" y="756" width="56.30" height="17" fill="#50d7b1"/>
-<rect x="549.30" y="756" width="253.33" height="17" fill="#f3bd68"/>
-<rect x="802.63" y="756" width="70.37" height="17" fill="#38485e"/>
-<text x="1006" y="769" text-anchor="end" fill="#a5b7c8" font-size="12">4 / 18 / 5</text>
+<rect x="549.30" y="756" width="281.48" height="17" fill="#f3bd68"/>
+<rect x="830.78" y="756" width="42.22" height="17" fill="#38485e"/>
+<text x="1006" y="769" text-anchor="end" fill="#a5b7c8" font-size="12">4 / 20 / 3</text>
 <text x="1080" y="769" text-anchor="end" fill="#d1dfeb" font-size="13">27</text>
 <text x="40" y="812" fill="#c1d1e0" font-size="13">Audio behavior and observable timing</text>
 <rect x="493.00" y="799" width="142.50" height="17" fill="#50d7b1"/>

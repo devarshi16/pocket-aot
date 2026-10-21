@@ -36,27 +36,27 @@
   },
   "summary": {
     "canonical_api_count": 108,
-    "implemented_partial": 103,
-    "missing_or_noop": 5,
+    "implemented_partial": 105,
+    "missing_or_noop": 3,
     "complete": 0,
-    "compiler_bound_canonical_names": 103,
+    "compiler_bound_canonical_names": 106,
     "accepted_noops": [],
-    "functional_name_presence_percent": 95.4,
+    "functional_name_presence_percent": 97.2,
     "warning": "Name presence percentage is not project completion, API semantic fidelity, games compatibility or estimated remaining effort.",
     "capability_status_counts": {
-      "missing": 5,
-      "partial": 61,
+      "missing": 3,
+      "partial": 63,
       "supported": 42
     }
   },
   "categories": {
     "system": {
       "total": 12,
-      "implemented_partial": 9,
-      "missing_or_noop": 3,
+      "implemented_partial": 10,
+      "missing_or_noop": 2,
       "capability_status_counts": {
-        "missing": 3,
-        "partial": 5,
+        "missing": 2,
+        "partial": 6,
         "supported": 4
       }
     },
@@ -145,10 +145,10 @@
     },
     "gpio": {
       "total": 1,
-      "implemented_partial": 0,
-      "missing_or_noop": 1,
+      "implemented_partial": 1,
+      "missing_or_noop": 0,
       "capability_status_counts": {
-        "missing": 1
+        "partial": 1
       }
     },
     "advanced_lua": {
@@ -162,8 +162,8 @@
     }
   },
   "source_evidence": {
-    "src/compiler/emit.rs": "53ebdc2008e95cae3956ec0345d7c690d1f906ee0914d1f1e463bdc71cc17964",
-    "converter/runtime/p8.c": "3314267681487ee846432edd8f92f533600faaf1b99083eb146af02f551ed7b4",
+    "src/compiler/emit.rs": "ec189b8eceb04775f01dd44060ea00eabe15ed23b458e4d8117fdbc690c728af",
+    "converter/runtime/p8.c": "0511c11c2043ceb710f8d054a0344d3c7ec9afe6277ff2556f61a4a8a7c1138c",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55"
   },
   "apis": [
@@ -172,14 +172,17 @@
       "aliases": [],
       "category": "system",
       "status": "missing",
-      "binding_present": false,
+      "binding_present": true,
       "functional_credit": false,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Converts, so carts that only load another cartridge from a menu still run; calling it stops the cartridge with an explicit error because only one cartridge is on the device.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:115",
+        "converter/runtime/p8.c:1197"
       ],
-      "selected_regression_tests": [],
+      "selected_regression_tests": [
+        "converter/test_pipeline.py: load-other-cart"
+      ],
       "implemented": false,
       "reference_validated": false,
       "known_limit": false,
@@ -209,19 +212,22 @@
       "name": "ls",
       "aliases": [],
       "category": "system",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Returns an empty table: the device has no host file system to list.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:115",
+        "converter/runtime/p8.c:1198"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -2263,19 +2269,22 @@
       "name": "serial",
       "aliases": [],
       "category": "gpio",
-      "status": "missing",
-      "binding_present": false,
-      "functional_credit": false,
+      "status": "implemented_partial",
+      "binding_present": true,
+      "functional_credit": true,
       "reference_equivalence_verified": false,
-      "reason": "No compiler binding or native runtime implementation.",
+      "reason": "Accepts every channel and transfers nothing; no GPIO or USB serial channel is wired to it.",
       "evidence": [
-        "src/compiler/emit.rs:6 (absent from API bindings)"
+        "src/compiler/emit.rs:115",
+        "converter/runtime/p8.c:1199"
       ],
-      "selected_regression_tests": [],
-      "implemented": false,
+      "selected_regression_tests": [
+        "converter/tests/extended_features.p8"
+      ],
+      "implemented": true,
       "reference_validated": false,
-      "known_limit": false,
-      "capability_status": "missing",
+      "known_limit": true,
+      "capability_status": "partial",
       "no_reference_equivalence_suite": true
     },
     {
@@ -2533,7 +2542,8 @@
     "2026-10-16 small API gaps: four raw helpers and partial select added; camera/cursor previous returns and palt bitmask/state gate omissions closed. Clip, line and sset overloads improved but remain partial. Assert multi-results fixed. New original sanitizer fixture and negative cases; no reference-conformance or game-compatibility claims. See docs/SMALL-GAPS.md.",
     "Second small-gap pass: numeric-string selectors; shared radix parser for tonum/split; numeric tostr/tonum flags; zero-result tonum failures; and bounded in-range multi-result ord. Existing API statuses remain unchanged because decimal, bounded-result and string limits remain. Original numeric_strings.p8 and controlled errors provide host evidence; no independent reference comparison. Added flag-index boundary assertions and zero/false invalid reads instead of wrapping; valid fset modes exercised.",
     "Third small-gap pass: draw pal previous-register/table/reset behavior, strict leading-dot radix literals and native bitwise per-operand defaults added. Conflicting palette keys0/16 and unsupported forms fail explicitly; strict bitwise operators retain errors. New original fixtures exercise these subfeatures. Canonical implementation labels, scope, weights and reference-validation flags are unchanged.",
-    "Coverage pass (2026-10-16): memory map, cartdata, menuitem, flip, run/reset/stop/extcmd, shapes, fillp, tline, metatables, first-class iterators, coroutines and stateful silent audio added and re-audited against original fixture converter/tests/extended_features.p8 and new expected-error cases. sfx/music are no longer accepted no-ops: they drive observable sequencer state. Partial statuses record upper-memory, persistence, pool, pixel-equivalence and synthesis limits. No reference conformance is claimed."
+    "Coverage pass (2026-10-16): memory map, cartdata, menuitem, flip, run/reset/stop/extcmd, shapes, fillp, tline, metatables, first-class iterators, coroutines and stateful silent audio added and re-audited against original fixture converter/tests/extended_features.p8 and new expected-error cases. sfx/music are no longer accepted no-ops: they drive observable sequencer state. Partial statuses record upper-memory, persistence, pool, pixel-equivalence and synthesis limits. No reference conformance is claimed.",
+    "Coverage pass (2026-10-18): ls and serial added as partial bindings; load converts and fails explicitly at runtime (still missing). save and cstore still stop conversion."
   ],
   "public_review": "2026-10-16: independently authored compact ASCII font; print remains partial. API implementation/status unchanged. Default public suite uses only original fixtures; external fixture pointers denote unbundled historical evidence. Small-gap follow-up uses only an original API boundary fixture and generated invalid-input cases; no external game source or device flashing."
 }

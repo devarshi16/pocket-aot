@@ -8,13 +8,13 @@ Inspired by the subsystem reporting style of [AnyPS5](https://boykopovar.github.
 
 | Measure | Result | Meaning |
 | --- | ---: | --- |
-| Functional API names | 103/108 (95.4%) | Some implemented behavior, including partial support |
-| API inventory | 42 supported · 61 partial · 5 missing | Fixed set of canonical names; aliases counted once |
-| Current public host execution | 82/108 | Entry points reached in 41 completed original-fixture sanitizer scenarios |
+| Functional API names | 105/108 (97.2%) | Some implemented behavior, including partial support |
+| API inventory | 42 supported · 63 partial · 3 missing | Fixed set of canonical names; aliases counted once |
+| Current public host execution | 87/108 | Entry points reached in 42 completed original-fixture sanitizer scenarios |
 | Historical private host execution | 49/108 | Earlier 8-scenario run, including external cartridges that are not bundled |
 | Historical random game sample | 1/20 built; 1/20 owner-confirmed | Earlier RP2040/Waveshare display and controls check; not a new public-suite result |
 | Independent PICO-8 reference conformance | **Unmeasured** | No independent oracle, framebuffer or audio differential suite |
-| Secondary weighted planning index | 72.6% | Judgment-based rubric; not remaining time or compatibility |
+| Secondary weighted planning index | 72.9% | Judgment-based rubric; not remaining time or compatibility |
 
 ## Low-hanging work
 
@@ -35,18 +35,18 @@ Supported means implemented within the stated audit gate, with no specific omiss
 
 | Subsystem | Supported | Partial | Missing | Total | Public host exercised |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| system | 4 | 5 | 3 | 12 | 4 |
+| system | 4 | 6 | 2 | 12 | 5 |
 | graphics | 6 | 20 | 0 | 26 | 23 |
 | tables | 7 | 0 | 0 | 7 | 6 |
 | input | 2 | 0 | 0 | 2 | 1 |
 | audio | 0 | 2 | 0 | 2 | 2 |
 | map | 0 | 4 | 0 | 4 | 3 |
 | memory | 0 | 9 | 1 | 10 | 8 |
-| math | 16 | 6 | 0 | 22 | 13 |
+| math | 16 | 6 | 0 | 22 | 16 |
 | menu | 0 | 1 | 0 | 1 | 1 |
 | strings | 0 | 7 | 0 | 7 | 7 |
 | persistence | 0 | 3 | 0 | 3 | 3 |
-| gpio | 0 | 0 | 1 | 1 | 0 |
+| gpio | 0 | 1 | 0 | 1 | 1 |
 | advanced_lua | 7 | 4 | 0 | 11 | 11 |
 
 ## Whole translation pipeline
@@ -61,12 +61,12 @@ The frozen scope has **173 acceptance gates** across ten components. The GUI, br
 | Graphics, maps and text | 6 | 24 | 0 | 30 | 18% | 60.0% |
 | Math, tables, strings and advanced Lua APIs | 30 | 17 | 0 | 47 | 8% | 81.9% |
 | Input and program lifecycle | 6 | 2 | 0 | 8 | 8% | 87.5% |
-| Memory, saves and system services | 4 | 18 | 5 | 27 | 8% | 48.1% |
+| Memory, saves and system services | 4 | 20 | 3 | 27 | 8% | 51.9% |
 | Audio behavior and observable timing | 3 | 3 | 2 | 8 | 8% | 56.2% |
 | RP2040 build and resource handling | 6 | 4 | 0 | 10 | 8% | 80.0% |
 | Correctness and compatibility validation | 4 | 1 | 5 | 10 | 6% | 45.0% |
 
-Component score = 100 × (supported + 0.5 × partial) / gates. The overall index is the weighted sum of component scores. Weights and the half-credit rule are fixed judgment calls. Changing partial credit from 0.25 to 0.75 changes the same snapshot from 62.7% to 82.5%; that is scoring sensitivity, not a confidence interval.
+Component score = 100 × (supported + 0.5 × partial) / gates. The overall index is the weighted sum of component scores. Weights and the half-credit rule are fixed judgment calls. Changing partial credit from 0.25 to 0.75 changes the same snapshot from 62.8% to 82.9%; that is scoring sensitivity, not a confidence interval.
 
 ## Evidence and reproducibility
 
