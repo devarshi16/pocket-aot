@@ -288,20 +288,8 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
                         i += 1;
                     }
                 }
-                if matches!(c.get(i), Some('e' | 'E')) {
-                    let digit = i + if matches!(c.get(i + 1), Some('+' | '-')) {
-                        2
-                    } else {
-                        1
-                    };
-                    // A compact `.5end` is a number followed by `end`, not an exponent.
-                    if c.get(digit).is_some_and(|ch| ch.is_ascii_digit()) {
-                        i = digit;
-                        while i < c.len() && c[i].is_ascii_digit() {
-                            i += 1;
-                        }
-                    }
-                }
+                // PICO-8 source has no exponent notation: minified carts rely on
+                // `0e0` being the number 0 followed by the name `e0`.
             }
             out.push(Token {
                 s: c[start..i].iter().collect(),
@@ -360,6 +348,8 @@ pub struct Parser {
     i: usize,
     pub current_line: usize,
     short_line: Option<usize>,
+    /// Set for `f"text"` and `f{...}` arguments, which take no suffixes.
+    atom_only: bool,
 }
 impl Parser {
     pub fn new(src: &str) -> Result<Self, Error> {
@@ -368,6 +358,7 @@ impl Parser {
             i: 0,
             current_line: 1,
             short_line: None,
+            atom_only: false,
         })
     }
     fn tok(&self) -> &Token {
@@ -666,6 +657,8 @@ impl Parser {
             self.need(")")?;
             Ok(args)
         } else if self.at("{") || self.tok().kind == 2 {
+            // `f"a"[1]` indexes the call's result, so the argument stops at its literal.
+            self.atom_only = true;
             Ok(vec![self.expr(13)?])
         } else {
             Err(self.err("expected function call arguments"))
@@ -679,6 +672,7 @@ impl Parser {
         Ok(a)
     }
     fn expr(&mut self, min: u8) -> Result<Expr, Error> {
+        let atom = std::mem::take(&mut self.atom_only);
         let t = self.take();
         let mut e = if t.kind == 1 {
             Expr::Num(t.s)
@@ -754,6 +748,9 @@ impl Parser {
                 }
             }
         };
+        if atom {
+            return Ok(e);
+        }
         loop {
             if self.eat("[") {
                 let k = self.expr(0)?;

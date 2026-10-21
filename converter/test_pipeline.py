@@ -109,7 +109,6 @@ def main():
             ("select-bad-radix", 'function _init() select("0b2",1) end', "number expected"),
             ("rawget-string", 'function _init() rawget("text",1) end', "table expected"),
             ("string-index-type", 'function _init() local s="abc" printh(s[false]) end', "number expected"),
-            ("ord-overrun", 'function _init() ord("ab",2,2) end', "ord result range outside string unsupported"),
             ("ord-zero", 'function _init() ord("ab",1,0) end', "ord count must be 1 to 32"),
             ("ord-large", 'function _init() ord("abcdefghijklmnopqrstuvwxyzabcdefghij",1,33) end', "ord count must be 1 to 32"),
             ("rawget-type", "function _init() rawget(1,2) end", "table expected"),
@@ -124,24 +123,19 @@ def main():
             ("index-chain", "function _init() local t={} setmetatable(t,{__index=t}) local x=t.missing end", "__index chain too long"),
             ("vararg-limit", "function f(...) return ... end function _init() local t={} for i=1,40 do t[i]=i end f(unpack(t,1,33)) end", "unpack exceeds the result limit"),
             ("pal-table-args", "function _init() pal({},0,0) end", "table pal accepts at most two arguments"),
-            ("pal-table-key", "function _init() pal({[17]=8}) end", "pal table keys must be integers from 0 to 16"),
             ("pal-table-value", "function _init() pal({[1]=false}) end", "pal table values must be numbers"),
             ("pal-zero-aliases", "function _init() pal({[0]=1,[16]=2}) end", "pal table cannot contain both color zero indices"),
-            ("pal-fractional-key", "function _init() pal({[1.5]=8}) end", "pal table keys must be integers from 0 to 16"),
-            ("pal-string-key", 'function _init() pal({color=8}) end', "pal table keys must be integers from 0 to 16"),
             ("pal-alias-arity", "function _init() local p=pal p(1,2,0,4) end", "pal accepts at most three arguments"),
             ("bit-operator-nil", "function _init() local a=nil&1 end", "number expected"),
             ("bit-not-nil", "function _init() local a=~nil end", "number expected"),
             ("bit-operator-string", 'function _init() local a="4"|2 end', "number expected"),
             ("load-other-cart", 'function _init() load("other.p8") end', "load(): only this cartridge is on the device (other.p8)"),
-            ("heap-bound", "function _init() local a={} for i=1,5000 do a[i]=i end end", "table entries exhausted"),
+            ("heap-bound", "function _init() local a={} for i=1,30000 do a[i]=i end end", "table entries exhausted"),
         ]:
             source = base / (name + ".p8")
             source.write_text("pico-8 cartridge\n__lua__\n" + body + "\nfunction _draw() cls() end\n")
             check(name, source, 1, expected)
         for name, body, expected in [
-            ("unsupported-cstore", "cstore(0,0,1)", "unsupported function/API 'cstore'"),
-            ("unsupported-save", "save(\"x\")", "unsupported function/API 'save'"),
             ("goto-without-label", "goto nowhere", "no visible label 'nowhere' for goto"),
             ("vararg-outside", "local a=...", "'...' used outside a vararg function"),
         ]:

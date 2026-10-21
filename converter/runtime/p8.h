@@ -7,9 +7,13 @@
 
 typedef struct { int32_t n; uint8_t tag; } V;
 enum { P8_NIL, P8_NUM, P8_BOOL, P8_STR, P8_TABLE, P8_FUNCTION, P8_CELL, P8_THREAD };
-#define P8_MAX_STRING 8191
+#define P8_MAX_STRING 32767
 #define P8_MAX_RESULTS 32
-extern uint8_t game_frame[128*128], game_buttons;
+/* The screen in PICO-8's own layout (0x6000): two pixels per byte, left pixel
+ * in the low nibble. Values are draw-palette colours 0-15. */
+extern uint8_t game_frame[128*64], game_buttons;
+static inline int p8_frame_get(int x,int y){uint8_t b=game_frame[y*64+(x>>1)];return x&1?b>>4:b&15;}
+static inline void p8_frame_set(int x,int y,int c){uint8_t *b=&game_frame[y*64+(x>>1)];*b=x&1?(uint8_t)((*b&15)|((c&15)<<4)):(uint8_t)((*b&0xf0)|(c&15));}
 extern const uint8_t pico_palette[16][3];
 extern const char *p8_title;
 extern const unsigned p8_target_hz;
@@ -156,6 +160,7 @@ enum P8ApiId {
  P8_API_load,
  P8_API_ls,
  P8_API_serial,
+ P8_API_save,
  P8_API_COUNT
 };
 #ifdef P8_API_PROFILE
@@ -163,6 +168,7 @@ void p8_profile_write(const char *path);
 #endif
 V p8_api_id(int id,int argc,const V *argv);
 V p8_api(const char *name,int argc,const V *argv);
+V p8_poke_unpack(int size,V address,V table);
 void p8_fail(const char *msg);
 void p8_tick(void);
 void p8_stack_check(void);
@@ -205,3 +211,6 @@ void p8_program_draw(void);
 void p8_program_roots(void);
 void p8_program_clear(void);
 V p8_debug_global(const char *name);
+V p8_env_index(V key);
+V p8_inext(void);
+V p8_strlong(const char *s,size_t length);

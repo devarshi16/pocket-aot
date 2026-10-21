@@ -8,7 +8,8 @@ const char *__asan_default_options(void){return "detect_stack_use_after_return=0
 static int frames=1200,frame_no;
 static bool title_written;
 static void dump(const char *name){char text[128];V v=p8_debug_global(name);printf("%s=%s ",name,p8_describe(v,text,sizeof text));}
-static void write_frame(const char *path){FILE *f=fopen(path,"wb");if(f){fwrite(game_frame,1,sizeof game_frame,f);fclose(f);}}
+/* One byte per pixel, as the preview and PNG tools read it. */
+static void write_frame(const char *path){FILE *f=fopen(path,"wb");if(f){for(int i=0;i<128*128;i++)fputc(p8_frame_get(i&127,i>>7),f);fclose(f);}}
 static uint8_t scripted_input(int i){
  uint8_t input=0;
  // Start with B; launch with A; move the paddle under the ball on the host.

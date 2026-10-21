@@ -40,7 +40,7 @@ In Pocket Arcade, use **+ ADD CARTRIDGE**, choose a local `.p8`, `.p8.png` or `.
 
 ## Hardware scope
 
-The cartridge parser, native C generator and core runtime are largely independent of the display. The shipped firmware backend is currently specific to **RP2040 Raspberry Pi Pico/Pico W with Waveshare Pico LCD 1.3**, a 240×240 ST7789 IPS LCD over SPI. It is an LCD, not an OLED. It is not a Pico 2/RP2350 target.
+The cartridge parser, native C generator and core runtime are largely independent of the display. The shipped firmware backend is currently specific to **RP2040 Raspberry Pi Pico/Pico W with Waveshare Pico LCD 1.3**, a 240×240 ST7789 IPS LCD over SPI. It is an LCD, not an OLED. An experimental Pico 2 / Pico 2 W (RP2350) build uses the same LCD backend: pass `--board pico2_w` (or `pico2`) to `build.py`. It is not yet hardware-tested.
 
 `converter/runtime/pico.c` supplies display transfer, palette expansion/scaling, GPIO input, frame scheduling, USB diagnostics and recovery. Supporting another display or button board requires a backend adaptation and hardware testing. There is no hardware-profile selector yet. The current firmware also assumes 2 MB flash and the fixed stack/memory layout.
 
@@ -75,7 +75,7 @@ Missing capabilities include varargs, `goto`/labels, active includes, metatables
 
 The runtime has fixed pools: **512 tables, 3,072 table entries, 1,024 lexical cells, 256 closures and 2,048 captured-cell links**. A closure captures at most 64 locals. Strings use a 32 KB arena with 256 slots and an 8,191-byte individual limit. Allocation within one frame can exhaust a pool before frame-boundary collection.
 
-Instruction/call-depth budgets, stack-headroom guards and compiler stack-usage checks limit runaway code. Core 0 reserves 16 KB of main RAM for stack; core 1 reserves 4 KB in scratch RAM. Builds reject oversized or non-static generated stack transitions. These checks do not guarantee that every accepted cartridge fits its intended frame deadline. Keep the board's physical BOOTSEL recovery accessible.
+Instruction/call-depth budgets, stack-headroom guards and compiler stack-usage checks limit runaway code. Core 0 reserves 16 KB of main RAM for stack (40 KB on RP2350); core 1 reserves 4 KB in scratch RAM. Builds reject oversized or non-static generated stack transitions. These checks do not guarantee that every accepted cartridge fits its intended frame deadline. Keep the board's physical BOOTSEL recovery accessible.
 
 ## Public tests
 

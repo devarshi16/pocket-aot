@@ -2,23 +2,23 @@
   "rubric_version": "pocket-aot-capabilities-v1",
   "assessed_date": "2026-10-16",
   "label": "Secondary weighted planning index; implementation and regression counts are primary",
-  "core_capability_score_percent": 72.8756902868605,
+  "core_capability_score_percent": 73.1719865831568,
   "supported_only_points": 52.73117855351898,
-  "partial_credit_points": 20.14451173334152,
-  "sensitivity_partial_credit_25_percent": 62.80343442018974,
-  "sensitivity_partial_credit_75_percent": 82.94794615353126,
+  "partial_credit_points": 20.440808029637818,
+  "sensitivity_partial_credit_25_percent": 62.95158256833789,
+  "sensitivity_partial_credit_75_percent": 83.3923905979757,
   "core_gate_count": 173,
   "status_counts": {
     "supported": 84,
-    "partial": 78,
-    "missing": 11
+    "partial": 80,
+    "missing": 9
   },
   "supporting_tooling_score_percent": 75.0,
-  "functional_api_names": 105,
+  "functional_api_names": 107,
   "canonical_api_count": 108,
   "api_status_counts": {
-    "missing": 3,
-    "partial": 63,
+    "missing": 1,
+    "partial": 65,
     "supported": 42
   },
   "api_subsystems": [
@@ -26,11 +26,11 @@
       "name": "system",
       "total": 12,
       "status_counts": {
-        "missing": 2,
-        "partial": 6,
+        "missing": 1,
+        "partial": 7,
         "supported": 4
       },
-      "exercised": 5
+      "exercised": 6
     },
     {
       "name": "graphics",
@@ -71,16 +71,15 @@
       "status_counts": {
         "partial": 4
       },
-      "exercised": 3
+      "exercised": 4
     },
     {
       "name": "memory",
       "total": 10,
       "status_counts": {
-        "partial": 9,
-        "missing": 1
+        "partial": 10
       },
-      "exercised": 8
+      "exercised": 9
     },
     {
       "name": "math",
@@ -89,7 +88,7 @@
         "supported": 16,
         "partial": 6
       },
-      "exercised": 16
+      "exercised": 17
     },
     {
       "name": "menu",
@@ -135,15 +134,15 @@
   ],
   "regression_profile_present": true,
   "regression_profile_fresh": true,
-  "regression_exercised_api_names": 87,
-  "regression_scenario_count": 42,
+  "regression_exercised_api_names": 91,
+  "regression_scenario_count": 38,
   "regression_suite": "public-original-fixtures",
   "historical_regression_exercised_api_names": 49,
   "historical_regression_scenario_count": 8,
   "historical_evidence_date": "2026-10-16",
   "historical_scope": "Private pre-publication suite; external cartridges are not redistributed and its source hashes are retained unchanged.",
   "recorded_rust_tests": null,
-  "functional_api_name_presence_percent": 97.22222222222221,
+  "functional_api_name_presence_percent": 99.07407407407408,
   "independent_reference_conformance": "not measured; no independent PICO-8 oracle suite",
   "sample_size": 20,
   "sample_built": 1,
@@ -393,11 +392,11 @@
         "api.dset",
         "api.serial"
       ],
-      "score_percent": 51.851851851851855,
-      "weighted_points": 4.148148148148148,
+      "score_percent": 55.55555555555556,
+      "weighted_points": 4.444444444444445,
       "status_counts": {
-        "missing": 3,
-        "partial": 20,
+        "missing": 1,
+        "partial": 22,
         "supported": 4
       }
     },
@@ -472,30 +471,30 @@
     }
   ],
   "source_hashes": {
-    "src/compiler/parse.rs": "127ea315a233e76e4391dcd99a4fba2c4ecff96855f99424d5dff4fc50f5c9d9",
-    "src/compiler/emit.rs": "ec189b8eceb04775f01dd44060ea00eabe15ed23b458e4d8117fdbc690c728af",
-    "src/compiler/mod.rs": "3b18674d537c9cb34da0717c8f5f90378dedd359b4377f8e4da2de9ea5e10e57",
+    "src/compiler/parse.rs": "5e61605665402abfb394ae6da7d06dc64043ba8420d494644bc179a3dc01a44c",
+    "src/compiler/emit.rs": "17dc59c9b2243f4e4c7f2433101f06687c7547edf22fb7415b58fb2a488b8f96",
+    "src/compiler/mod.rs": "7e8fdbf01cf7da4ef1b866b2e296e382cb2f3e22e66632447698c489c8ae1315",
     "src/compiler/charset.rs": "ddb9bb6f9f5946dcb6cc7847dcf4a217308b9f7b1c2f812a2cfbe907f5657e0b",
-    "converter/runtime/p8.c": "0511c11c2043ceb710f8d054a0344d3c7ec9afe6277ff2556f61a4a8a7c1138c",
-    "converter/runtime/p8.h": "21732a6b7a97553e93afe2de1c1b65c9f58bbf0ddebcea0dedeeff4d44e565c1",
-    "converter/runtime/pico.c": "27b44ccd73da8633f1ab8bc870a232a565641efbd160c32fea039853c87dbe2d",
-    "converter/runtime/host.c": "12ab0cc4da3b94bca090366dfd665d51fbd1654e60062a13e4c92c9e095f555f",
-    "converter/build.py": "6c51d3ed3945be1944eb75e13a20a1df63cd37617b060e4736f8bb882dadf56a",
-    "converter/CMakeLists.txt": "254eb6663d65307401fa5c2918376495d558b40282f6ef31de4bae03706105bd",
+    "converter/runtime/p8.c": "3ef2dcfd5723c879995d0a8e90a9929c130c908f473a9973bf17713c4412398a",
+    "converter/runtime/p8.h": "cc180c3ac3f332191ecfa6a37ffec040aa595c0c5ac2a54b2d832149ff10e430",
+    "converter/runtime/pico.c": "999db9417dfa913e8a23a3cac27d6ddcabafd7ccb04efbd19416558346e537d8",
+    "converter/runtime/host.c": "114eb355a7aa2d176ffe8971e5371e9e6a01994df9dc36aa35e62e76aa465b01",
+    "converter/build.py": "f3443fb36b2da62ac043a3de3ca8fcfeeddc9c3fd2991d2b143ce4a69a5ce737",
+    "converter/CMakeLists.txt": "8aeae24d44825ca2e32e8cea80861dbebb7f7d6ce2e6af792b9bc41e9bb8993e",
     "converter/memmap_pocket.ld": "b9b97cf3f2f227047da1f3b499d1dd45bb7be7f56bb1ad84a208eb6dd97b2a72",
-    "converter/test_pipeline.py": "46a8bfcf1a946f607d462c8674e2f2abbf0aaec34f3ba1a3da95c6d8bffedaf6",
+    "converter/test_pipeline.py": "108b933068293884ed2c7d723715334f416b1530627107ff81882ad0dd7a25ff",
     "converter/test_png.py": "76bee5ccb5038430e45393c8420fe6de905fdbcb447f13a9831031938f916635",
-    "converter/tests/semantics.p8": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
+    "converter/tests/semantics.p8": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
     "converter/tests/functions.p8": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "converter/tests/runtime_closures.c": "641dbafa16e5e0a2ca6bd60bb6c414999c12b28cab4d2da79f4b3e2f0009abcc",
     "converter/runtime/font.h": "7e6515af97733af4c082ee8fff3630edd8ab87655bd0896863ed07bba149ac55",
-    "converter/tests/api_overloads.p8": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864",
+    "converter/tests/api_overloads.p8": "bcb05f124e2c7db58315486e79141542063e82c4e1c84c69fc71ee29bd052db0",
     "converter/cartridge_input.py": "21e634578ca8ef2fa34ee4e380c78fee19b1bd641c96bd9acb1e6859af22c8f8",
     "converter/test_containers.py": "c78934234733d7ec43379ca0460e0cdb4cd54f0d040ea2a1b01c2fc35932d9d6",
-    "converter/tests/numeric_strings.p8": "2437099687700752d71306f733b9b9654fbda813af575afe06465cbf620f5c5f",
+    "converter/tests/numeric_strings.p8": "fdeffe2d516e5258d439463103bca7699821a9395fd2fedcaeb50de8216af3e9",
     "converter/tests/fraction_literals.p8": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
-    "converter/tests/palette_state.p8": "318e55e47b8b00565d5fc843058d9bf5c3903990c933c9209bdf640fbc0fe681",
+    "converter/tests/palette_state.p8": "28eda4054fd9be5be2b04f0632390a2990a4606d10162ce9e5658456a483cf3a",
     "converter/tests/bitwise_defaults.p8": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
-    "converter/tests/extended_features.p8": "6163793049f44f81bfe6b45c2c037b8e38ebf5f52e4e7948e97dfd0342c90b52"
+    "converter/tests/extended_features.p8": "ebbdcf4d929b7c49fefc3a8297d519e3e634d348ecd79b39eeda4e0690d0fefe"
   }
 }

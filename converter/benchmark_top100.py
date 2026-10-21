@@ -129,7 +129,8 @@ def downloads(dest):
 def fingerprint():
     paths = list((REPO / 'src/compiler').rglob('*.rs')) + [REPO / 'src/bin/pocket-aot.rs', REPO / 'Cargo.lock']
     paths += list((REPO / 'converter/runtime').glob('*'))
-    paths += [REPO / ('converter/' + name) for name in ('build.py', 'cartridge_input.py', 'CMakeLists.txt', 'memmap_pocket.ld')]
+    paths += [REPO / ('converter/' + name) for name in ('build.py', 'cartridge_input.py', 'CMakeLists.txt', 'memmap_pocket.ld',
+                                                        'memmap_pocket_rp2350.ld')]
     return {str(path.relative_to(REPO)): sha(path) for path in sorted(paths) if path.is_file()}
 
 
@@ -163,7 +164,7 @@ def report(dest, rows, provenance):
     lines += [f'| {stage} | {counts[stage]} |' for stage in stage_names]
     lines += ['', 'Translation means generated C. Host checks run 1,200 scripted frames with ASan/UBSan. '
               'Leak detection alone is disabled because LeakSanitizer cannot operate under sandbox ptrace. '
-              'Firmware builds target RP2040/Pico + Waveshare LCD 1.3 and enforce the existing memory/stack checks. '
+              f"Firmware builds target board `{provenance.get('board', 'pico')}` + Waveshare LCD 1.3 and enforce the existing memory/stack checks. "
               'No flashing or physical gameplay tests were performed. A successful build is not a complete compatibility or fidelity test. '
               'Unavailable downloads remain in the denominator and are listed separately. '
               'Multi-cartridge/export/include dependencies are not assembled; the first public Cart File in the ranked post is tested as-is.', '',
@@ -178,7 +179,7 @@ def report(dest, rows, provenance):
     return summary
 
 
-def tests(dest, compiler):
+def tests(dest, compiler, board='pico'):
     spec = importlib.util.spec_from_file_location('cartridge_input', REPO / 'converter/cartridge_input.py')
     inputs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(inputs)
@@ -195,9 +196,9 @@ def tests(dest, compiler):
                       python=sys.version.splitlines()[0],
                       sanitizers=dict(address=True, undefined_behavior=True, leak=False,
                           reason='LeakSanitizer fails under sandbox ptrace; superseded initial attempt retained separately'),
-                      started_at=datetime.now(timezone.utc).isoformat(), sdk_commit=subprocess.check_output(
+                      board=board, started_at=datetime.now(timezone.utc).isoformat(), sdk_commit=subprocess.check_output(
                           ['git', '-C', env['PICO_SDK_PATH'], 'rev-parse', 'HEAD'], text=True).strip(),
-                      criterion='Current generated C + 1200 ASan/UBSan host frames + completed RP2040 UF2 build; no source patches')
+                      criterion=f'Current generated C + 1200 ASan/UBSan host frames + completed {board} UF2 build; no source patches')
     save(dest / 'provenance.json', provenance)
     rows = []
     for downloaded in json.loads((dest / 'downloads.json').read_text()):
@@ -219,9 +220,9 @@ def tests(dest, compiler):
                 row['first_blocker'] = output.strip().splitlines()[-1][:1000] if output.strip() else f'Compiler exited {code}'
                 continue
             row['translated'] = True
-            code, output = run([sys.executable, REPO / 'converter/build.py', cart, '--title', row['title'], '--frames', '1200'],
-                               folder / 'build.log', 240, env)
-            row['host_passed'] = 'Compiling the RP2040 firmware...' in output
+            code, output = run([sys.executable, REPO / 'converter/build.py', cart, '--title', row['title'], '--frames', '1200',
+                                '--board', board], folder / 'build.log', 240, env)
+            row['host_passed'] = re.search(r'^Compiling the RP2[0-9]+ firmware\.\.\.', output, re.M) is not None
             if code:
                 row['outcome'] = ('build_timeout' if code == 124 else 'firmware_failed' if row['host_passed'] else 'host_check_failed')
                 errors = [line.strip() for line in output.splitlines() if 'CARTRIDGE_ERROR:' in line or 'error:' in line]
@@ -255,7 +256,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode', choices=('download', 'test'))
     parser.add_argument('--dest', type=Path, default=DEFAULT_DEST)
+    parser.add_argument('--board', default='pico', help='PICO_BOARD for firmware builds, e.g. pico2_w for RP2350')
     parser.add_argument('--compiler', type=Path, default=Path(os.environ.get('POCKET_AOT_BIN', REPO / 'target/release/pocket-aot')))
     args = parser.parse_args()
     args.dest.mkdir(parents=True, exist_ok=True)
-    downloads(args.dest.resolve()) if args.mode == 'download' else tests(args.dest.resolve(), args.compiler.resolve())
+    downloads(args.dest.resolve()) if args.mode == 'download' else tests(args.dest.resolve(), args.compiler.resolve(), args.board)

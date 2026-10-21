@@ -46,6 +46,7 @@ function table_palette()
  cls(5) sspr(0,0,3,1,0,0)
  assert(pget(0,0)==5 and pget(1,0)==5 and pget(2,0)==1,"sprite transparency before draw remapping")
  pal({})
+ pal({[17]=8,[1.5]=8,color=8}) -- ignored keys
  assert(pal(2,4)==1,"empty table leaves current mapping intact")
 end
 

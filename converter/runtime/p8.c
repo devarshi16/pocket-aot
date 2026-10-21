@@ -5,29 +5,79 @@
 #include <math.h>
 #include <limits.h>
 #include "font.h"
+#if defined(__SANITIZE_ADDRESS__)
+#include <sanitizer/asan_interface.h>
+#endif
 
-#define NT 1280
-#define NE 4352
+#ifdef P8_LARGE_POOLS
+/* RP2350 builds (and their host checks) have 520 KB of RAM: most goes to the
+ * Lua heap pools, and the upper 32 KB of PICO-8 memory is mapped. */
+#define P8_UPPER_RAM 1
+/* Core 0 has a 40 KB stack on RP2350, so deeper Lua recursion fits. */
+#define P8_MAX_DEPTH 64
+#define NT 5120
+#define NE 22000
+#define STRING_BYTES 65535
+#define NS 1536
+#define NC 3072
+#define NF 1536
+#define NU 6144
+#endif
+#ifndef NT
+#define NT 2048
+#endif
+#ifndef NE
+#define NE 11200
+#endif
+#ifndef NS
 #define NS 768
+#endif
 #define SL (P8_MAX_STRING+1)
+#ifndef STRING_BYTES
 #define STRING_BYTES 32768
-#define NC 1536
+#endif
+#ifndef NC
+#define NC 1024
+#endif
+#ifndef NF
 #define NF 768
-#define NU 4096
+#endif
+#ifndef NU
+#define NU 1536
+#endif
 #define MAX_CAPTURE 64
 /* Compact pool records: a table entry is used when its key tag is not nil and a
  * capture is used when its cell index is not NO_LINK. */
 #define NO_LINK 0xffff
-static struct {uint16_t head,meta;uint8_t used,mark;} tables[NT];
-static struct {int32_t key,value;uint16_t next;uint8_t key_tag,value_tag;} entries[NE];
+/* Flags share a word with a small field: 4 bytes per table, 5 per cell, 6 per closure. */
+static struct {uint16_t head;uint16_t meta:14,used:1,mark:1;} tables[NT];
+_Static_assert(NT<(1<<14),"table ids must fit the 14-bit metatable field");
+_Static_assert(NU<(1<<14),"capture counts must fit the 14-bit closure field");
+/* Table entries are split into parallel arrays (9 bytes each). Keys are
+ * stored as a 16-bit payload: an object id, a bool, or an integer number in
+ * -32768..32767. Other numeric keys live in a small boxed pool. */
+#define KEY_BOXED 8
+#define NB 128
+static int32_t entry_value[NE];
+static uint16_t entry_key[NE],entry_next[NE];
+static uint8_t entry_tags[NE];
+static int32_t boxed_keys[NB];
+static uint8_t boxed_used[NB];
 static struct {uint16_t offset,length;uint8_t used,mark;} strings[NS];
-static char string_data[STRING_BYTES],string_scratch[SL];
-static struct {V value;uint8_t used,mark;} cells[NC];
-static struct {int fn;uint16_t head,count;uint8_t used,mark;} closures[NF];
+static char string_data[STRING_BYTES];
+/* V's fields are inlined so a cell packs into 8 bytes instead of 12. */
+static struct __attribute__((packed)) {int32_t n;uint8_t tag:4,used:1,mark:1;} cells[NC];
+static struct {uint16_t fn,head;uint16_t count:14,used:1,mark:1;} closures[NF];
 static struct {uint16_t cell,next;} captures[NU];
-#define ENTRY_KEY(i) ((V){entries[i].key,entries[i].key_tag})
-#define ENTRY_VALUE(i) ((V){entries[i].value,entries[i].value_tag})
-#define ENTRY_USED(i) (entries[i].key_tag!=P8_NIL)
+#define ENTRY_KEY_TAG(i) (entry_tags[i]&15)
+#define ENTRY_KEY(i) decode_key(entry_key[i],ENTRY_KEY_TAG(i))
+#define ENTRY_VALUE(i) ((V){entry_value[i],entry_tags[i]>>4})
+#define ENTRY_USED(i) (ENTRY_KEY_TAG(i)!=P8_NIL)
+#define ENTRY_CLEAR(i) (entry_tags[i]&=0xf0)
+static V decode_key(uint16_t key,int tag){
+ if(tag==KEY_BOXED)return(V){boxed_keys[key],P8_NUM};
+ if(tag==P8_NUM)return(V){(int32_t)((uint32_t)(int32_t)(int16_t)key<<16),P8_NUM};
+ return(V){key,tag};}
 static V result_values[P8_MAX_RESULTS];
 static int result_count;
 void *p8_stack_top;
@@ -50,7 +100,7 @@ static uint8_t sound_ram[0x1200];   /* 0x3100 music, 0x3200 sfx */
 static uint8_t user_ram[0x1b00];    /* 0x4300 general use */
 static uint8_t persist_ram[0x100];  /* 0x5e00 cartdata */
 static uint8_t hw_ram[0x100];       /* 0x5f00 draw state and hardware registers */
-uint8_t game_frame[128*128],game_buttons;
+uint8_t game_frame[128*64],game_buttons;
 uint8_t p8_screen_palette[16];
 bool p8_paused_by_cart;
 const uint8_t pico_palette[16][3]={
@@ -82,8 +132,15 @@ static int screen_bound(int n){return n<0?0:n>128?128:n;}
 
 void p8_fail(const char *s){snprintf(p8_error,sizeof p8_error,"%s",s);longjmp(p8_guard,1);}
 void p8_tick(void){if(!budget--)p8_fail("frame instruction budget exceeded");p8_operations++;}
-__attribute__((weak)) void p8_stack_check(void){}
-void p8_enter(void){p8_stack_check();p8_tick();if(++depth>32)p8_fail("call depth exceeds 32");}
+/* Host default: keep coroutine frames inside their runtime-owned stacks. */
+__attribute__((weak)) void p8_stack_check(void){
+ const uint8_t *low=p8_current_stack_low();
+ if(low&&(const uint8_t*)__builtin_frame_address(0)<low+16384)p8_fail("coroutine stack budget exceeded");
+}
+#ifndef P8_MAX_DEPTH
+#define P8_MAX_DEPTH 32
+#endif
+void p8_enter(void){p8_stack_check();p8_tick();if(++depth>P8_MAX_DEPTH)p8_fail("call depth exceeds the limit");}
 void p8_leave(void){if(depth)depth--;}
 bool p8_truth(V v){return v.tag!=P8_NIL&&(v.tag!=P8_BOOL||v.n);}
 static bool parse_fixed(V value,int32_t *result);
@@ -98,9 +155,18 @@ int32_t p8_number(V v){
 static int32_t strict_number(V v){if(v.tag!=P8_NUM)p8_fail("number expected");return v.n;}
 static int integer(V v){return p8_number(v)>>16;}
 static bool equal(V a,V b){return a.tag==b.tag&&a.n==b.n;}
-static const char *string(V v){if(v.tag!=P8_STR||(unsigned)v.n>=NS||!strings[v.n].used)p8_fail("string expected");return string_data+strings[v.n].offset;}
+/* Literals longer than the arena limit stay in program memory (flash on the
+ * Pico). Their ids follow the arena slots and they are never collected. */
+#define NK 16
+static struct {const char *text;uint32_t length;} long_strings[NK];static int long_count;
+#define IS_LONG(v) ((v).tag==P8_STR&&(unsigned)(v).n-(unsigned)NS<(unsigned)long_count)
+V p8_strlong(const char *s,size_t length){
+ for(int i=0;i<long_count;i++)if(long_strings[i].text==s||(long_strings[i].length==length&&!memcmp(long_strings[i].text,s,length)))return(V){NS+i,P8_STR};
+ if(long_count==NK)p8_fail("too many long string literals");
+ long_strings[long_count].text=s;long_strings[long_count].length=(uint32_t)length;return(V){NS+long_count++,P8_STR};}
+static const char *string(V v){if(IS_LONG(v))return long_strings[v.n-NS].text;if(v.tag!=P8_STR||(unsigned)v.n>=NS||!strings[v.n].used)p8_fail("string expected");return string_data+strings[v.n].offset;}
 /* Strings carry explicit lengths, so embedded NUL bytes are preserved. */
-static int string_length(V v){string(v);return strings[v.n].length;}
+static int string_length(V v){string(v);return IS_LONG(v)?(int)long_strings[v.n-NS].length:strings[v.n].length;}
 static bool meta_call1(V t,const char *event,V *result);
 const char *p8_describe(V v,char *out,size_t n){switch(v.tag){
  case P8_NUM:if(!(v.n&65535))snprintf(out,n,"%d",v.n/65536);else{
@@ -124,33 +190,56 @@ static bool string_place(size_t len,size_t *at){
  for(;;){bool moved=false;for(int i=0;i<NS;i++)if(strings[i].used){size_t begin=strings[i].offset,end=begin+strings[i].length+1;if(offset<end&&offset+len+1>begin){offset=end;moved=true;break;}}if(!moved)break;}
  *at=offset;return offset+len+1<=STRING_BYTES;
 }
-static V string_bytes(const char *s,size_t len){
- if(len>=SL)p8_fail("string exceeds 8191 bytes");
- for(int i=0;i<NS;i++)if(strings[i].used&&strings[i].length==len&&!memcmp(string_data+strings[i].offset,s,len))return(V){i,P8_STR};
- /* The source bytes may live in the arena; copy them before a collection can free them. */
- bool inside=s>=string_data&&s<string_data+STRING_BYTES;
- if(inside){memmove(string_scratch,s,len);s=string_scratch;}
+/* Arena strings whose bytes are being copied; the collector keeps them alive.
+ * Mid-frame collections never move strings, so their pointers stay valid. */
+static int pinned_strings[2]={-1,-1};
+static int arena_owner(const char *s){
+ if(s<string_data||s>=string_data+STRING_BYTES)return -1;size_t at=(size_t)(s-string_data);
+ for(int i=0;i<NS;i++)if(strings[i].used&&at>=strings[i].offset&&at<=(size_t)strings[i].offset+strings[i].length)return i;return -1;}
+/* A new string made of two byte ranges, either of which may lie in the arena. */
+static V string_join(const char *a,size_t alen,const char *b,size_t blen){
+ size_t len=alen+blen;if(len>=SL)p8_fail("string exceeds 32767 bytes");
+ for(int i=0;i<NS;i++)if(strings[i].used&&strings[i].length==len){const char *d=string_data+strings[i].offset;if(!memcmp(d,a,alen)&&!memcmp(d+alen,b,blen))return(V){i,P8_STR};}
  int id=string_slot();size_t offset;bool fits=string_place(len,&offset);
- if((id<0||!fits)&&can_collect()){collect_now(false);id=string_slot();fits=string_place(len,&offset);}
+ if((id<0||!fits)&&can_collect()){pinned_strings[0]=arena_owner(a);pinned_strings[1]=arena_owner(b);collect_now(false);pinned_strings[0]=pinned_strings[1]=-1;id=string_slot();fits=string_place(len,&offset);}
  if(id<0)p8_fail("string slots exhausted in one frame");
- if(!fits)p8_fail("32KB string arena exhausted in one frame");
- memmove(string_data+offset,s,len);string_data[offset+len]=0;
+ if(!fits)p8_fail("string arena exhausted in one frame");
+ memmove(string_data+offset,a,alen);memmove(string_data+offset+alen,b,blen);string_data[offset+len]=0;
  strings[id].offset=(uint16_t)offset;strings[id].length=(uint16_t)len;strings[id].used=1;strings[id].mark=0;if(offset+len+1>string_top)string_top=offset+len+1;return(V){id,P8_STR};
 }
+static V string_bytes(const char *s,size_t len){return string_join(s,len,"",0);}
+/* _ENV[name] outside any local _ENV: look the global up by name. */
+V p8_env_index(V key){return key.tag==P8_STR?p8_debug_global(string(key)):p8_nil();}
 V p8_str(const char *s){return string_bytes(s,strlen(s));}
 V p8_strn(const char *s,size_t length){return string_bytes(s,length);}
 static int table_id(V t){if(t.tag!=P8_TABLE||(unsigned)t.n>=NT||!tables[t.n].used)p8_fail("table expected");return t.n;}
 static int table_slot(void){NEXT_FREE(NT,table_hint,!tables[i].used);}
 V p8_table(void){int i=table_slot();if(i<0&&can_collect()){collect_now(false);i=table_slot();}if(i<0)p8_fail("table pool exhausted");tables[i].used=1;tables[i].head=0;tables[i].meta=0;tables[i].mark=0;return(V){i,P8_TABLE};}
-static V raw_get(V t,V key){int id=table_id(t);for(int at=tables[id].head;at;at=entries[at-1].next){if(entries[at-1].key==key.n&&entries[at-1].key_tag==key.tag)return ENTRY_VALUE(at-1);}return p8_nil();}
+/* Encode a key for lookup. With create, a boxed slot is allocated if needed;
+ * without it, a numeric key that was never boxed is reported as absent. */
+static bool encode_key(V key,bool create,uint16_t *payload,uint8_t *tag){
+ if(key.tag==P8_NUM&&!(key.n&65535)&&key.n>=-32768*65536&&key.n<=32767*65536){*payload=(uint16_t)(key.n>>16);*tag=P8_NUM;return true;}
+ if(key.tag!=P8_NUM){*payload=(uint16_t)key.n;*tag=key.tag;return true;}
+ *tag=KEY_BOXED;int free_slot=-1;
+ for(int i=0;i<NB;i++){if(boxed_used[i]&&boxed_keys[i]==key.n){*payload=(uint16_t)i;return true;}if(!boxed_used[i]&&free_slot<0)free_slot=i;}
+ if(!create)return false;
+ if(free_slot<0&&can_collect()){collect_now(false);for(int i=0;i<NB;i++)if(!boxed_used[i]){free_slot=i;break;}}
+ if(free_slot<0)p8_fail("numeric key pool exhausted");
+ boxed_used[free_slot]=1;boxed_keys[free_slot]=key.n;*payload=(uint16_t)free_slot;return true;}
+#define ENTRY_IS(i,payload,tag) (entry_key[i]==(payload)&&ENTRY_KEY_TAG(i)==(tag))
+static V raw_get(V t,V key){int id=table_id(t);uint16_t k;uint8_t kt;if(!encode_key(key,false,&k,&kt))return p8_nil();
+ for(int at=tables[id].head;at;at=entry_next[at-1]){if(ENTRY_IS(at-1,k,kt))return ENTRY_VALUE(at-1);}return p8_nil();}
 static int entry_slot(void){NEXT_FREE(NE,entry_hint,!ENTRY_USED(i));}
-static void raw_set(V t,V key,V value){int id=table_id(t);if(key.tag==P8_NIL)p8_fail("nil table key");uint16_t *link=&tables[id].head;
- while(*link){int i=*link-1;if(entries[i].key==key.n&&entries[i].key_tag==key.tag){if(value.tag==P8_NIL){*link=entries[i].next;entries[i].key_tag=P8_NIL;}else{entries[i].value=value.n;entries[i].value_tag=value.tag;}return;}link=&entries[i].next;}
+static void raw_set(V t,V key,V value){int id=table_id(t);if(key.tag==P8_NIL)p8_fail("nil table key");uint16_t k;uint8_t kt;
+ if(!encode_key(key,value.tag!=P8_NIL,&k,&kt))return;
+ uint16_t *link=&tables[id].head;
+ while(*link){int i=*link-1;if(ENTRY_IS(i,k,kt)){if(value.tag==P8_NIL){*link=entry_next[i];ENTRY_CLEAR(i);}else{entry_value[i]=value.n;entry_tags[i]=(uint8_t)(kt|value.tag<<4);}return;}link=&entry_next[i];}
  if(value.tag==P8_NIL)return;
  int i=entry_slot();
- if(i<0&&can_collect()){collect_now(false);i=entry_slot();}
+ /* A collection may free the boxed key just allocated; it is re-encoded below. */
+ if(i<0&&can_collect()){collect_now(false);i=entry_slot();if(kt==KEY_BOXED)encode_key(key,true,&k,&kt);}
  if(i<0)p8_fail("table entries exhausted");
- entries[i].key=key.n;entries[i].key_tag=key.tag;entries[i].value=value.n;entries[i].value_tag=value.tag;entries[i].next=tables[id].head;tables[id].head=i+1;}
+ entry_key[i]=k;entry_value[i]=value.n;entry_tags[i]=(uint8_t)(kt|value.tag<<4);entry_next[i]=tables[id].head;tables[id].head=i+1;}
 /* Metatables: the metatable is itself a pool table referenced by index+1. */
 static V metatable(V t){if(t.tag!=P8_TABLE)return p8_nil();int id=table_id(t);return tables[id].meta?(V){tables[id].meta-1,P8_TABLE}:p8_nil();}
 static V metamethod(V t,const char *event){V m=metatable(t);return m.tag==P8_TABLE?raw_get(m,p8_str(event)):p8_nil();}
@@ -180,13 +269,14 @@ static int length(V t){if(t.tag==P8_STR)return string_length(t);int n=0;while(n<
 static int cell_id(V v){if(v.tag!=P8_CELL||(unsigned)v.n>=NC||!cells[v.n].used)p8_fail("invalid lexical cell");return v.n;}
 static int closure_id(V v){if(v.tag!=P8_FUNCTION||(unsigned)v.n>=NF||!closures[v.n].used)p8_fail("function expected");return v.n;}
 static int cell_slot(void){for(int i=0;i<NC;i++)if(!cells[i].used)return i;return -1;}
-V p8_cell(V initial){int i=cell_slot();if(i<0&&can_collect()){collect_now(false);i=cell_slot();}if(i<0)p8_fail("lexical cell pool exhausted in one frame");cells[i].used=1;cells[i].mark=0;cells[i].value=initial;return(V){i,P8_CELL};}
-V p8_cell_get(V v){return cells[cell_id(v)].value;}
-void p8_cell_set(V v,V value){cells[cell_id(v)].value=value;}
+V p8_cell(V initial){int i=cell_slot();if(i<0&&can_collect()){collect_now(false);i=cell_slot();}if(i<0)p8_fail("lexical cell pool exhausted in one frame");cells[i].used=1;cells[i].mark=0;cells[i].n=initial.n;cells[i].tag=initial.tag;return(V){i,P8_CELL};}
+V p8_cell_get(V v){int i=cell_id(v);return(V){cells[i].n,cells[i].tag};}
+void p8_cell_set(V v,V value){int i=cell_id(v);cells[i].n=value.n;cells[i].tag=value.tag;}
 static int closure_slot(void){for(int i=0;i<NF;i++)if(!closures[i].used)return i;return -1;}
 static int free_captures(void){int n=0;for(int i=0;i<NU;i++)n+=captures[i].cell==NO_LINK;return n;}
 V p8_closure(int fn,int count,const V *refs){
  if(count<0||count>MAX_CAPTURE)p8_fail("closure exceeds 64 captures");
+ if(fn<0||fn>0xffff)p8_fail("closure function id out of range");
  int id=closure_slot();
  if((id<0||free_captures()<count)&&can_collect()){collect_now(false);id=closure_slot();}
  if(id<0)p8_fail("native closure pool exhausted in one frame");
@@ -223,7 +313,18 @@ V p8_result(int index){return index<0||index>=result_count?p8_nil():result_value
 /* Raw pairs order: insertion order is not tracked, so walk the table's chain. */
 static bool table_next(V t,V key,V *next_key,V *next_value){
  int id=table_id(t),at=tables[id].head;
- if(key.tag!=P8_NIL){while(at&&!(entries[at-1].key==key.n&&entries[at-1].key_tag==key.tag))at=entries[at-1].next;if(!at)p8_fail("invalid key to next");at=entries[at-1].next;}
+ if(key.tag!=P8_NIL){uint16_t k;uint8_t kt;if(!encode_key(key,false,&k,&kt))p8_fail("invalid key to next");while(at&&!ENTRY_IS(at-1,k,kt))at=entry_next[at-1];
+  if(at)at=entry_next[at-1];
+  else{
+   /* The key was cleared since the last call. A removed entry keeps its key
+    * payload and link until reused, so resume after it while that link still
+    * leads into this table. */
+   int found=0;for(int i=0;i<NE&&!found;i++)if(!ENTRY_USED(i)&&entry_key[i]==k)found=i+1;
+   if(!found)p8_fail("invalid key to next");
+   at=entry_next[found-1];while(at&&!ENTRY_USED(at-1))at=entry_next[at-1];
+   if(at){int in=tables[id].head;while(in&&in!=at)in=entry_next[in-1];if(!in)return false;}
+  }
+  while(at&&!ENTRY_USED(at-1))at=entry_next[at-1];}
  if(!at)return false;*next_key=ENTRY_KEY(at-1);*next_value=ENTRY_VALUE(at-1);return true;
 }
 bool p8_iter_next(const char *kind,V t,int *cursor,V *last,V *key,V *value){
@@ -241,8 +342,8 @@ bool p8_iter_next(const char *kind,V t,int *cursor,V *last,V *key,V *value){
  if(!strcmp(kind,"pairs")){
   /* The cursor is the last entry slot. Removed entries keep their link, so
    * clearing fields during traversal is safe, as in Lua. */
-  int at=*cursor?entries[*cursor-1].next:tables[id].head;
-  while(at&&!ENTRY_USED(at-1))at=entries[at-1].next;
+  int at=*cursor?entry_next[*cursor-1]:tables[id].head;
+  while(at&&!ENTRY_USED(at-1))at=entry_next[at-1];
   if(!at)return false;
   *cursor=at;*key=ENTRY_KEY(at-1);*value=ENTRY_VALUE(at-1);*last=*key;return true;
  }
@@ -259,7 +360,7 @@ static int grey_count;
 static bool grey_overflow;
 static bool object_live(V v){
  switch(v.tag){
-  case P8_STR:return (unsigned)v.n<NS&&strings[v.n].used;
+  case P8_STR:return ((unsigned)v.n<NS&&strings[v.n].used)||IS_LONG(v);
   case P8_TABLE:return (unsigned)v.n<NT&&tables[v.n].used;
   case P8_CELL:return (unsigned)v.n<NC&&cells[v.n].used;
   case P8_FUNCTION:return (unsigned)v.n<NF&&closures[v.n].used;
@@ -268,7 +369,7 @@ static bool object_live(V v){
  return false;
 }
 static void shade(V v){
- if(v.tag==P8_STR){if(!object_live(v))p8_fail("bad string reference");strings[v.n].mark=1;return;}
+ if(v.tag==P8_STR){if(!object_live(v))p8_fail("bad string reference");if(!IS_LONG(v))strings[v.n].mark=1;return;}
  if(v.tag==P8_TABLE){int id=table_id(v);if(tables[id].mark)return;tables[id].mark=1;}
  else if(v.tag==P8_CELL){int id=cell_id(v);if(cells[id].mark)return;cells[id].mark=1;}
  else if(v.tag==P8_FUNCTION){int id=closure_id(v);if(closures[id].mark)return;closures[id].mark=1;}
@@ -284,13 +385,13 @@ static void scan(V v){
  if(v.tag==P8_TABLE){
   if(tables[v.n].meta)shade((V){tables[v.n].meta-1,P8_TABLE});
   bool weak_keys=false,weak_values=false;if(tables[v.n].meta)weak_mode(v,&weak_keys,&weak_values);
-  for(int at=tables[v.n].head;at;at=entries[at-1].next){
+  for(int at=tables[v.n].head;at;at=entry_next[at-1]){
    V key=ENTRY_KEY(at-1),value=ENTRY_VALUE(at-1);
    if(!weak_keys||key.tag==P8_STR)shade(key);
    if(!weak_values||value.tag==P8_STR)shade(value);
   }
  }
- else if(v.tag==P8_CELL)shade(cells[v.n].value);
+ else if(v.tag==P8_CELL)shade((V){cells[v.n].n,cells[v.n].tag});
  else if(v.tag==P8_FUNCTION)for(int at=closures[v.n].head;at;at=captures[at-1].next)shade((V){captures[at-1].cell,P8_CELL});
  else if(v.tag==P8_THREAD)scan_coroutine(v.n);
 }
@@ -308,9 +409,18 @@ void p8_mark(V v){shade(v);drain();}
 /* Conservative native-stack roots: any 8-byte window that looks like a live
  * reference keeps that object. False positives only delay reclamation. */
 __attribute__((no_sanitize_address,noinline)) static void scan_range(const uint8_t *low,const uint8_t *high){
- for(const volatile uint8_t *p=(const uint8_t*)(((uintptr_t)low+3)&~(uintptr_t)3);p+8<=high;p+=4){
+ for(const volatile uint8_t *p=(const uint8_t*)(((uintptr_t)low+3)&~(uintptr_t)3);p+4<=high;p+=4){
+#if defined(__SANITIZE_ADDRESS__)
+  /* Sanitizer redzones hold stale words from old frames, never live values. */
+  if(__asan_address_is_poisoned((const void*)p))continue;
+#endif
   int32_t n=(int32_t)((uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24));
-  V v={n,p[4]};if(v.tag>=P8_STR&&v.tag<=P8_THREAD&&object_live(v))shade(v);
+  /* Optimized code may keep a value's id and tag in separate registers or
+   * slots, so any word that could be a live object id keeps every object
+   * with that id alive. This retains some garbage but never frees a live value. */
+  for(int tag=P8_STR;tag<=P8_CELL;tag++){V w={n,(uint8_t)tag};if(object_live(w))shade(w);}
+  /* Coroutine ids are tiny and the pool is small, so they still need their tag beside them. */
+  if(p+8<=high&&p[4]==P8_THREAD&&object_live((V){n,P8_THREAD}))shade((V){n,P8_THREAD});
  }
 }
 __attribute__((noinline)) static void scan_stack(void){
@@ -324,6 +434,7 @@ __attribute__((noinline)) static void scan_stack(void){
 static void mark_roots(bool native_stack){
  grey_count=0;grey_overflow=false;
  p8_program_roots();
+ for(int i=0;i<2;i++)if(pinned_strings[i]>=0&&object_live((V){pinned_strings[i],P8_STR}))shade((V){pinned_strings[i],P8_STR});
  for(int i=0;i<result_count;i++)shade(result_values[i]);
  for(int i=0;i<5;i++){shade(menu_items[i].label);shade(menu_items[i].callback);}
  coroutine_roots();
@@ -338,13 +449,13 @@ static void clear_weak_entries(void){
   while(*link){int i=*link-1;V k=ENTRY_KEY(i),v=ENTRY_VALUE(i);
    bool dead=(keys&&k.tag>=P8_TABLE&&k.tag<=P8_CELL&&object_live(k)&&!((k.tag==P8_TABLE&&tables[k.n].mark)||(k.tag==P8_FUNCTION&&closures[k.n].mark)))||
              (values&&v.tag>=P8_TABLE&&v.tag<=P8_CELL&&object_live(v)&&!((v.tag==P8_TABLE&&tables[v.n].mark)||(v.tag==P8_FUNCTION&&closures[v.n].mark)));
-   if(dead){*link=entries[i].next;entries[i].key_tag=P8_NIL;}else link=&entries[i].next;}
+   if(dead){*link=entry_next[i];ENTRY_CLEAR(i);}else link=&entry_next[i];}
  }
 }
 static int by_string_offset(const void *a,const void *b){return (int)strings[*(const uint16_t*)a].offset-(int)strings[*(const uint16_t*)b].offset;}
 static void sweep(bool compact){
  clear_weak_entries();
- for(int i=0;i<NT;i++)if(tables[i].used&&!tables[i].mark){int at=tables[i].head;while(at){int next=entries[at-1].next;entries[at-1].key_tag=P8_NIL;at=next;}tables[i].used=0;}
+ for(int i=0;i<NT;i++)if(tables[i].used&&!tables[i].mark){int at=tables[i].head;while(at){int next=entry_next[at-1];ENTRY_CLEAR(at-1);at=next;}tables[i].used=0;}
  for(int i=0;i<NC;i++)if(cells[i].used&&!cells[i].mark)cells[i].used=0;
  for(int i=0;i<NF;i++)if(closures[i].used&&!closures[i].mark){int at=closures[i].head;while(at){int next=captures[at-1].next;captures[at-1].cell=NO_LINK;at=next;}closures[i].used=0;}
  p8_heap_strings=p8_heap_entries=0;uint16_t *order=gc_work.order;int count=0;
@@ -353,7 +464,8 @@ static void sweep(bool compact){
   * temporary holds a string pointer. Moving in offset order never overwrites
   * a string that has not moved yet. */
  if(compact){qsort(order,(size_t)count,sizeof *order,by_string_offset);size_t offset=0;for(int n=0;n<count;n++){int id=order[n];size_t len=strings[id].length+1;memmove(string_data+offset,string_data+strings[id].offset,len);strings[id].offset=(uint16_t)offset;offset+=len;}string_top=offset;}
- for(int i=0;i<NE;i++)p8_heap_entries+=ENTRY_USED(i);
+ memset(boxed_used,0,sizeof boxed_used);
+ for(int i=0;i<NE;i++){p8_heap_entries+=ENTRY_USED(i);if(ENTRY_KEY_TAG(i)==KEY_BOXED)boxed_used[entry_key[i]]=1;}
  sweep_coroutines();
 }
 static void clear_marks(void){for(int i=0;i<NT;i++)tables[i].mark=0;for(int i=0;i<NS;i++)strings[i].mark=0;for(int i=0;i<NC;i++)cells[i].mark=0;for(int i=0;i<NF;i++)closures[i].mark=0;}
@@ -405,7 +517,7 @@ V p8_binary(const char *op,V a,V b){
  if(!strcmp(op,"..")){if((a.tag!=P8_STR&&a.tag!=P8_NUM)||(b.tag!=P8_STR&&b.tag!=P8_NUM))p8_fail("concatenation requires strings or numbers");
   char sa[64],sb[64];const char *as=a.tag==P8_STR?string(a):p8_describe(a,sa,sizeof sa),*bs=b.tag==P8_STR?string(b):p8_describe(b,sb,sizeof sb);
   size_t alen=a.tag==P8_STR?(size_t)string_length(a):strlen(as),blen=b.tag==P8_STR?(size_t)string_length(b):strlen(bs);
-  if(alen+blen>=SL)p8_fail("concatenated string too long");memmove(string_scratch,as,alen);memmove(string_scratch+alen,bs,blen);return string_bytes(string_scratch,alen+blen);}
+  if(alen+blen>=SL)p8_fail("concatenated string too long");return string_join(as,alen,bs,blen);}
  if(a.tag==P8_STR&&b.tag==P8_STR){int c=compare_strings(a,b);if(!strcmp(op,"<"))return p8_bool(c<0);if(!strcmp(op,">"))return p8_bool(c>0);if(!strcmp(op,"<="))return p8_bool(c<=0);if(!strcmp(op,">="))return p8_bool(c>=0);}
  bool coerce=!strcmp(op,"+")||!strcmp(op,"-")||!strcmp(op,"*")||!strcmp(op,"/")||!strcmp(op,"//")||!strcmp(op,"%");
  int32_t x=coerce?p8_number(a):strict_number(a),y=coerce?p8_number(b):strict_number(b);
@@ -427,7 +539,7 @@ V p8_binary(const char *op,V a,V b){
  }
  if(!strcmp(op,"^")){double r=pow((double)x/65536.0,(double)y/65536.0);if(!isfinite(r)||fabs(r)>32767)p8_fail("power outside supported numeric range");return p8_num((int32_t)(r*65536));}
  p8_fail("unknown binary operator");return p8_nil();}
-static void pixel(int x,int y,int c){x-=camera_x;y-=camera_y;if(x>=clip_x0&&x<clip_x1&&y>=clip_y0&&y<clip_y1)game_frame[y*128+x]=palette[c&15];}
+static void pixel(int x,int y,int c){x-=camera_x;y-=camera_y;if(x>=clip_x0&&x<clip_x1&&y>=clip_y0&&y<clip_y1)p8_frame_set(x,y,palette[c&15]);}
 /* Shape pixels honour fillp(): pattern bit 15 is the top-left pixel of each
  * 4x4 cell. Set bits use the high colour nibble, or are skipped when the
  * pattern is transparent. Coordinates are screen-space after the camera. */
@@ -435,7 +547,7 @@ static void shape_pixel(int x,int y,int c){
  x-=camera_x;y-=camera_y;
  if(x<clip_x0||x>=clip_x1||y<clip_y0||y>=clip_y1)return;
  if(fill_pattern&(0x8000>>(((y&3)<<2)|(x&3)))){if(fill_transparent)return;c=(c>>4)&15;}
- game_frame[y*128+x]=palette[c&15];
+ p8_frame_set(x,y,palette[c&15]);
 }
 static int sample(int x,int y){if((unsigned)x>=128||(unsigned)y>=128)return 0;uint8_t p=gfx[y*64+x/2];return(p>>((x&1)*4))&15;}
 static void set_sample(int x,int y,int c){if((unsigned)x>=128||(unsigned)y>=128)return;uint8_t *p=&gfx[y*64+x/2];int shift=(x&1)*4;*p=(*p&~(15<<shift))|((c&15)<<shift);}
@@ -445,7 +557,9 @@ static void rectfill(int x,int y,int xx,int yy,int c){if(x>xx){int t=x;x=xx;xx=t
  if(fill_pattern){for(int j=y;j<=yy;j++){int sy=j-camera_y;if(sy<clip_y0||sy>=clip_y1)continue;int a=x,b=xx;if(a-camera_x<clip_x0)a=clip_x0+camera_x;if(b-camera_x>=clip_x1)b=clip_x1-1+camera_x;for(int i=a;i<=b;i++)shape_pixel(i,j,c);}return;}
  x-=camera_x;xx-=camera_x;y-=camera_y;yy-=camera_y;
  if(x<clip_x0)x=clip_x0;if(y<clip_y0)y=clip_y0;if(xx>=clip_x1)xx=clip_x1-1;if(yy>=clip_y1)yy=clip_y1-1;
- for(int j=y;j<=yy;j++)if(x<=xx)memset(game_frame+j*128+x,palette[c&15],xx-x+1);}
+ if(x>xx)return;int v=palette[c&15];
+ /* Odd edge pixels share a byte with their neighbours; whole bytes in between are filled at once. */
+ for(int j=y;j<=yy;j++){int a=x,b=xx;if(a&1)p8_frame_set(a++,j,v);if(!(b&1)&&b>=a)p8_frame_set(b--,j,v);if(a<b)memset(game_frame+j*64+a/2,v|(v<<4),(size_t)(b-a+1)/2);}}
 static void line_draw(int x,int y,int xx,int yy,int c){if(abs(xx-x)>131072||abs(yy-y)>131072)p8_fail("line too long");int dx=abs(xx-x),sx=x<xx?1:-1,dy=-abs(yy-y),sy=y<yy?1:-1,err=dx+dy;
  for(;;){shape_pixel(x,y,c);if(x==xx&&y==yy)break;int e=2*err;if(e>=dy){err+=dy;x+=sx;}if(e<=dx){err+=dx;y+=sy;}}}
 static void circle(int x,int y,int r,int c,bool fill){if(r<0)return;if(r>2048)p8_fail("circle radius exceeds subset limit");int xx=r,yy=0,err=1-r;
@@ -499,7 +613,7 @@ static void rounded_rect(int x,int y,int w,int h,int r,int c,bool fill){
  }
 }
 /* System text (pause menu): raw screen pixels, unaffected by the cart's camera, clip and palette. */
-void p8_overlay_text(const char *s,int x,int y,int c){for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s&127;for(int row=0;row<6;row++)for(int col=0;col<4;col++){int px=x+col,py=y+row;if((p8_font[ch*6+row]&(1<<col))&&(unsigned)px<128&&(unsigned)py<128)game_frame[py*128+px]=(uint8_t)(c&15);}}}
+void p8_overlay_text(const char *s,int x,int y,int c){for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s&127;for(int row=0;row<6;row++)for(int col=0;col<4;col++){int px=x+col,py=y+row;if((p8_font[ch*6+row]&(1<<col))&&(unsigned)px<128&&(unsigned)py<128)p8_frame_set(px,py,c);}}}
 void p8_text(const char *s,int x,int y,int c){int origin=x;for(;*s;s++,x+=4){unsigned ch=(uint8_t)*s;if(ch=='\n'){x=origin-4;y+=6;continue;}
  // Source strings use P8SCII bytes. Common button icons match the physical A/B labels.
  if(ch>=128){if(ch==142)ch='a';else if(ch==151)ch='b';else ch='?';}
@@ -526,7 +640,8 @@ static void textured_line(int x0,int y0,int x1,int y1,int32_t mx,int32_t my,int3
   if(steps){ex+=dx;ey+=dy;if(dx>=dy){x+=sx;if(2*ey>=steps){y+=sy;ey-=steps;}}else{y+=sy;if(2*ex>=steps){x+=sx;ex-=steps;}}}
  }
 }
-static double real(V v){return (double)p8_number(v)/65536.0;}
+static int32_t api_number(V v);
+static double real(V v){return (double)api_number(v)/65536.0;}
 static V numeric(double n){if(!isfinite(n)||n< -32768.0||n>=32768.0)p8_fail("math result outside fixed point range");return p8_num((int32_t)floor(n*65536.));}
 /* Numeric text shared by TONUM, SELECT coercion and SPLIT. Hex/binary
  * construction uses unsigned bits, including the signed 16.16 wrap boundary.
@@ -555,8 +670,9 @@ static bool parse_fixed(V value,int32_t *result){
  }
  if(at==end||!((*at>='0'&&*at<='9')||*at=='.'))return false;
  char *stop;double number=strtod(start,&stop);
- if(stop!=end||!isfinite(number)||number< -32768.0||number>=32768.0)return false;
- *result=(int32_t)floor(number*65536.0);return true;
+ /* Out-of-range decimals wrap to 16.16 bits, as PICO-8's tonum("32768")==-32768. */
+ if(stop!=end||!isfinite(number)||fabs(number)>=140737488355328.0)return false;
+ *result=(int32_t)(uint32_t)(int64_t)floor(number*65536.0);return true;
 }
 /* API bitwise operands follow numeric conversion with zero fallback.
  * Operators continue to use p8_number and reject non-number values. */
@@ -573,14 +689,20 @@ static bool parse_raw_integer(V value,int32_t *result){
 static uint32_t random_next(void){uint32_t x=random_state;x^=x<<13;x^=x>>17;x^=x<<5;return random_state=x?x:1;}
 #define HAS(i) ((i)<argc)
 #define A(i) (HAS(i)?argv[i]:p8_nil())
-#define I(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?integer(argv[i]):(def))
+/* Built-in functions never raise on argument types: PICO-8 reads a value that
+ * is neither a number nor a numeric string as 0. Operators stay strict. */
+static int32_t api_number(V v){int32_t n;if(v.tag==P8_NUM)return v.n;if(v.tag==P8_STR&&parse_fixed(v,&n))return n;return 0;}
+#define I(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?api_number(argv[i])>>16:(def))
 /* Fixed-point argument with a default, for APIs that keep the fraction. */
-#define F(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?p8_number(argv[i]):(def))
+#define F(i,def) ((HAS(i)&&argv[i].tag!=P8_NIL)?api_number(argv[i]):(def))
 #define C(i) I(i,draw_color)
 #define IS(api) (id==(api))
 /* ---- PICO-8 base RAM (0x0000..0x7fff) mapped onto the runtime state ---- */
 static int repeat_delay(void){int d=hw_ram[0x5c];return d?d:15;}
 static int repeat_interval(void){int i=hw_ram[0x5d];return i?i:4;}
+#ifdef P8_UPPER_RAM
+static uint8_t upper_ram[0x8000];
+#endif
 static uint8_t mem_read(int address){
  address&=0xffff;
  if(address<0x2000)return gfx[address];
@@ -602,8 +724,12 @@ static uint8_t mem_read(int address){
   if(r>=0x60&&r<0x70)return secondary_palette[r-0x60];
   return hw_ram[r];
  }
- if(address<0x8000){int at=(address-0x6000)*2;return (uint8_t)((game_frame[at]&15)|((game_frame[at+1]&15)<<4));}
+ if(address<0x8000)return game_frame[address-0x6000];
+#ifdef P8_UPPER_RAM
+ return upper_ram[address-0x8000];
+#else
  return 0;/* Upper 32 KB is not mapped on this target; reads return zero. */
+#endif
 }
 static void mem_write(int address,uint8_t v){
  address&=0xffff;
@@ -627,8 +753,12 @@ static void mem_write(int address,uint8_t v){
   if(r>=0x60&&r<0x70){secondary_palette[r-0x60]=v;return;}
   hw_ram[r]=v;return;
  }
- if(address<0x8000){int at=(address-0x6000)*2;game_frame[at]=v&15;game_frame[at+1]=v>>4;return;}
+ if(address<0x8000){game_frame[address-0x6000]=v;return;}
+#ifdef P8_UPPER_RAM
+ upper_ram[address-0x8000]=v;
+#else
  p8_fail("upper memory 0x8000-0xffff is not available on this target");
+#endif
 }
 static int address_of(V v){return (int)(((uint32_t)p8_number(v)>>16)&0xffff);}
 /* Original cartridge ROM, used by reload(). Sound data is optional for older generated assets. */
@@ -710,19 +840,27 @@ void p8_menu_select(int index,int buttons){
 /* ---- Runtime-native closures (iterator values, all(), next, coroutines) ---- */
 enum {NATIVE_NEXT=P8_RUNTIME_NATIVE,NATIVE_INEXT,NATIVE_ALL};
 static V native_value(int fn,int count,const V *cells){return p8_closure(fn,count,cells);}
+/* The global inext: the iterator ipairs returns. */
+V p8_inext(void){return native_value(NATIVE_INEXT,0,NULL);}
 /* ---- Coroutines: each one runs native code on its own small stack ---- */
 #if defined(__SANITIZE_ADDRESS__)
 #include <sanitizer/common_interface_defs.h>
 #include <sanitizer/asan_interface.h>
 #define P8_ASAN 1
 #endif
+/* The host check uses the device's coroutine count, so a cart that needs more fails there too. */
 #ifndef P8_COROUTINES
-#if defined(__arm__)
+#ifdef P8_LARGE_POOLS
+#define P8_COROUTINES 8
+#else
 #define P8_COROUTINES 4
+#endif
+#endif
+#ifndef P8_COROUTINE_STACK
+#if defined(__arm__)
 #define P8_COROUTINE_STACK 3072
 #else
-#define P8_COROUTINES 8
-#define P8_COROUTINE_STACK 65536
+#define P8_COROUTINE_STACK 262144
 #endif
 #endif
 enum {CO_FREE,CO_SUSPENDED,CO_RUNNING,CO_NORMAL,CO_DEAD};
@@ -860,17 +998,23 @@ static void sweep_coroutines(void){for(int i=0;i<P8_COROUTINES;i++){if(coroutine
 /* -1: not a live coroutine; otherwise the mark bit (optionally setting it). */
 static int coroutine_mark(int i,bool set){if((unsigned)i>=P8_COROUTINES||coroutines[i].state==CO_FREE)return -1;if(set)coroutines[i].mark=1;return coroutines[i].mark;}
 static void reset_coroutines(void){memset(coroutines,0,sizeof coroutines);current_coroutine=-1;main_sp=NULL;}
+/* poke(address,unpack(t)) without expanding t into call arguments. */
+V p8_poke_unpack(int size,V address,V table){
+ int at=address_of(address),n=raw_length(table);p8_tick();
+ if(n<1){V args[1]={address};return p8_api_id(size==1?P8_API_poke:size==2?P8_API_poke2:P8_API_poke4,1,args);}
+ for(int i=1;i<=n;i++,at+=size){V v=raw_get(table,p8_int(i));uint32_t bits=v.tag==P8_NUM?(uint32_t)v.n:0;if(size<4)bits>>=16;for(int b=0;b<size;b++)mem_write(at+b,(uint8_t)(bits>>(8*b)));}
+ return p8_nil();}
 V p8_api_id(int id,int argc,const V *argv){
 #ifdef P8_API_PROFILE
  if((unsigned)id<P8_API_COUNT)api_profile_hits[id]++;
 #endif
  p8_tick();
- if(IS(P8_API_cls)){memset(game_frame,palette[I(0,0)&15],sizeof game_frame);cursor_x=cursor_y=clip_x0=clip_y0=0;clip_x1=clip_y1=128;return p8_nil();}
+ if(IS(P8_API_cls)){int v=palette[I(0,0)&15];memset(game_frame,v|(v<<4),sizeof game_frame);cursor_x=cursor_y=clip_x0=clip_y0=0;clip_x1=clip_y1=128;return p8_nil();}
  if(IS(P8_API_pset)){int c=C(2);if(HAS(2))draw_color=c&255;shape_pixel(I(0,0),I(1,0),c);return p8_nil();}
- if(IS(P8_API_pget)){int x=I(0,0)-camera_x,y=I(1,0)-camera_y;return p8_int((unsigned)x<128&&(unsigned)y<128?game_frame[y*128+x]:0);}
+ if(IS(P8_API_pget)){int x=I(0,0)-camera_x,y=I(1,0)-camera_y;return p8_int((unsigned)x<128&&(unsigned)y<128?p8_frame_get(x,y):0);}
  if(IS(P8_API_rectfill)||IS(P8_API_rect)){int x=I(0,0),y=I(1,0),xx=I(2,0),yy=I(3,0),c=C(4);draw_color=c&255;if(IS(P8_API_rectfill))rectfill(x,y,xx,yy,c);else{line_draw(x,y,xx,y,c);line_draw(xx,y,xx,yy,c);line_draw(xx,yy,x,yy,c);line_draw(x,yy,x,y,c);}return p8_nil();}
  if(IS(P8_API_line)){
-  if(argc>5)p8_fail("line accepts at most five arguments");
+  if(argc>5)argc=5;/* PICO-8 ignores surplus arguments. */
   if(argc<2){if(argc)draw_color=I(0,6)&15;line_started=false;return p8_nil();}
   int x=I(0,0),y=I(1,0),c=argc<4?C(2):C(4);draw_color=c&255;
   if(argc>=4){line_x=x;line_y=y;x=I(2,0);y=I(3,0);line_started=true;}
@@ -884,7 +1028,7 @@ V p8_api_id(int id,int argc,const V *argv){
   for(const char *at=s;*at;at++)if(*at=='\n')lines++;
   if(implicit&&y+(lines-1)*6>122){int scroll=((y+(lines-1)*6-122+5)/6)*6;
    if(scroll>=128)memset(game_frame,0,sizeof game_frame);
-   else{memmove(game_frame,game_frame+scroll*128,(128-scroll)*128);memset(game_frame+(128-scroll)*128,0,scroll*128);}
+   else{memmove(game_frame,game_frame+scroll*64,(size_t)(128-scroll)*64);memset(game_frame+(128-scroll)*64,0,(size_t)scroll*64);}
    y-=scroll;
   }
   draw_color=c&15;p8_text(s,x,y,c);cursor_x=0;cursor_y=y+6*lines;return p8_int(x+4*(int)strlen(s));
@@ -916,10 +1060,10 @@ V p8_api_id(int id,int argc,const V *argv){
    if(argc>2)p8_fail("table pal accepts at most two arguments");
    int tid=table_id(A(0));
    /* Keep this overload bounded to the documented palette/list indices. */
-   for(int at=tables[tid].head;at;at=entries[at-1].next){
+   for(int at=tables[tid].head;at;at=entry_next[at-1]){
     V key=ENTRY_KEY(at-1),value=ENTRY_VALUE(at-1);
-    if(key.tag!=P8_NUM||(key.n&65535)||key.n<0||key.n>16*65536)
-     p8_fail("pal table keys must be integers from 0 to 16");
+    /* Only keys 0-16 address colors; PICO-8 ignores any others. */
+    if(key.tag!=P8_NUM||(key.n&65535)||key.n<0||key.n>16*65536)continue;
     if(value.tag!=P8_NUM)p8_fail("pal table values must be numbers");
    }
    if(raw_get(A(0),p8_int(0)).tag!=P8_NIL&&raw_get(A(0),p8_int(16)).tag!=P8_NIL)
@@ -946,14 +1090,18 @@ V p8_api_id(int id,int argc,const V *argv){
   return p8_int((int)old);
  }
  if(IS(P8_API_spr)){sprite(I(0,0),I(1,0),I(2,0),I(3,1),I(4,1),p8_truth(A(5)),p8_truth(A(6)));return p8_nil();}
- if(IS(P8_API_sspr)){int sx=I(0,0),sy=I(1,0),sw=I(2,1),sh=I(3,1),dx=I(4,0),dy=I(5,0),dw=I(6,sw),dh=I(7,sh);bool fx=p8_truth(A(8)),fy=p8_truth(A(9));if(sw<1||sh<1||dw<1||dh<1||dw>1024||dh>1024)p8_fail("unsupported sspr dimensions");for(int y=0;y<dh;y++)for(int x=0;x<dw;x++){int c=sample(sx+(fx?dw-1-x:x)*sw/dw,sy+(fy?dh-1-y:y)*sh/dh);if(!transparent[c])pixel(dx+x,dy+y,c);}return p8_nil();}
+ if(IS(P8_API_sspr)){int sx=I(0,0),sy=I(1,0),sw=I(2,1),sh=I(3,1),dx=I(4,0),dy=I(5,0),dw=I(6,sw),dh=I(7,sh);bool fx=p8_truth(A(8)),fy=p8_truth(A(9));if(sw<1||sh<1||!dw||!dh)return p8_nil();
+  /* A negative destination size mirrors the image back from dx/dy. Only rows and columns inside the clip are walked. */
+  if(dw<0){dw=-dw;dx-=dw;fx=!fx;}if(dh<0){dh=-dh;dy-=dh;fy=!fy;}
+  int x0=clip_x0+camera_x-dx,x1=clip_x1+camera_x-dx,y0=clip_y0+camera_y-dy,y1=clip_y1+camera_y-dy;if(x0<0)x0=0;if(y0<0)y0=0;if(x1>dw)x1=dw;if(y1>dh)y1=dh;
+  for(int y=y0;y<y1;y++)for(int x=x0;x<x1;x++){int c=sample(sx+(int)((int64_t)(fx?dw-1-x:x)*sw/dw),sy+(int)((int64_t)(fy?dh-1-y:y)*sh/dh));if(!transparent[c])pixel(dx+x,dy+y,c);}return p8_nil();}
  if(IS(P8_API_sget))return p8_int(sample(I(0,0),I(1,0)));
  if(IS(P8_API_sset)){set_sample(I(0,0),I(1,0),C(2));return p8_nil();}
  if(IS(P8_API_mget))return p8_int(mapget(I(0,0),I(1,0)));
  if(IS(P8_API_mset)){mapset(I(0,0),I(1,0),I(2,0));return p8_nil();}
  if(IS(P8_API_fget)){int tile=I(0,0),bit=I(1,0),f=(unsigned)tile<256?flags[tile]:0;return argc>1?p8_bool((unsigned)bit<8&&((f>>bit)&1)):p8_int(f);}
  if(IS(P8_API_fset)){int i=I(0,0)&255;if(argc==2)flags[i]=I(1,0);else if(p8_truth(A(2)))flags[i]|=1<<(I(1,0)&7);else flags[i]&=~(1<<(I(1,0)&7));return p8_nil();}
- if(IS(P8_API_map)){int mx=I(0,0),my=I(1,0),dx=I(2,0),dy=I(3,0),w=I(4,128),h=I(5,32),mask=I(6,0);if(w>128||h>64)p8_fail("map dimensions outside supported range");for(int y=0;y<h;y++)for(int x=0;x<w;x++){int tile=mapget(mx+x,my+y);if(tile&&(!mask||(flags[tile]&mask)))sprite(tile,dx+x*8,dy+y*8,1,1,false,false);}return p8_nil();}
+ if(IS(P8_API_map)){int mx=I(0,0),my=I(1,0),dx=I(2,0),dy=I(3,0),w=I(4,128),h=I(5,32),mask=I(6,0);/* Cells outside the 128x64 map read as 0 and draw nothing. */if(w>128)w=128;if(h>64)h=64;for(int y=0;y<h;y++)for(int x=0;x<w;x++){int tile=mapget(mx+x,my+y);if(tile&&(!mask||(flags[tile]&mask)))sprite(tile,dx+x*8,dy+y*8,1,1,false,false);}return p8_nil();}
  if(IS(P8_API_btn)||IS(P8_API_btnp)){int player=I(1,0);if(player<0||player>7)p8_fail("player index must be 0 to 7");unsigned bits=IS(P8_API_btn)?game_buttons:pressed;
   /* Only player one has physical buttons; other documented players read as idle. */
   if(!argc)return p8_int((int)bits);if(player)return p8_bool(false);int b=I(0,0);return p8_bool((unsigned)b<6&&(bits&(1u<<b)));}
@@ -975,7 +1123,10 @@ V p8_api_id(int id,int argc,const V *argv){
  if(IS(P8_API_count)){V t=A(0);if(t.tag==P8_NIL)return p8_int(0);int len=length(t);if(argc<2)return p8_int(len);int n=0;for(int i=1;i<=len;i++)if(equal(p8_get(t,p8_int(i)),A(1)))n++;return p8_int(n);}
  if(IS(P8_API_foreach)){int cursor=0;V last=p8_nil(),key,value;while(p8_iter_next("all",A(0),&cursor,&last,&key,&value))p8_call(A(1),1,&value);return p8_nil();}
  if(IS(P8_API_split)){
-  const char *s=string(A(0));V out=p8_table();int n=0;bool convert=argc<3||p8_truth(A(2));
+  /* A number is split as its tostr text; other non-strings give an empty table. */
+  V text=A(0);if(text.tag==P8_NUM){char b[32];text=p8_str(p8_describe(text,b,sizeof b));}
+  if(text.tag!=P8_STR)return p8_table();
+  const char *s=string(text);V out=p8_table();int n=0;bool convert=argc<3||p8_truth(A(2));
   int chunk=HAS(1)&&A(1).tag==P8_NUM?integer(A(1)):0;
   const char *sep=HAS(1)&&A(1).tag!=P8_NIL&&A(1).tag!=P8_NUM?string(A(1)):"\x2c";
   if(HAS(1)&&A(1).tag==P8_NUM&&chunk<1)p8_fail("split chunk length must be positive");
@@ -1000,18 +1151,18 @@ V p8_api_id(int id,int argc,const V *argv){
   if(n>=32)return p8_num(!left&&IS(P8_API_shr)&&((int32_t)bits<0)?-1:0);
   return p8_num((int32_t)(left?bits<<n:IS(P8_API_shr)?(uint32_t)((int32_t)bits>>n):bits>>n));
  }
- if(IS(P8_API_flr))return p8_num((int32_t)((uint32_t)p8_number(A(0))&0xffff0000u));
- if(IS(P8_API_ceil)){int32_t x=p8_number(A(0));return p8_num((int32_t)(((uint32_t)x&0xffff0000u)+((x&65535)?65536u:0)));}
- if(IS(P8_API_abs)){int32_t x=p8_number(A(0));return p8_num(x<0?(int32_t)(0u-(uint32_t)x):x);}
+ if(IS(P8_API_flr))return p8_num((int32_t)((uint32_t)api_number(A(0))&0xffff0000u));
+ if(IS(P8_API_ceil)){int32_t x=api_number(A(0));return p8_num((int32_t)(((uint32_t)x&0xffff0000u)+((x&65535)?65536u:0)));}
+ if(IS(P8_API_abs)){int32_t x=api_number(A(0));return p8_num(x<0?(int32_t)(0u-(uint32_t)x):x);}
  if(IS(P8_API_min)||IS(P8_API_max)){int32_t a=F(0,0),b=F(1,0);return p8_num(IS(P8_API_min)?(a<b?a:b):(a>b?a:b));}
  if(IS(P8_API_mid)){int32_t a=F(0,0),b=F(1,0),c=F(2,0);if(a>b){int32_t t=a;a=b;b=t;}if(b>c){int32_t t=b;b=c;c=t;}return p8_num(a>b?a:b);}
- if(IS(P8_API_sgn))return p8_int(p8_number(A(0))<0?-1:1);
+ if(IS(P8_API_sgn))return p8_int(api_number(A(0))<0?-1:1);
  if(IS(P8_API_sqrt)){double x=real(A(0));return numeric(sqrt(x<0?0:x));}
  if(IS(P8_API_sin))return numeric(-sin(real(A(0))*6.283185307179586));
  if(IS(P8_API_cos))return numeric(cos(real(A(0))*6.283185307179586));
  if(IS(P8_API_atan2)){double a=atan2(-real(A(1)),real(A(0)))/6.283185307179586;if(a<0)a+=1;return numeric(a);}
- if(IS(P8_API_srand)){random_state=(uint32_t)p8_number(A(0));if(!random_state)random_state=1;return p8_nil();}
- if(IS(P8_API_rnd)){uint32_t r=random_next();if(argc&&A(0).tag==P8_TABLE){int n=raw_length(A(0));return n?raw_get(A(0),p8_int((int)(r%(unsigned)n)+1)):p8_nil();}int32_t limit=HAS(0)?p8_number(A(0)):65536;if(limit<0)p8_fail("negative rnd range unsupported");return p8_num((int32_t)(((uint64_t)r*(uint32_t)limit)>>32));}
+ if(IS(P8_API_srand)){random_state=(uint32_t)api_number(A(0));if(!random_state)random_state=1;return p8_nil();}
+ if(IS(P8_API_rnd)){uint32_t r=random_next();if(argc&&A(0).tag==P8_TABLE){int n=raw_length(A(0));return n?raw_get(A(0),p8_int((int)(r%(unsigned)n)+1)):p8_nil();}/* A negative limit reads as unsigned, so rnd(-1) yields any 32-bit value. */uint32_t limit=(uint32_t)F(0,65536);return p8_num((int32_t)(((uint64_t)r*limit)>>32));}
  if(IS(P8_API_time)||IS(P8_API_t))return p8_num((int32_t)(((uint64_t)p8_frames*65536)/p8_target_hz));
  if(IS(P8_API_tostr)){
   if(!argc)return p8_str("");
@@ -1046,13 +1197,12 @@ V p8_api_id(int id,int argc,const V *argv){
   int index=I(1,1);V results[P8_MAX_RESULTS];
   if(A(0).tag!=P8_STR){if(count!=1)p8_fail("ord multiple results require a string");results[0]=p8_nil();return p8_return(1,results);}
   const char *text=string(A(0));int size=string_length(A(0));
-  if(index<1||index>size){if(count!=1)p8_fail("ord result range outside string unsupported");results[0]=p8_nil();return p8_return(1,results);}
-  if(count>size-index+1)p8_fail("ord result range outside string unsupported");
-  for(int n=0;n<count;n++)results[n]=p8_int((uint8_t)text[index-1+n]);
+  /* Positions outside the string give nil. */
+  for(int n=0;n<count;n++){int at=index+n;results[n]=at>=1&&at<=size?p8_int((uint8_t)text[at-1]):p8_nil();}
   return p8_return(count,results);
  }
- if(IS(P8_API_chr)){if(argc>=SL)p8_fail("chr result exceeds string limit");for(int i=0;i<argc;i++)string_scratch[i]=(char)(I(i,0)&255);return string_bytes(string_scratch,(size_t)argc);}
- if(IS(P8_API_sub)){const char *s=string(A(0));int len=string_length(A(0)),i=I(1,1),j=HAS(2)&&A(2).tag!=P8_NUM?i:I(2,len);if(i<0)i+=len+1;if(j<0)j+=len+1;if(i<1)i=1;if(j>len)j=len;int n=j>=i?j-i+1:0;if(i>len)n=0;return string_bytes(n?s+i-1:s,(size_t)n);}
+ if(IS(P8_API_chr)){char text[64];if(argc>(int)sizeof text)p8_fail("chr result exceeds string limit");for(int i=0;i<argc;i++)text[i]=(char)(I(i,0)&255);return string_bytes(text,(size_t)argc);}
+ if(IS(P8_API_sub)){V text=A(0);/* Numbers are converted as tostr does. */if(text.tag==P8_NUM){char b[32];text=p8_str(p8_describe(text,b,sizeof b));}const char *s=string(text);int len=string_length(text),i=I(1,1),j=HAS(2)&&A(2).tag!=P8_NUM?i:I(2,len);if(i<0)i+=len+1;if(j<0)j+=len+1;if(i<1)i=1;if(j>len)j=len;int n=j>=i?j-i+1:0;if(i>len)n=0;return string_bytes(n?s+i-1:s,(size_t)n);}
  if(IS(P8_API_sfx)){
   /* Silent but stateful: channel/note state advances and is visible to stat(). */
   int n=I(0,0),ch=I(1,-1),offset=I(2,0),len=I(3,0);
@@ -1165,8 +1315,8 @@ V p8_api_id(int id,int argc,const V *argv){
  }
  if(IS(P8_API_tline)){
   if(argc<6)p8_fail("unsupported tline() overload");
-  int32_t mdx=HAS(6)?p8_number(A(6)):0x2000,mdy=HAS(7)?p8_number(A(7)):0;
-  textured_line(I(0,0),I(1,0),I(2,0),I(3,0),p8_number(A(4)),p8_number(A(5)),mdx,mdy,I(8,0));return p8_nil();
+  int32_t mdx=HAS(6)?api_number(A(6)):0x2000,mdy=HAS(7)?api_number(A(7)):0;
+  textured_line(I(0,0),I(1,0),I(2,0),I(3,0),api_number(A(4)),api_number(A(5)),mdx,mdy,I(8,0));return p8_nil();
  }
  /* ---- Metatables ---- */
  if(IS(P8_API_setmetatable)){
@@ -1200,6 +1350,12 @@ V p8_api_id(int id,int argc,const V *argv){
  /* ---- Cartridge files and serial: one bundled cartridge, no host file system ---- */
  if(IS(P8_API_load)){char text[96];snprintf(text,sizeof text,"load(): only this cartridge is on the device (%s)",A(0).tag==P8_STR?string(A(0)):"?");p8_fail(text);}
  if(IS(P8_API_ls))return p8_table();
+ /* There is no file system to save the cartridge file into. */
+ if(IS(P8_API_save))return p8_nil();
+ if(IS(P8_API_cstore)){
+  /* Cartridge ROM is in flash: the range is checked and the write is discarded, so reload keeps reading the original data. */
+  int dst=HAS(0)?address_of(A(0)):0,src=HAS(1)?address_of(A(1)):0,len=I(2,0x4300);if(len>0){check_range(dst,len);check_range(src,len);}return p8_nil();
+ }
  if(IS(P8_API_serial)){
   /* No serial channel is wired up: reads and writes transfer nothing. */
   int length=I(2,0);(void)length;return p8_int(0);
@@ -1271,6 +1427,7 @@ static const char *const api_names[P8_API_COUNT]={
   [P8_API_load]="load",
   [P8_API_ls]="ls",
   [P8_API_serial]="serial",
+  [P8_API_save]="save",
   [P8_API_cls]="cls",
   [P8_API_pset]="pset",
   [P8_API_pget]="pget",
@@ -1350,10 +1507,13 @@ V p8_api(const char *name,int argc,const V *argv){
  p8_fail("unimplemented API");return p8_nil();
 }
 void p8_reset(void){
- memset(tables,0,sizeof tables);memset(entries,0,sizeof entries);memset(strings,0,sizeof strings);string_top=0;string_hint=table_hint=entry_hint=0;memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);
+ memset(tables,0,sizeof tables);memset(entry_tags,0,sizeof entry_tags);memset(entry_next,0,sizeof entry_next);memset(boxed_used,0,sizeof boxed_used);memset(strings,0,sizeof strings);string_top=0;string_hint=table_hint=entry_hint=0;memset(cells,0,sizeof cells);memset(closures,0,sizeof closures);
  for(int i=0;i<NU;i++){captures[i].cell=NO_LINK;captures[i].next=0;}
  memcpy(gfx,p8_cart_gfx,sizeof gfx);memcpy(map_data,p8_cart_map,sizeof map_data);memcpy(flags,p8_cart_flags,sizeof flags);
  if(p8_cart_sound)memcpy(sound_ram,p8_cart_sound,sizeof sound_ram);else memset(sound_ram,0,sizeof sound_ram);
+#ifdef P8_UPPER_RAM
+ memset(upper_ram,0,sizeof upper_ram);
+#endif
  memset(user_ram,0,sizeof user_ram);memset(persist_ram,0,sizeof persist_ram);memset(hw_ram,0,sizeof hw_ram);memset(game_frame,0,sizeof game_frame);
  for(int i=0;i<16;i++){palette[i]=i;transparent[i]=(i==0);p8_screen_palette[i]=i;secondary_palette[i]=i;}
  memset(held_frames,0,sizeof held_frames);camera_x=camera_y=clip_x0=clip_y0=cursor_x=cursor_y=0;clip_x1=clip_y1=128;draw_color=6;

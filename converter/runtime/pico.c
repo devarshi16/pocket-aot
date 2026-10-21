@@ -17,13 +17,15 @@ static const uint8_t buttons[] = {16,20,2,18,15,17,19,21,3};
 static const uint32_t spi_speeds[] = {40000000,20000000,10000000};
 static critical_section_t video_lock;
 // Frames cross cores packed at 4 bits per pixel, as in PICO-8 screen memory.
-static uint8_t pending_frame[128*64], display_frame[128*64];
-static uint8_t pending_palette[16], display_palette[16];
+// Core 0 copies a finished frame straight into display_frame while core 1 is
+// not drawing it; a frame offered while core 1 is busy is offered again later.
+static uint8_t display_frame[128*64];
+static uint8_t display_palette[16];
 // Stream a scanline at a time; a full 115 KB RGB565 buffer is unnecessary.
 static uint8_t lcd_bytes[240*2];
 static uint16_t palette565[32];
 static uint8_t scale_lut[240];
-static bool pending;
+static bool frame_ready, rendering, missed;
 static volatile uint32_t video_frames, actual_spi, display_ms;
 static volatile unsigned speed_index;
 static bool paused;
@@ -96,7 +98,7 @@ static void video_core(void) {
     for (;;) {
         bool ready=false;
         critical_section_enter_blocking(&video_lock);
-        if (pending) { memcpy(display_frame,pending_frame,sizeof display_frame); memcpy(display_palette,pending_palette,sizeof display_palette); pending=false; ready=true; }
+        if (frame_ready) { frame_ready=false; rendering=true; ready=true; }
         critical_section_exit(&video_lock);
         if (!ready) { sleep_us(200); continue; }
         if (speed_index!=last_speed) {
@@ -118,17 +120,23 @@ static void video_core(void) {
             spi_write_blocking(spi1,lcd_bytes,sizeof lcd_bytes);
         }
         gpio_put(LCD_CS,1);
+        critical_section_enter_blocking(&video_lock); rendering=false; critical_section_exit(&video_lock);
         display_ms=(time_us_32()-start)/1000;
         video_frames++;
     }
 }
 
-static void publish(void) {
+static bool offer_frame(void) {
     critical_section_enter_blocking(&video_lock);
-    for (int i=0;i<128*64;i++) pending_frame[i]=(game_frame[2*i]&15)|((game_frame[2*i+1]&15)<<4);
-    memcpy(pending_palette,p8_screen_palette,sizeof pending_palette); pending=true;
+    bool taken=!rendering;
+    if (taken) { memcpy(display_frame,game_frame,sizeof display_frame); memcpy(display_palette,p8_screen_palette,sizeof display_palette); frame_ready=true; }
     critical_section_exit(&video_lock);
+    return taken;
 }
+/* game_frame stays unchanged until the next frame starts, so a missed frame is offered again while waiting. */
+static void publish(void) { missed=!offer_frame(); }
+/* For frames drawn over game_frame and then undone, such as the pause menu. */
+static void publish_now(void) { while (!offer_frame()) tight_loop_contents(); missed=false; }
 
 static uint16_t read_buttons(uint32_t now) {
     static uint16_t raw,stable;
@@ -144,7 +152,7 @@ static uint16_t read_buttons(uint32_t now) {
 
 
 static void error_screen(void) {
-    memset(game_frame,1,sizeof game_frame);
+    memset(game_frame,0x11,sizeof game_frame);
     V zero=p8_int(0);p8_api("camera",0,NULL);p8_api("clip",0,NULL);
     p8_text("CONVERSION RUNTIME ERROR",10,10,8);
     for(unsigned i=0;i<strlen(p8_error);i+=27){char line[28];snprintf(line,sizeof line,"%.27s",p8_error+i);p8_text(line,8,27+(i/27)*8,7);}
@@ -156,10 +164,11 @@ static int menu_cursor;
 /* Pause overlay: cartridge menuitem() entries followed by CONTINUE. */
 static void draw_pause_menu(void) {
     /* Only the menu box is drawn over, so only it is saved: six rows at most. */
-    static uint8_t saved[(6*8+8)*80];
+    /* 80 pixels from x=24 are 40 whole bytes of the packed screen. */
+    static uint8_t saved[(6*8+8)*40];
     int items=p8_menu_count(),rows=items+1,h=rows*8+8,y0=64-h/2;
-    for (int y=0;y<h;y++) memcpy(saved+y*80,game_frame+(y0+y)*128+24,80);
-    for (int y=y0;y<y0+h;y++) memset(game_frame+y*128+24,0,80);
+    for (int y=0;y<h;y++) memcpy(saved+y*40,game_frame+(y0+y)*64+12,40);
+    for (int y=y0;y<y0+h;y++) memset(game_frame+y*64+12,0,40);
     int row=0;
     for (int i=1;i<=5;i++) {
         const char *label=p8_menu_label(i); if(!label) continue;
@@ -167,8 +176,8 @@ static void draw_pause_menu(void) {
     }
     p8_overlay_text("continue",36,y0+5+row*8,menu_cursor==row?7:6);
     p8_overlay_text(">",28,y0+5+menu_cursor*8,7);
-    publish();
-    for (int y=0;y<h;y++) memcpy(game_frame+(y0+y)*128+24,saved+y*80,80);
+    publish_now();
+    for (int y=0;y<h;y++) memcpy(game_frame+(y0+y)*64+12,saved+y*40,40);
 }
 static int menu_entry(int row) { int seen=0; for (int i=1;i<=5;i++) if (p8_menu_label(i)) { if (seen==row) return i; seen++; } return 0; }
 /* Returns true while the game should stay paused. */
@@ -192,7 +201,7 @@ static void service_usb(uint32_t now) {
     int ch=getchar_timeout_us(0);
     if(ch=='s')status();else if(ch=='b')reset_usb_boot(0,0);else if(ch=='p')paused=!paused;
     else if(ch=='i'){int value=getchar_timeout_us(10000);if(value>=0){injected=value&63;inject_until=now+250000;}}
-    else if(ch=='f'){printf("FRAME 16384\n");fwrite(game_frame,1,sizeof game_frame,stdout);fflush(stdout);}
+    else if(ch=='f'){printf("FRAME 16384\n");for(int i=0;i<128*128;i++)putchar(p8_frame_get(i&127,i>>7));fflush(stdout);}
 }
 static void poll_buttons(uint32_t now) {
     physical_buttons=read_buttons(now);latched_buttons|=physical_buttons&~last_buttons;last_buttons=physical_buttons;
@@ -202,6 +211,7 @@ static void poll_buttons(uint32_t now) {
 static uint8_t wait_frame(void) {
     for (;;) {
         uint32_t now=time_us_32();poll_buttons(now);service_usb(now);
+        if(missed)publish();
         if((int32_t)(now-next_frame)>=0){
             unsigned interval=1000000/p8_target_hz;next_frame+=interval;if((int32_t)(now-next_frame)>100000)next_frame=now+interval;
             uint16_t latched=latched_buttons;latched_buttons=0;
@@ -243,7 +253,7 @@ int main(void) {
     p8_stack_top=&__StackTop;
     panel_init();critical_section_init(&video_lock);next_frame=time_us_32();restart();multicore_launch_core1(video_core);publish();
     for(;;){
-        if(failed){uint32_t now=time_us_32();poll_buttons(now);int ch=getchar_timeout_us(0);if(ch=='r')restart();else if(ch=='s')status();else if(ch=='b')reset_usb_boot(0,0);sleep_us(1000);continue;}
+        if(failed){uint32_t now=time_us_32();poll_buttons(now);if(missed)publish();int ch=getchar_timeout_us(0);if(ch=='r')restart();else if(ch=='s')status();else if(ch=='b')reset_usb_boot(0,0);sleep_us(1000);continue;}
         uint8_t held=wait_frame();
         int jump=setjmp(p8_guard);
         if(jump==P8_RESTART){restart();}

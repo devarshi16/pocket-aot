@@ -115,6 +115,8 @@ pub const APIS: &[&str] = &[
     "load",
     "ls",
     "serial",
+    "cstore",
+    "save",
 ];
 /// Builtins that publish their own result list (possibly empty or several values).
 const MULTI_RESULT_APIS: &[&str] = &[
@@ -174,7 +176,7 @@ const SINGLE_RESULT_APIS: &[&str] = &[
 /// Canonical PICO-8 APIs this target does not provide. Calling one stops the
 /// conversion, because deferring would hide a real capability gap behind a
 /// runtime error; an undefined cart-local name is not in this set.
-const UNIMPLEMENTED_APIS: &[&str] = &["save", "cstore"];
+const UNIMPLEMENTED_APIS: &[&str] = &[];
 /// Values per expression list. A final multi-value expression may add up to
 /// EXPANSION values beyond the fixed entries; this bounds each call site's
 /// stack array for the Pico's 16 KB stack.
@@ -184,6 +186,13 @@ const EXPANSION: usize = 16;
 struct Binding {
     c: String,
     cell: bool,
+}
+/// PICO-8 predefines the button glyphs as globals holding their button numbers.
+fn button_glyph(n: &str) -> Option<u8> {
+    ["⬅", "➡", "⬆", "⬇", "🅾", "❎"]
+        .iter()
+        .position(|g| n.trim_end_matches('\u{fe0f}') == *g)
+        .map(|i| i as u8)
 }
 fn global(n: &str) -> String {
     format!(
@@ -350,6 +359,43 @@ impl Emitter {
         };
         Ok(self.val(format!("p8_closure({id},{},{caps})", visible.len())))
     }
+    fn builtin(&self, e: &Expr, names: &[&str]) -> Option<String> {
+        match e {
+            Expr::Var(n)
+                if names.contains(&n.as_str())
+                    && !self.assigned.contains(n)
+                    && !self.scopes.iter().any(|s| s.contains_key(n)) =>
+            {
+                Some(n.clone())
+            }
+            _ => None,
+        }
+    }
+    /// `poke(a,unpack(t))` loads data tables far longer than the call result
+    /// limit, so it writes straight from the table instead of expanding it.
+    fn poke_unpack(&mut self, f: &Expr, args: &[Expr]) -> Result<Option<String>, Error> {
+        let Some(poke) = self.builtin(f, &["poke", "poke2", "poke4"]) else {
+            return Ok(None);
+        };
+        let [address, Expr::Call(u, inner)] = args else {
+            return Ok(None);
+        };
+        if inner.len() != 1 || self.builtin(u, &["unpack"]).is_none() {
+            return Ok(None);
+        }
+        self.apis.insert(poke.clone());
+        self.apis.insert("unpack".into());
+        let size = match poke.as_str() {
+            "poke" => 1,
+            "poke2" => 2,
+            _ => 4,
+        };
+        let address = self.expr(address)?;
+        let table = self.expr(&inner[0])?;
+        Ok(Some(
+            self.val(format!("p8_poke_unpack({size},{address},{table})")),
+        ))
+    }
     fn multi(&self, e: &Expr) -> bool {
         if let Expr::Call(f, _) = e {
             if let Expr::Var(n) = f.as_ref() {
@@ -368,18 +414,44 @@ impl Emitter {
             .ok_or_else(|| Error::new(0, "'...' used outside a vararg function"))
     }
     /// Append a final multi-value expression (call results or `...`) to `a`.
-    fn expand(&mut self, e: &Expr, a: &str, n: &str, capacity: usize) -> Result<(), Error> {
+    /// With `truncate`, values past the capacity are dropped instead of failing.
+    fn expand(
+        &mut self,
+        e: &Expr,
+        a: &str,
+        n: &str,
+        capacity: usize,
+        truncate: bool,
+    ) -> Result<(), Error> {
+        let full = if truncate {
+            "break;"
+        } else {
+            "p8_fail(\"too many values in expression list\");"
+        };
         if is_vararg(e) {
             let base = self.vararg_base()?;
-            self.line(format!("for(int j={base};j<argc;j++){{if({n}>={capacity})p8_fail(\"too many values in expression list\");{a}[{n}++]=argv[j];}}"));
+            self.line(format!(
+                "for(int j={base};j<argc;j++){{if({n}>={capacity}){full}{a}[{n}++]=argv[j];}}"
+            ));
         } else {
             self.expr(e)?;
-            self.line(format!("if({n}+p8_result_count()>{capacity})p8_fail(\"too many values in expression list\");for(int j=0;j<p8_result_count();j++){a}[{n}++]=p8_result(j);"));
+            self.line(format!("for(int j=0;j<p8_result_count();j++){{if({n}>={capacity}){full}{a}[{n}++]=p8_result(j);}}"));
         }
         Ok(())
     }
     fn args(&mut self, args: &[Expr]) -> Result<(String, String), Error> {
-        if args.len() > MAX_LIST {
+        self.args_kept(args, None)
+    }
+    /// Values for an assignment to `keep` targets: extra values are dropped, as in Lua.
+    fn args_kept(&mut self, args: &[Expr], keep: Option<usize>) -> Result<(String, String), Error> {
+        // Assignments only bind values; calls also bound argc for the runtime.
+        if args.len()
+            > if keep.is_some() {
+                4 * MAX_LIST
+            } else {
+                MAX_LIST
+            }
+        {
             return Err(Error::new(
                 0,
                 "at most 64 values per expression list are supported",
@@ -387,7 +459,9 @@ impl Emitter {
         }
         let a = self.fresh();
         let n = self.fresh();
-        let capacity = if args.last().is_some_and(|e| self.multi(e)) {
+        let capacity = if let Some(keep) = keep {
+            keep.max(args.len())
+        } else if args.last().is_some_and(|e| self.multi(e)) {
             args.len() - 1 + EXPANSION
         } else {
             args.len() + 1
@@ -395,7 +469,7 @@ impl Emitter {
         self.line(format!("V {a}[{capacity}];int {n}=0;"));
         for (i, e) in args.iter().enumerate() {
             if i + 1 == args.len() && self.multi(e) {
-                self.expand(e, &a, &n, capacity)?;
+                self.expand(e, &a, &n, capacity, keep.is_some())?;
             } else {
                 let v = self.expr(e)?;
                 self.line(format!("{a}[{n}++]={v};"));
@@ -414,10 +488,8 @@ impl Emitter {
             Expr::Str(s) => {
                 let length = cbytes(s);
                 if length > 8191 {
-                    return Err(Error::new(
-                        0,
-                        "strings longer than 8191 bytes are not supported yet",
-                    ));
+                    // Kept in program memory instead of the string arena.
+                    return Ok(self.val(format!("p8_strlong({},{length})", cstr(s))));
                 }
                 if super::charset::bytes(s).contains(&0) {
                     self.val(format!("p8_strn({},{length})", cstr(s)))
@@ -468,6 +540,13 @@ impl Emitter {
                     self.val(format!("p8_binary({},{a},{b})", cstr(op)))
                 }
             }
+            Expr::Index(a, k)
+                if matches!(&**a, Expr::Var(n) if n == "_ENV")
+                    && !self.scopes.iter().any(|s| s.contains_key("_ENV")) =>
+            {
+                let k = self.expr(k)?;
+                self.val(format!("p8_env_index({k})"))
+            }
             Expr::Index(a, k) => {
                 let a = self.expr(a)?;
                 let k = self.expr(k)?;
@@ -476,9 +555,13 @@ impl Emitter {
             Expr::Table(items) => {
                 let t = self.val("p8_table()".into());
                 for (k, v) in items {
+                    // A block per field ends its temporaries' lifetimes, so GCC can
+                    // reuse their stack slots across a long constructor.
+                    self.line("{");
                     let k = self.expr(k)?;
                     let v = self.expr(v)?;
                     self.line(format!("p8_set({t},{k},{v});"));
+                    self.line("}");
                 }
                 t
             }
@@ -526,6 +609,9 @@ impl Emitter {
                         // raises only if the call is reached, so defer to runtime
                         // instead of rejecting a cartridge for an unused branch.
                     }
+                }
+                if let Some(v) = self.poke_unpack(f, args)? {
+                    return Ok(v);
                 }
                 let f = self.expr(f)?;
                 let (n, a) = self.args(args)?;
@@ -591,7 +677,7 @@ impl Emitter {
                         self.line(format!("V {t}=p8_nil();"));
                     }
                     self.line("{");
-                    let (count, vals) = self.args(rhs)?;
+                    let (count, vals) = self.args_kept(rhs, Some(temps.len()))?;
                     for (i, t) in temps.iter().enumerate() {
                         self.line(format!("if({count}>{i}){t}={vals}[{i}];"));
                     }
@@ -606,8 +692,9 @@ impl Emitter {
                     }
                     return Ok(());
                 }
-                let (count, vals) = self.args(rhs)?;
-                for (i, (n, t, k)) in dest.into_iter().enumerate() {
+                let (count, vals) = self.args_kept(rhs, Some(dest.len()))?;
+                // Like the reference Lua, assign right to left: in `a,a=1,2` a ends up 1.
+                for (i, (n, t, k)) in dest.into_iter().enumerate().rev() {
                     let v = format!("{count}>{i}?{vals}[{i}]:p8_nil()");
                     if let Some(n) = n {
                         if *local {
@@ -839,7 +926,10 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "ord" => (1, 3),
         "chr" => (0, 16),
         "pset" => (2, 3),
-        "pget" | "sget" | "mget" => (2, 2),
+        // A surplus third argument is ignored, as PICO-8 does.
+        "pget" | "sget" | "mget" => (2, 3),
+        // srand() seeds with 0.
+        "srand" => (0, 1),
         "rectfill" | "rect" => (4, 5),
         "line" => (0, 5),
         "rawget" | "rawequal" => (2, 2),
@@ -892,6 +982,8 @@ fn validate_api(name: &str, n: usize) -> Result<(), Error> {
         "load" => (1, 3),
         "ls" => (0, 1),
         "serial" => (3, 3),
+        "cstore" => (0, 4),
+        "save" => (0, 1),
         _ => (1, 1),
     };
     if n < min || n > max {
@@ -956,6 +1048,11 @@ fn vars_expr(e: &Expr, n: &mut BTreeSet<String>) {
         Expr::Function(args, b) => {
             n.extend(args.iter().cloned());
             vars(b, n);
+        }
+        // String literals are kept with a NUL prefix so `_ENV[name]` lookups
+        // can find the builtins they name; emit() removes them again.
+        Expr::Str(s) => {
+            n.insert(format!("\0{s}"));
         }
         _ => {}
     }
@@ -1190,6 +1287,24 @@ fn assigned(b: &[Stmt], n: &mut BTreeSet<String>) {
 pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> {
     let mut names = BTreeSet::new();
     vars(body, &mut names);
+    let strings: Vec<String> = names
+        .iter()
+        .filter(|n| n.starts_with('\0'))
+        .cloned()
+        .collect();
+    for s in &strings {
+        names.remove(s);
+    }
+    if names.contains("_ENV") {
+        // `_ENV[name]` reads globals by name; builtins named in literals must exist as globals.
+        for s in &strings {
+            for word in s[1..].split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {
+                if APIS.contains(&word) {
+                    names.insert(word.into());
+                }
+            }
+        }
+    }
     for n in ["_init", "_draw", "_update", "_update60"] {
         names.insert(n.into());
     }
@@ -1213,6 +1328,9 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
         if names.contains(*n) {
             e.line(format!("{}=p8_closure({},0,NULL);", global(n), 10000 + i));
         }
+    }
+    if names.contains("inext") && !e.assigned.contains("inext") {
+        e.line(format!("{}=p8_inext();", global("inext")));
     }
     e.body(body)?;
     e.line(format!(
@@ -1241,22 +1359,22 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
     for (id, _) in e.functions.clone() {
         e.line(format!("case {id}:return fn_{id}(self,argc,argv);"));
     }
+    // Every builtin gets a case: `_ENV[name]` can look one up by a computed name.
     for (i, n) in APIS.iter().enumerate() {
-        if names.contains(*n) {
-            // These builtins publish their own result list, including zero results.
-            // Keep other APIs scalar: e.g. foreach may leave callback results behind.
-            if MULTI_RESULT_APIS.contains(n) {
-                e.line(format!(
-                    "case {}:return p8_api_id(P8_API_{},argc,argv);",
-                    10000 + i,
-                    n
-                ));
-            } else {
-                e.line(format!(
-                    "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
-                    10000 + i, n
-                ));
-            }
+        // These builtins publish their own result list, including zero results.
+        // Keep other APIs scalar: e.g. foreach may leave callback results behind.
+        if MULTI_RESULT_APIS.contains(n) {
+            e.line(format!(
+                "case {}:return p8_api_id(P8_API_{},argc,argv);",
+                10000 + i,
+                n
+            ));
+        } else {
+            e.line(format!(
+                "case {}:{{V result=p8_api_id(P8_API_{},argc,argv);return p8_return(1,&result);}}",
+                10000 + i,
+                n
+            ));
         }
     }
     e.line("default:p8_fail(\"invalid native function\");return p8_nil();}}");
@@ -1274,7 +1392,10 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
     e.line("}");
     e.line("void p8_program_clear(void){");
     for n in &names {
-        e.line(format!("{}=p8_nil();", global(n)));
+        match button_glyph(n) {
+            Some(b) => e.line(format!("{}=p8_int({b});", global(n))),
+            None => e.line(format!("{}=p8_nil();", global(n))),
+        }
     }
     e.line("}");
     e.line("V p8_debug_global(const char *name){");
@@ -1284,6 +1405,15 @@ pub fn emit(body: &[Stmt], title: &str) -> Result<(String, Vec<String>), Error> 
             cstr(n),
             global(n)
         ));
+    }
+    for (i, n) in APIS.iter().enumerate() {
+        if !names.contains(*n) {
+            e.line(format!(
+                "if(!strcmp(name,{}))return p8_closure({},0,NULL);",
+                cstr(n),
+                10000 + i
+            ));
+        }
     }
     e.line("return p8_nil();}");
     Ok((e.out, e.apis.into_iter().collect()))

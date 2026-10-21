@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Compile a self-contained .p8 cartridge to native RP2040 UF2, optionally add it to the shelf."""
+"""Compile a self-contained .p8 cartridge to native RP2040 or RP2350 UF2, optionally add it to the shelf."""
 from pathlib import Path
 import argparse, hashlib, json, os, re, shutil, struct, subprocess, sys
 
 from cartridge_input import prepare_source
 
 ROOT = Path(__file__).resolve().parent.parent
+# PICO_BOARD -> (chip, UF2 family id). RP2350 builds run in Arm secure mode.
+BOARDS = {'pico': ('RP2040', 0xe48bff56), 'pico_w': ('RP2040', 0xe48bff56),
+          'pico2': ('RP2350', 0xe48bff59), 'pico2_w': ('RP2350', 0xe48bff59)}
 
 
 def compiler_binary():
@@ -35,12 +38,46 @@ def command(args, cwd=None, timeout=120):
     return result.stdout
 
 
+# Set once the cartridge and board are known, so a failed --library build can
+# record why this chip has no firmware for the cartridge.
+FAILURE = {}
+
+
+def short_blocker(text):
+    """The cartridge-level reason inside a failed build's output, in a few words."""
+    for line in text.splitlines():
+        if 'CARTRIDGE_ERROR:' in line:
+            return re.sub(r' frame=\d+$', '', line.split('CARTRIDGE_ERROR:', 1)[1].strip())
+    if re.search(r"region .RAM. overflowed|will not fit in region|static data exceeds", text):
+        return 'firmware does not fit in RAM'
+    if 'stack budget' in text:
+        return 'native stack budget exceeded'
+    match = re.search(r'conversion stopped: (.+)', text)
+    if match:
+        return match.group(1).strip()
+    return text.strip().splitlines()[-1][:200] if text.strip() else 'build failed'
+
+
+def record_failure(error):
+    """Note on the cartridge's shelf entry why this chip's build failed."""
+    if not FAILURE.get('library'):
+        return
+    path = ROOT / 'catalog.json'
+    catalog = json.loads(path.read_text())
+    for entry in catalog['cartridges']:
+        if entry.get('source_file') and (ROOT / entry['source_file']).resolve() == FAILURE['source']:
+            entry['blocker_' + FAILURE['chip'].lower()] = short_blocker(str(error))
+            temp = path.with_suffix('.tmp'); temp.write_text(json.dumps(catalog, indent=2) + '\n'); temp.replace(path)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('source', type=Path)
     parser.add_argument('--title')
     parser.add_argument('--library', action='store_true')
     parser.add_argument('--frames', type=int, default=1200)
+    parser.add_argument('--board', choices=sorted(BOARDS), default=os.environ.get('PICO_BOARD', 'pico'),
+                        help='Pico SDK board; pico2_w builds for the Raspberry Pi Pico 2 W (RP2350)')
     args = parser.parse_args()
     source = args.source.expanduser().resolve()
     if source.suffix.lower() not in ('.p8','.png','.rom'):
@@ -48,6 +85,11 @@ def main():
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     slug = re.sub('[^a-z0-9]+', '-', source.stem.lower()).strip('-')[:32] or 'cartridge'
     cart_id = 'aot-' + slug + '-' + digest[:8]
+    chip, family = BOARDS[args.board]
+    shelf_id = cart_id  # Both chips' firmware share one shelf entry.
+    FAILURE.update(library=args.library, source=source, chip=chip)
+    if args.board != 'pico':
+        cart_id += '-' + args.board.replace('_', '')
     dest = ROOT / 'converted' / cart_id
     title = args.title or source.stem.replace('_', ' ').replace('-', ' ').title()
     if source.suffix.lower() != '.p8':
@@ -60,7 +102,9 @@ def main():
     runtime = ROOT / 'converter/runtime'
     sources = [runtime / 'p8.c', runtime / 'host.c', dest / 'game.c', dest / 'assets.c']
     print('Checking the generated game on this computer...', flush=True)
-    output += command(['gcc', '-O1', '-g', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
+    # The host check uses the same pool sizes as the board's firmware.
+    pools = ['-DP8_LARGE_POOLS'] if chip == 'RP2350' else []
+    output += command(['gcc', '-O1', '-g', '-fsanitize=address,undefined', '-fno-omit-frame-pointer', *pools,
                        '-I' + str(runtime), *sources, '-lm', '-o', dest / 'host-check'])
     output += command([dest / 'host-check', str(args.frames)], cwd=dest, timeout=45)
     sdk_env = os.environ.get('PICO_SDK_PATH')
@@ -75,10 +119,10 @@ def main():
         cmake_toolchain = ['-DPICO_TOOLCHAIN_PATH=' + str(Path(toolchain_env).expanduser().resolve())]
     elif not shutil.which('arm-none-eabi-gcc'):
         raise RuntimeError('Put arm-none-eabi-gcc on PATH or set PICO_TOOLCHAIN_PATH to the Arm toolchain directory.')
-    print('Compiling the RP2040 firmware...', flush=True)
+    print('Compiling the ' + chip + ' firmware...', flush=True)
     output += command(['cmake', '-S', ROOT / 'converter', '-B', dest / 'build', '-G', 'Ninja',
                        '-DCMAKE_BUILD_TYPE=Release', '-DCART_DIR=' + str(dest),
-                       '-DPICO_SDK_PATH=' + str(sdk), *cmake_toolchain])
+                       '-DPICO_SDK_PATH=' + str(sdk), '-DPICO_BOARD=' + args.board, *cmake_toolchain])
     output += command(['cmake', '--build', dest / 'build', '-j4'])
     # All generated calls pass through p8_dispatch. Bound one native transition
     # against the Pico runtime's 4 KB stack headroom check.
@@ -94,7 +138,7 @@ def main():
     initial=max((r['bytes'] for r in stack_rows if r['function']=='p8_program_init'),default=0)
     if largest+dispatcher>3072 or initial>3072 or any(r['kind']!='static' for r in stack_rows):
         raise RuntimeError('Generated native stack frames exceed the bounded Pico stack budget')
-    (dest/'stack-usage.json').write_text(json.dumps(dict(frames=stack_rows,max_call_transition=largest+dispatcher,initial_frame=initial,core0_stack=16384,headroom_guard=4096),indent=2)+'\n')
+    (dest/'stack-usage.json').write_text(json.dumps(dict(frames=stack_rows,max_call_transition=largest+dispatcher,initial_frame=initial,core0_stack=40960 if chip=='RP2350' else 16384,headroom_guard=4096),indent=2)+'\n')
     # Emit the same contiguous family-tagged UF2 layout accepted by the flasher.
     data = (dest / 'build/pocket_aot.bin').read_bytes()
     if len(data) > 2 * 1024 * 1024:
@@ -102,14 +146,19 @@ def main():
     count = (len(data) + 255) // 256
     firmware = dest / 'cartridge.uf2'
     with firmware.open('wb') as f:
+        if chip == 'RP2350':
+            # RP2350-E10: picotool's ignorable absolute-family block, so A2 boot ROMs
+            # write the image at its absolute flash address.
+            f.write(struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0xa000, 0x10ffff00, 256, 0, 2, 0xe48bff57))
+            f.write(b'\xef' * 256 + struct.pack('<I', 0x9957e304) + bytes(216) + struct.pack('<I', 0x0ab16f30))
         for i in range(count):
-            f.write(struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0x2000, 0x10000000 + 256 * i, 256, i, count, 0xe48bff56))
+            f.write(struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0x2000, 0x10000000 + 256 * i, 256, i, count, family))
             f.write(data[256 * i:256 * (i + 1)].ljust(256, b'\xff') + bytes(220) + struct.pack('<I', 0x0ab16f30))
     (dest / 'build.log').write_text(output)
     report = json.loads((dest / 'conversion.json').read_text())
     report.update(original_source=str(source), original_sha256=digest, input_format={'.png':'p8.png','.rom':'p8.rom','.p8':'p8'}[source.suffix.lower()], uf2_sha256=hashlib.sha256(firmware.read_bytes()).hexdigest(), host_frames=args.frames,
                   host_result=next((s for s in output.splitlines() if s.startswith('AOT_HOST_OK')), ''),
-                  firmware_bytes=len(data), stack_max_call_transition=largest+dispatcher, stack_initial_frame=initial, hardware_tested=False)
+                  board=args.board, chip=chip, firmware_bytes=len(data), stack_max_call_transition=largest+dispatcher, stack_initial_frame=initial, hardware_tested=False)
     (dest / 'conversion.json').write_text(json.dumps(report, indent=2) + '\n')
     if args.library:
         # Only update the shelf after translation, sanitizer run and firmware build succeed.
@@ -123,20 +172,26 @@ def main():
         im.frombytes(preview.read_bytes());im.save(ROOT/'assets'/f'{cart_id}.png')
         shutil.copyfile(firmware, ROOT/'firmware'/f'{cart_id}.uf2')
         path=ROOT/'catalog.json';catalog=json.loads(path.read_text())
-        entry=dict(id=cart_id,title=title.upper(),subtitle='Converted from a PICO-8 cartridge.',kind='PICO-8 / EXPERIMENTAL AOT',
+        entry=dict(id=shelf_id,title=title.upper(),subtitle='Converted from a PICO-8 cartridge.',kind='PICO-8 / EXPERIMENTAL AOT',
                    description='Native firmware generated from this cartridge by Pocket AOT. Conversion and a desktop smoke test passed; check gameplay on your Pico.',
                    controls=['STICK   PICO-8 directions','A / B   PICO-8 O / X buttons','X / CLICK   Pause / resume','Y       Change LCD speed'],
                    filename=f'firmware/{cart_id}.uf2',sha256=report['uf2_sha256'],accent=[124,222,245],
                    cover=f'assets/{cart_id}.png',credits='Cartridge: '+source.name+' / converted with Pocket AOT 0.2')
         entry.update(status='ready',source_file=str(source),thumbnail=f'assets/{cart_id}.png')
+        if chip=='RP2350':
+            # Pico 2 / Pico 2 W firmware goes beside the RP2040 image; the flasher picks by drive.
+            entry.update(filename='',sha256='',filename_rp2350=entry['filename'],sha256_rp2350=entry['sha256'])
         if source.suffix.lower()=='.png':
             shutil.copyfile(source,ROOT/'assets'/f'{cart_id}.p8.png')
             entry['cart_image']=f'assets/{cart_id}.p8.png'
-        index=next((i for i,c in enumerate(catalog['cartridges']) if c['id']==cart_id or (c.get('source_file') and (ROOT/c['source_file']).resolve()==source)),None)
+        index=next((i for i,c in enumerate(catalog['cartridges']) if c['id']==shelf_id or (c.get('source_file') and (ROOT/c['source_file']).resolve()==source)),None)
         if index is not None:
             old=catalog['cartridges'][index]
             for field in ['id','rank','source_url','thumbnail','cart_image','credits']:
                 if field in old:entry[field]=old[field]
+            # Keep the other chip's firmware.
+            for field in (['filename','sha256','blocker_rp2040'] if chip=='RP2350' else ['filename_rp2350','sha256_rp2350','blocker_rp2350']):
+                if old.get(field):entry[field]=old[field]
         if index is None: catalog['cartridges'].append(entry)
         else: catalog['cartridges'][index]=entry
         temp=path.with_suffix('.tmp');temp.write_text(json.dumps(catalog,indent=2)+'\n');temp.replace(path)
@@ -148,4 +203,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
+        record_failure(e)
         raise SystemExit(str(e))

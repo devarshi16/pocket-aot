@@ -72,6 +72,33 @@ Aimed at the blockers measured on the frozen top-100 run (22/100 firmware builds
 
 The top-100 effect is unmeasured until the benchmark is re-run on a machine that can download the cartridges.
 
+Follow-up: lexical cells (12 to 8 bytes) and closure records (12 to 8 bytes) are packed tighter. The 9 KB this frees goes to table entries, 4352 to 5120, so RAM use is unchanged.
+
+## Sixth batch (top-100 blockers)
+
+Aimed at the failures in the 53/100 top-100 run:
+
+- Strings: literals over 8191 bytes stay in program memory (flash on the Pico) instead of the string arena. `sub` and `split` convert numbers as `tostr` does, and `split` of another non-string gives an empty table. `tonum` and `split` wrap out-of-range decimals as PICO-8 does (`tonum("32768")==-32768`). `ord` returns nil for positions past the end.
+- Globals: `_ENV[name]` reads globals and builtins by name when `_ENV` is not a local, and `inext` is the iterator `ipairs` returns. `local _ENV` is still unsupported.
+- Calls: `rnd` with a negative limit reads it as unsigned, `line` and `pal` tables ignore surplus arguments and keys, `f"text"[i]` indexes the call result, and `next` continues after its key was cleared.
+- Host check: coroutine stacks are bounded with a controlled error instead of overflowing into other memory.
+
+The original `numeric_strings.p8` and `palette_state.p8` fixtures cover each change.
+
+## Seventh batch (pool limits and the Pico 2 W)
+
+- RP2040: strings are copied straight into the arena instead of through an 8 KB scratch buffer, and the strings being copied are pinned during a collection. The 8 KB goes to table entries (8160 to 9056). Strings may now be up to 32767 bytes long.
+- Pico 2 / Pico 2 W (RP2350): one `P8_LARGE_POOLS` switch sets the larger pools for both the firmware and its host check, maps the upper 32 KB of PICO-8 memory, doubles the string arena to 64 KB, and gives core 0 a 40 KB stack with a call depth of 64. `benchmark_top100.py test --board pico2_w` measures this target.
+- Assignments keep only as many values as they have targets, so `local a,b,...=unpack(t)` with more than 16 results and multiple assignment of over 64 values work.
+- `cstore` checks its range and discards the write: cartridge ROM is in flash, so `reload` keeps reading the original data.
+- `save(filename)` does nothing: there is no file system to write the cartridge file into.
+- The button glyph globals `⬅️ ➡️ ⬆️ ⬇️ 🅾️ ❎` start as 0 to 5, as in PICO-8, instead of nil.
+- Multiple assignment writes its targets right to left, as the reference Lua does, so `a,a=1,2` leaves `a` at 1.
+- `_ENV[name]` finds builtins by a computed name, such as `_ENV["map"]`, even when the cart never names them directly.
+- RP2040: core 0 copies each finished frame straight into the display buffer while core 1 is not drawing it, instead of through a second 8 KB buffer; a frame offered while core 1 is busy is offered again while waiting for the next frame.
+- Pico 2 / Pico 2 W: 5120 tables, 3072 lexical cells, 6144 closure captures and 8 coroutines. The host check now uses the device's coroutine count (4 on the RP2040), so a cart that needs more stops there instead of on the device.
+- RP2040: the screen buffer holds two pixels per byte and pool flags share a word with a small field, which frees about 11 KB for 2048 tables (from 1536) and 11200 table entries (from 9056).
+
 ## Smallest remaining candidates
 
 | Priority | Incomplete part | Useful next check |

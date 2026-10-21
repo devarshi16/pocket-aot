@@ -336,25 +336,54 @@ impl Arcade {
         self.message = "Decoding, checking and compiling the cartridge on this computer...".into();
         self.import_open = false;
         std::thread::spawn(move || {
-            let mut cmd = std::process::Command::new("python3");
-            cmd.arg(root.join("converter/build.py"))
-                .arg(source)
-                .arg("--library");
-            if !title.is_empty() {
-                cmd.arg("--title").arg(title);
-            }
-            let result = match cmd.output() {
-                Ok(r) if r.status.success() => {
-                    if let Some(id) = String::from_utf8_lossy(&r.stdout)
-                        .lines()
-                        .find_map(|l| l.strip_prefix("Added to Pocket Arcade: "))
-                    {
-                        let _ = tx.send(Update::Imported(id.into()));
-                    }
-                    Ok("Cartridge built and added. Review it, then press FLASH TO PICO.".into())
+            // Build for the Pico (RP2040) and the Pico 2 / Pico 2 W (RP2350); the
+            // flasher picks the image matching the BOOTSEL drive. One success is enough.
+            let mut built = Vec::new();
+            let mut errors = Vec::new();
+            // The Pico 2 build goes first, so a Pico build that does not fit can
+            // record why on the cartridge's shelf entry.
+            for (board, name) in [("pico2_w", "Pico 2"), ("pico", "Pico")] {
+                let _ = tx.send(Update::Stage(
+                    if built.is_empty() && errors.is_empty() {
+                        0.2
+                    } else {
+                        0.6
+                    },
+                    format!("Converting and compiling for the {name}..."),
+                ));
+                let mut cmd = std::process::Command::new("python3");
+                cmd.arg(root.join("converter/build.py"))
+                    .arg(&source)
+                    .arg("--library")
+                    .arg("--board")
+                    .arg(board);
+                if !title.is_empty() {
+                    cmd.arg("--title").arg(&title);
                 }
-                Ok(r) => Err(String::from_utf8_lossy(&r.stderr).trim().to_string()),
-                Err(e) => Err(format!("Could not start converter: {e}")),
+                match cmd.output() {
+                    Ok(r) if r.status.success() => {
+                        if let Some(id) = String::from_utf8_lossy(&r.stdout)
+                            .lines()
+                            .find_map(|l| l.strip_prefix("Added to Pocket Arcade: "))
+                        {
+                            let _ = tx.send(Update::Imported(id.into()));
+                        }
+                        built.push(name);
+                    }
+                    Ok(r) => errors.push(format!(
+                        "{name}: {}",
+                        String::from_utf8_lossy(&r.stderr).trim()
+                    )),
+                    Err(e) => errors.push(format!("Could not start converter: {e}")),
+                }
+            }
+            let result = if built.is_empty() {
+                Err(errors.join("\n"))
+            } else {
+                Ok(format!(
+                    "Cartridge built for the {} and added. Review it, then press FLASH TO PICO.",
+                    built.join(" and ")
+                ))
             };
             let _ = tx.send(Update::Done(result));
             ctx.request_repaint();
@@ -612,9 +641,11 @@ impl Arcade {
                 }
                 ui.add_space(6.);
                 ui.label(
-                    egui::RichText::new("RP2040 + WAVESHARE LCD 1.3\"\n240 × 240 / 9 inputs")
-                        .font(mono(10.))
-                        .color(MUTED),
+                    egui::RichText::new(
+                        "RP2040 or RP2350 + WAVESHARE LCD 1.3\"\n240 × 240 / 9 inputs",
+                    )
+                    .font(mono(10.))
+                    .color(MUTED),
                 );
             });
     }
@@ -975,12 +1006,17 @@ fn main() -> eframe::Result {
                 println!("SKIP  {} ({})", c.title, c.state_label());
                 continue;
             }
-            let r = std::fs::read(root.join(&c.filename))
-                .map_err(|e| e.to_string())
-                .and_then(|b| flasher::verify_image(&b, &c.sha256));
-            if let Err(e) = r {
-                eprintln!("{}: {e}", c.title);
-                std::process::exit(1);
+            for chip in [flasher::Chip::Rp2040, flasher::Chip::Rp2350] {
+                let Some((file, hash)) = c.image(chip) else {
+                    continue;
+                };
+                let r = std::fs::read(root.join(file))
+                    .map_err(|e| e.to_string())
+                    .and_then(|b| flasher::verify_image(&b, hash, chip));
+                if let Err(e) = r {
+                    eprintln!("{} ({}): {e}", c.title, chip.label());
+                    std::process::exit(1);
+                }
             }
             println!("OK  {}", c.title);
         }

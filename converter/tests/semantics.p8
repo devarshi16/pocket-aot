@@ -9,6 +9,16 @@ function take(a,b)
  return a*10+b
 end
 function _init()
+ -- Fractional keys are boxed; 16-bit integer keys are stored inline.
+ local k={}
+ k[0.5]="half" k[32767.5]="big" k[-32768]="low" k[32767]="high" k[-1]="neg"
+ assert(k[0.5]=="half" and k[32767.5]=="big" and k[-32768]=="low" and k[32767]=="high" and k[-1]=="neg")
+ assert(k[0.25]==nil and k[-32767.5]==nil)
+ k[0.5]=nil assert(k[0.5]==nil)
+ local seen=0 for key,v in pairs(k) do seen+=1 assert(k[key]==v) end assert(seen==4)
+ for i=1,100 do k[i+0.5]=i end for i=1,100 do assert(k[i+0.5]==i) end
+ -- Built-ins read non-numeric arguments as 0, as PICO-8 does.
+ assert(flr(nil)==0 and abs("x")==0 and sin(nil)==0 and flr("2.5")==2)
  assert(0 or false)
  assert(not nil)
  assert(not false)

@@ -7,15 +7,15 @@
   {
     "test": "semantics",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=2 strings=3 operations=1760116 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "a516ce772505544387a2acba9e34728e9352ec0ac07d9a27a80e216ab03ff429",
+    "result": "AOT_HOST_OK frames=5000 entries=220 strings=20 operations=1760551 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "cc05c81f3096a1c21cede21fc67dadbfc2bd6615d665be39dc46b7b1599a60c1",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
   {
     "test": "functions",
     "frames": 5000,
-    "result": "AOT_HOST_OK frames=5000 entries=4 strings=4 operations=210172 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=5000 entries=35 strings=17 operations=210172 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "f05107e295221a7bdddcfdbb87792455a1193f92d1504e0d36be2f5b628327e4",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -23,23 +23,23 @@
   {
     "test": "api-overloads",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=4 strings=2 operations=45352 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "ec9d0012db688e25e52675affcee41f04888ed2557a7fc0df1e35ec4853af864",
+    "result": "AOT_HOST_OK frames=2500 entries=8 strings=10 operations=45488 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "bcb05f124e2c7db58315486e79141542063e82c4e1c84c69fc71ee29bd052db0",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
   {
     "test": "numeric-strings",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=2 strings=2 operations=35673 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "2437099687700752d71306f733b9b9654fbda813af575afe06465cbf620f5c5f",
+    "result": "AOT_HOST_OK frames=2500 entries=10 strings=13 operations=35727 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "fdeffe2d516e5258d439463103bca7699821a9395fd2fedcaeb50de8216af3e9",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
   {
     "test": "fraction-literals",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=0 strings=0 operations=102537 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=2500 entries=0 strings=9 operations=102537 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "6fe815830bc6727f59981f65f1dee48ce69d3a4f1f6a5011a58260c1ee992d07",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -47,15 +47,15 @@
   {
     "test": "palette-state",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=2 strings=0 operations=40203 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "318e55e47b8b00565d5fc843058d9bf5c3903990c933c9209bdf640fbc0fe681",
+    "result": "AOT_HOST_OK frames=2500 entries=24 strings=9 operations=40205 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "28eda4054fd9be5be2b04f0632390a2990a4606d10162ce9e5658456a483cf3a",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
   {
     "test": "bitwise-defaults",
     "frames": 2500,
-    "result": "AOT_HOST_OK frames=2500 entries=0 strings=0 operations=152866 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "result": "AOT_HOST_OK frames=2500 entries=0 strings=10 operations=152866 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
     "source_sha256": "3bd532bf423713ede328865ca11ae589f6dc324b6d707be28b00c658374640f3",
     "source_modified": false,
     "origin": "original-public-fixture"
@@ -63,8 +63,8 @@
   {
     "test": "extended-features",
     "frames": 600,
-    "result": "FEATURES_OK 40\nAOT_HOST_OK frames=600 entries=41 strings=42 operations=43226 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
-    "source_sha256": "6163793049f44f81bfe6b45c2c037b8e38ebf5f52e4e7948e97dfd0342c90b52",
+    "result": "FEATURES_OK 45\nAOT_HOST_OK frames=600 entries=62 strings=53 operations=43249 mode=nil points=nil lives=nil pad_x=nil ball_x=nil state=nil score=nil",
+    "source_sha256": "ebbdcf4d929b7c49fefc3a8297d519e3e634d348ecd79b39eeda4e0690d0fefe",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -121,14 +121,6 @@
     "frames": 1,
     "result": "CARTRIDGE_ERROR: number expected frame=0",
     "source_sha256": "9585e43aa3cb5731a2ac014190345b1f0ec30ac8deea9d918234edcc046b938a",
-    "source_modified": false,
-    "origin": "original-public-fixture"
-  },
-  {
-    "test": "ord-overrun",
-    "frames": 1,
-    "result": "CARTRIDGE_ERROR: ord result range outside string unsupported frame=0",
-    "source_sha256": "d992f82830f7bdabcf0d09f9a2cde0a9652e2a5cccc8f68473dd94ec7449e79b",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -245,14 +237,6 @@
     "origin": "original-public-fixture"
   },
   {
-    "test": "pal-table-key",
-    "frames": 1,
-    "result": "CARTRIDGE_ERROR: pal table keys must be integers from 0 to 16 frame=0",
-    "source_sha256": "8fe21e0ec8164fad836cc060b7783a84d5a7ef0d0a18be8f3789c73c35a6d7bd",
-    "source_modified": false,
-    "origin": "original-public-fixture"
-  },
-  {
     "test": "pal-table-value",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: pal table values must be numbers frame=0",
@@ -265,22 +249,6 @@
     "frames": 1,
     "result": "CARTRIDGE_ERROR: pal table cannot contain both color zero indices frame=0",
     "source_sha256": "1839e3008efef7dbe9ebce7b0b69ea81763271ea589a3b4dc4b08c6c5f33e73c",
-    "source_modified": false,
-    "origin": "original-public-fixture"
-  },
-  {
-    "test": "pal-fractional-key",
-    "frames": 1,
-    "result": "CARTRIDGE_ERROR: pal table keys must be integers from 0 to 16 frame=0",
-    "source_sha256": "a8be25944196812aa26d671844298516328ce682bf3a3c209657af56c75ae244",
-    "source_modified": false,
-    "origin": "original-public-fixture"
-  },
-  {
-    "test": "pal-string-key",
-    "frames": 1,
-    "result": "CARTRIDGE_ERROR: pal table keys must be integers from 0 to 16 frame=0",
-    "source_sha256": "2da15ecc0c273c999589cba1446cc26085ef197957a4272efddcc261d1f2bfdc",
     "source_modified": false,
     "origin": "original-public-fixture"
   },
@@ -328,21 +296,9 @@
     "test": "heap-bound",
     "frames": 1,
     "result": "CARTRIDGE_ERROR: table entries exhausted frame=0",
-    "source_sha256": "1675e564824edb5506f5ac638c2d74fa6850ef4eec89b07c4a7cac883745c46f",
+    "source_sha256": "5de5d31d7947884fd1e083973fa7369b6ae32d740d43df6787b23808dc7eccac",
     "source_modified": false,
     "origin": "original-public-fixture"
-  },
-  {
-    "test": "unsupported-cstore",
-    "result": "rejected explicitly",
-    "detail": "Conversion failed: conversion stopped: unsupported function/API 'cstore'",
-    "flashed": false
-  },
-  {
-    "test": "unsupported-save",
-    "result": "rejected explicitly",
-    "detail": "Conversion failed: conversion stopped: unsupported function/API 'save'",
-    "flashed": false
   },
   {
     "test": "goto-without-label",

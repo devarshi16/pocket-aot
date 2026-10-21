@@ -95,6 +95,20 @@ function drawing_overloads()
  sspr(0,0,2,1,0,0)
  assert(pget(0,0)==7 and pget(1,0)==0,"palt low bit is color fifteen")
  palt()
+ -- Zero-sized sspr draws nothing; a negative size mirrors back from dx.
+ cls(0) sset(0,0,9) sset(1,0,10)
+ sspr(0,0,2,1,5,5,0,1) sspr(0,0,0,1,5,5)
+ assert(pget(5,5)==0,"zero-sized sspr draws nothing")
+ sspr(0,0,2,1,10,5,-2,1)
+ assert(pget(8,5)==10 and pget(9,5)==9,"negative sspr width mirrors")
+ -- map() wider than the map clamps instead of failing.
+ map(0,0,0,0,128,128)
+ -- poke(a,unpack(t)) writes tables longer than the call result limit.
+ local data={} for i=1,100 do data[i]=i end
+ poke(0x4300,unpack(data))
+ assert(peek(0x4300)==1 and peek(0x4363)==100,"poke from a long unpack")
+ poke2(0x4400,unpack({0x1234,0x5678}))
+ assert(peek2(0x4402)==0x5678,"poke2 from unpack")
  cls(0) line(8) line(3,3)
  assert(pget(3,3)==0,"line color-only arms pen without drawing")
  line(6,3)
